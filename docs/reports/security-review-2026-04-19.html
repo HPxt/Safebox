@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeBox - Relatorio de Seguranca</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --ink: #142033;
+      --muted: #5e6b7a;
+      --line: #d9e2ef;
+      --blue: #1f6feb;
+      --blue-soft: #e8f1ff;
+      --green: #1f8f5f;
+      --green-soft: #e9f8f0;
+      --amber: #b97700;
+      --amber-soft: #fff3dd;
+      --red: #c43838;
+      --red-soft: #fdeaea;
+      --slate: #31425a;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top right, #dbeafe 0%, transparent 30%),
+        linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+    }
+
+    .container {
+      width: min(1180px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0f274a 0%, #184b96 100%);
+      color: #fff;
+      border-radius: 28px;
+      padding: 32px;
+      box-shadow: 0 24px 48px rgba(23, 45, 88, 0.18);
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: 34px;
+      line-height: 1.1;
+    }
+
+    .hero p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.86);
+      line-height: 1.6;
+    }
+
+    .meta-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .meta-card {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      padding: 14px 16px;
+    }
+
+    .meta-card strong {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 28px;
+      margin-bottom: 20px;
+      box-shadow: 0 12px 28px rgba(28, 52, 91, 0.06);
+    }
+
+    .section h2 {
+      margin: 0 0 18px;
+      font-size: 24px;
+    }
+
+    .section h3 {
+      margin: 18px 0 10px;
+      font-size: 18px;
+    }
+
+    .lead {
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 18px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      border-radius: 20px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: #fbfdff;
+    }
+
+    .card .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .card .value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .card .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 18px;
+    }
+
+    .chart-box {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      background: #fbfdff;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 42px;
+      gap: 12px;
+      align-items: center;
+      margin: 12px 0;
+    }
+
+    .bar-shell {
+      height: 14px;
+      border-radius: 999px;
+      background: #e8eef7;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+    }
+
+    .donut {
+      width: 220px;
+      height: 220px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      background: conic-gradient(
+        var(--green) 0 310deg,
+        var(--amber) 310deg 338deg,
+        var(--red) 338deg 360deg
+      );
+      position: relative;
+    }
+
+    .donut::after {
+      content: "Validacao\nFinal";
+      white-space: pre;
+      position: absolute;
+      inset: 28px;
+      border-radius: 50%;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 700;
+      color: var(--slate);
+      line-height: 1.4;
+    }
+
+    .legend {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .boundary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .boundary-box {
+      border-radius: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      position: relative;
+      background: #fbfdff;
+      min-height: 170px;
+    }
+
+    .boundary-box h4 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .boundary-box p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .boundary-tag {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tag-blue { background: var(--blue-soft); color: var(--blue); }
+    .tag-green { background: var(--green-soft); color: var(--green); }
+    .tag-amber { background: var(--amber-soft); color: var(--amber); }
+    .tag-red { background: var(--red-soft); color: var(--red); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--line);
+      line-height: 1.6;
+    }
+
+    th {
+      color: var(--slate);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .severity {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .sev-critical { background: var(--red-soft); color: var(--red); }
+    .sev-high { background: #ffeedd; color: #b65700; }
+    .sev-medium { background: var(--amber-soft); color: var(--amber); }
+    .sev-low { background: var(--green-soft); color: var(--green); }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+    }
+
+    .timeline-item {
+      border-left: 4px solid #cfe0ff;
+      padding: 4px 0 4px 14px;
+    }
+
+    .timeline-item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .risk-box {
+      border-radius: 18px;
+      padding: 18px;
+      margin-top: 14px;
+      border: 1px solid var(--line);
+    }
+
+    .risk-high { background: #fff4e9; }
+    .risk-medium { background: #fff9e7; }
+
+    ul.flat {
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    code {
+      background: #eef3fa;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .cards,
+      .grid-2,
+      .boundary {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <div>
+        <h1>SafeBox<br />Relatorio Consolidado de Seguranca</h1>
+        <p>
+          Documento consolidado da revisao de seguranca, hardening, arquitetura,
+          historico vulneravel do Git, import/export/backup, boundaries de autenticacao
+          e separacao operacional entre API, IA e jobs.
+          Escopo executado sem alteracoes destrutivas de schema, migration ou reset do banco.
+        </p>
+      </div>
+      <div class="meta-grid">
+        <div class="meta-card">
+          <strong>19/04/2026</strong>
+          Data da consolidacao
+        </div>
+        <div class="meta-card">
+          <strong>Backend + Frontend</strong>
+          Escopo validado
+        </div>
+        <div class="meta-card">
+          <strong>Sem perda de dados</strong>
+          Restricao operacional mantida
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Resumo Executivo</h2>
+      <p class="lead">
+        O projeto evoluiu de um estado com exposicao de segredos, 2FA fragil, import/export inconsistente
+        e isolamento multi-tenant dependente de filtros manuais para uma base mais endurecida. As correcoes
+        mais relevantes desta rodada foram: redaction e tratamento de erros no backend, sessao revogavel,
+        SQL bruto desabilitado, cliente HTTP com allowlist, import/export baseado no snapshot atual do cofre
+        e migracao do 2FA para verificacao server-side com segredo criptografado. Nesta etapa, o vault passou
+        a trafegar como snapshot cifrado do frontend para o backend, as rotas de vault e settings passaram a
+        usar cliente user-scoped com RLS, a camada de dominio do vault foi extraida e os scripts de API, IA
+        e manutencao foram separados.
+      </p>
+
+      <div class="cards">
+        <div class="card">
+          <div class="label">Achados Historicos Criticos</div>
+          <div class="value">4</div>
+          <div class="hint">Credenciais expostas, 2FA em texto simples, arquivos <code>.env</code> e backup versionados.</div>
+        </div>
+        <div class="card">
+          <div class="label">Correcoes de Seguranca Aplicadas</div>
+          <div class="value">16+</div>
+          <div class="hint">Auth hardening, redaction, outbound allowlist, 2FA server-side, vault boundary, settings via backend e scripts isolados.</div>
+        </div>
+        <div class="card">
+          <div class="label">Validacoes Executadas</div>
+          <div class="value">6</div>
+          <div class="hint">Lint, type-check, backend tests, frontend tests, frontend build e smoke do dev server.</div>
+        </div>
+        <div class="card">
+          <div class="label">Risco Residual Principal</div>
+          <div class="value">Medio</div>
+          <div class="hint">Ainda restam superficies legadas com service_role e warnings antigos no frontend.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Graficos de Status</h2>
+      <div class="grid-2">
+        <div class="chart-box">
+          <h3>Distribuicao de Severidade dos Achados</h3>
+          <div class="bar-row">
+            <div>Critico</div>
+            <div class="bar-shell"><div class="bar-fill" style="width: 82%; background: var(--red);"></div></div>
+            <div>4</div>
+          </div>
+          <div class="bar-row">
+            <div>Alto</div>
+            <div class="bar-shell"><div class="bar-fill" style="width: 74%; background: #e67b00;"></div></div>
+            <div>5</div>
+          </div>
+          <div class="bar-row">
+            <div>Medio</div>
+            <div class="bar-shell"><div class="bar-fill" style="width: 48%; background: var(--amber);"></div></div>
+            <div>4</div>
+          </div>
+          <div class="bar-row">
+            <div>Baixo</div>
+            <div class="bar-shell"><div class="bar-fill" style="width: 24%; background: var(--green);"></div></div>
+            <div>2</div>
+          </div>
+          <p class="lead" style="margin-top: 16px;">
+            O peso de risco restante ficou concentrado em superficies legadas que ainda nao foram migradas
+            por completo para cliente user-scoped e em warnings antigos de qualidade no frontend.
+          </p>
+        </div>
+
+        <div class="chart-box">
+          <h3>Validacao Final</h3>
+          <div class="donut"></div>
+          <div class="legend">
+            <div class="legend-item"><span class="dot" style="background: var(--green);"></span> Backend lint / type-check / testes: ok</div>
+            <div class="legend-item"><span class="dot" style="background: var(--green);"></span> Frontend testes e build: ok</div>
+            <div class="legend-item"><span class="dot" style="background: var(--amber);"></span> Frontend build com warnings antigos nao bloqueantes</div>
+            <div class="legend-item"><span class="dot" style="background: var(--green);"></span> Historico remoto higienizado com branch saneado e force-push</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Boundaries de Auth e Confianca</h2>
+      <p class="lead">
+        O desenho abaixo resume onde cada boundary de autenticacao comeca e termina, e qual risco existe
+        quando esse limite fica misturado.
+      </p>
+      <div class="boundary">
+        <div class="boundary-box">
+          <h4>Navegador / Cofre Local</h4>
+          <p>
+            O frontend manipula o snapshot do cofre, a chave local da sessao do vault e a serializacao do ciphertext.
+            Aqui vivem a UX, o unlock da senha mestre e a montagem do envelope criptografado.
+          </p>
+          <div class="boundary-tag tag-blue">Boundary: dispositivo do usuario</div>
+        </div>
+        <div class="boundary-box">
+          <h4>Supabase Auth</h4>
+          <p>
+            Identidade primaria do usuario no estado atual do app. O token do Supabase
+            agora tambem serve como identidade para os endpoints server-side de 2FA.
+          </p>
+          <div class="boundary-tag tag-green">Boundary: identidade</div>
+        </div>
+        <div class="boundary-box">
+          <h4>Backend SafeBox</h4>
+          <p>
+            Responsavel por auth, sessao, audit logs, validacao, hardening, settings, restore/backup do vault
+            e 2FA criptografado server-side, sem receber a senha mestra em claro.
+          </p>
+          <div class="boundary-tag tag-amber">Boundary: autorizacao e seguranca</div>
+        </div>
+        <div class="boundary-box">
+          <h4>Supabase Data / Service Role</h4>
+          <p>
+            Camada de dados e operacoes privilegiadas. O risco caiu porque vault e settings migraram para
+            cliente user-scoped com RLS, mas ainda existem superficies legadas que dependem de <code>service_role</code>.
+          </p>
+          <div class="boundary-tag tag-red">Boundary: dado multi-tenant</div>
+        </div>
+      </div>
+      <div class="risk-box risk-medium">
+        <strong>Leitura arquitetural:</strong>
+        o boundary de identidade ficou mais claro e o boundary do vault agora esta melhor isolado.
+        O passo arquitetural restante mais importante e terminar a migracao das superficies legadas
+        para cliente user-scoped por padrao.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Problemas, Mudancas Necessarias e Alteracoes Realizadas</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Problema</th>
+            <th>Risco / Ameaca</th>
+            <th>Mudanca Necessaria</th>
+            <th>Alteracao Aplicada</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Historico do Git com segredos e artefatos sensiveis</td>
+            <td>Exposicao de credenciais, possivel incidente de dados e acesso indevido ao projeto</td>
+            <td>Rotacionar segredos e reescrever historico remoto</td>
+            <td>Historico reescrito a partir de um branch saneado, removendo <code>.env</code>, artefatos de build, <code>node_modules</code> e backup sensivel do indice atual</td>
+            <td><span class="severity sev-high">Mitigado</span></td>
+          </tr>
+          <tr>
+            <td>2FA com secret em texto simples no frontend</td>
+            <td>Clonagem do TOTP, vazamento por leitura indevida do banco ou XSS</td>
+            <td>Migrar o segredo e a verificacao para o backend</td>
+            <td>2FA agora usa endpoints server-side com segredo criptografado em AES-GCM e verificacao TOTP no backend</td>
+            <td><span class="severity sev-high">Corrigido</span></td>
+          </tr>
+          <tr>
+            <td>Import/export/backup lendo snapshot antigo</td>
+            <td>Backup inconsistente, restauracao incorreta e perda logica de confianca no cofre</td>
+            <td>Usar snapshot canonico do vault e merge seguro</td>
+            <td>Fluxo refeito para consumir o registro ativo do <code>enc_blob</code> e impedir duplicatas na reimportacao</td>
+            <td><span class="severity sev-high">Corrigido</span></td>
+          </tr>
+          <tr>
+            <td>SQL bruto e defaults inseguros no backend</td>
+            <td>Injection, disclosure e execucao imprevisivel</td>
+            <td>Desabilitar SQL dinamico e normalizar erros</td>
+            <td><code>executeQuery()</code> bloqueado, validacao compartilhada e respostas sem vazamento</td>
+            <td><span class="severity sev-high">Corrigido</span></td>
+          </tr>
+          <tr>
+            <td>Logs com dados sensiveis</td>
+            <td>Exposicao de credenciais, tokens e PII em observabilidade</td>
+            <td>Redaction centralizada</td>
+            <td>Logger endurecido com mascaramento de campos sensiveis antes de log operacional e audit log</td>
+            <td><span class="severity sev-medium">Corrigido</span></td>
+          </tr>
+          <tr>
+            <td>Outbound HTTP sem boundary claro</td>
+            <td>SSRF e alcance indevido de rede interna</td>
+            <td>Cliente com allowlist, timeout e retry seguro</td>
+            <td>Cliente HTTP seguro aplicado ao acesso LLM local</td>
+            <td><span class="severity sev-medium">Corrigido</span></td>
+          </tr>
+          <tr>
+            <td>Backend multi-tenant usando service role por padrao</td>
+            <td>Broken access control por falha de filtro manual</td>
+            <td>User-scoped client por padrao para recursos do usuario</td>
+            <td>Vault e settings migrados para cliente user-scoped com RLS; auth e outras superficies legadas ainda precisam da mesma consolidacao</td>
+            <td><span class="severity sev-high">Parcial</span></td>
+          </tr>
+          <tr>
+            <td>Conflitos de concorrencia no vault</td>
+            <td>Lost update e sobrescrita entre abas/sessoes</td>
+            <td>Controle otimista obrigatorio</td>
+            <td><code>expectedVersion</code> passou a ser obrigatorio em update/delete do vault e coberto por testes de conflito e restore</td>
+            <td><span class="severity sev-low">Corrigido</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Timeline de Commits Vulneraveis Confirmados</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <strong>18/06/2025 - <code>c7f91852</code></strong>
+          2FA passou a salvar <code>two_factor_secret</code> como <code>PLAIN:</code> e removeu parte do step-up local.
+        </div>
+        <div class="timeline-item">
+          <strong>20/06/2025 - <code>d22cfa74</code></strong>
+          Credenciais reais do Supabase foram colocadas diretamente no frontend como fallback.
+        </div>
+        <div class="timeline-item">
+          <strong>20/06/2025 - <code>693be35f</code> / <code>4021df0b</code></strong>
+          Logs de debug de variaveis de ambiente e consolidacao de credenciais reais no codigo.
+        </div>
+        <div class="timeline-item">
+          <strong>06/10/2025 - <code>39db15bd</code></strong>
+          <code>backend/.env</code> voltou a ser alterado no historico do repositorio.
+        </div>
+        <div class="timeline-item">
+          <strong>21/01/2026 - <code>ff64e449</code></strong>
+          Arquivos <code>.env</code>, <code>backend/.env</code> e backup de banco foram versionados.
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Alteracoes Tecnicas Realizadas</h2>
+      <div class="grid-2">
+        <div>
+          <h3>Backend</h3>
+          <ul class="flat">
+            <li>Camada compartilhada de seguranca para validacao, autorizacao, redaction, tratamento de erro e outbound HTTP.</li>
+            <li>Sessao JWT vinculada a <code>user_sessions</code>, com verificacao de token, refresh e revoke.</li>
+            <li>2FA server-side com segredo criptografado em <code>users.two_factor_secret</code>.</li>
+            <li>Vault e settings migrados para cliente user-scoped com RLS e camada de dominio <code>VaultSnapshotService</code>.</li>
+            <li>Middleware adicional para autenticar token do Supabase quando o fluxo precisar identidade client-side segura.</li>
+            <li>Entrypoints separados para API, worker de IA e job de manutencao.</li>
+            <li>SQL bruto desabilitado.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Frontend</h3>
+          <ul class="flat">
+            <li>Vault snapshot trafegando como ciphertext para o backend, sem enviar a senha mestra em claro.</li>
+            <li>Import/export/backup migrados para o snapshot atual do cofre.</li>
+            <li>Merge de importacao com fingerprint para evitar duplicatas de backups antigos.</li>
+            <li>Backup criptografado do SafeBox com envelope legivel e validacao de integridade.</li>
+            <li>Preferencias migradas para a API backend, alinhando auth/sessao/audit numa unica fronteira.</li>
+            <li>2FA ajustado para setup, verificacao e recovery por codigo de backup via backend.</li>
+            <li>Logs sensiveis de debug removidos dos fluxos de login, auth context e leitura do vault.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Testes e Validacao Executados</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Etapa</th>
+            <th>Comando / Evidencia</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Backend lint</td>
+            <td><code>npm run lint</code></td>
+            <td><span class="severity sev-low">OK</span></td>
+          </tr>
+          <tr>
+            <td>Backend type-check</td>
+            <td><code>npm run type-check</code></td>
+            <td><span class="severity sev-low">OK</span></td>
+          </tr>
+          <tr>
+            <td>Backend testes</td>
+            <td><code>jest --runInBand</code> - 5 suites / 17 testes</td>
+            <td><span class="severity sev-low">OK</span></td>
+          </tr>
+          <tr>
+            <td>Frontend testes</td>
+            <td><code>react-scripts test --watchAll=false</code> - 2 suites / 5 testes</td>
+            <td><span class="severity sev-low">OK</span></td>
+          </tr>
+          <tr>
+            <td>Frontend build</td>
+            <td><code>react-scripts build</code></td>
+            <td><span class="severity sev-low">OK</span> com warnings antigos nao bloqueantes</td>
+          </tr>
+          <tr>
+            <td>Backend dev smoke</td>
+            <td><code>npm run dev</code> iniciou sem o warning do <code>express-slow-down</code>; a unica falha observada foi <code>Port 3001 is already in use</code></td>
+            <td><span class="severity sev-low">OK</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Risco Residual</h2>
+      <div class="risk-box risk-high">
+        <h3 style="margin-top: 0;">Risco Residual Alto</h3>
+        <ul class="flat">
+          <li>As credenciais previamente expostas no historico antigo devem continuar sendo tratadas como comprometidas; nesta rodada voce optou por nao rotaciona-las por ser um projeto de testes.</li>
+          <li>O backend ainda possui superficies legadas com <code>service_role</code>, o que nao e o desenho ideal para multi-tenant.</li>
+        </ul>
+      </div>
+      <div class="risk-box risk-medium">
+        <h3 style="margin-top: 0;">Risco Residual Medio</h3>
+        <ul class="flat">
+          <li>O 2FA agora esta mais seguro, mas passa a depender da disponibilidade do backend para verificacao.</li>
+          <li>A separacao operacional entre API, IA e jobs ja existe em scripts e entrypoints, mas ainda pode evoluir para deploys distintos no futuro.</li>
+          <li>O frontend ainda possui warnings antigos de qualidade e acessibilidade fora do escopo desta rodada.</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
+
+

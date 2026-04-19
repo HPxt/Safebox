@@ -42,11 +42,13 @@ yarn-error.log*
 logs/
 backend/logs/
 
-# Reports (contém dados de análise)
+# Reports (contain analysis data)
 reports/
 backend/reports/
+!docs/reports/
+!docs/reports/*.html
 
-# Redis dump
+# Dumps and backups
 dump.rdb
 *.backup
 *.dump
@@ -54,7 +56,7 @@ dump.rdb
 # Supabase local
 .supabase/
 
-# Credenciais sensíveis
+# Sensitive docs
 docs/.supabase-credentials.md
 
 # Editor directories
