@@ -80,10 +80,10 @@ const SSHKeyForm: React.FC<SSHKeyFormProps> = ({
           </h4>
           <p className="text-gray-300 text-sm">
             Armazene suas chaves e conecte com o agente SSH para uma autenticação rápida e criptografada.{' '}
-            <a href="#" className="text-blue-400 hover:text-blue-300 inline-flex items-center gap-1">
+            <button type="button" className="text-blue-400 hover:text-blue-300 inline-flex items-center gap-1">
               Saiba mais sobre o agente SSH
               <ExternalLink className="h-3 w-3" />
-            </a>
+            </button>
           </p>
         </div>
       )}

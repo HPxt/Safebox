@@ -16,10 +16,6 @@ import {
   Star,
   Globe,
   User,
-  Lock,
-  Unlock,
-  EyeIcon,
-  Shield,
   X
 } from 'lucide-react'
 

@@ -12,13 +12,16 @@ import {
   Key,
   Smartphone,
   Globe,
-  Users,
   ChevronRight,
   Star
 } from 'lucide-react'
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate()
+  const footerActionClassName = 'hover:text-white transition-colors'
+  const handleFooterPlaceholderClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const benefits = [
     {
@@ -387,23 +390,23 @@ const LandingPage: React.FC = () => {
               <ul className="space-y-2 text-sm">
                 <li><a href="#features" className="hover:text-white transition-colors">Recursos</a></li>
                 <li><a href="#security" className="hover:text-white transition-colors">Segurança</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Preços</a></li>
+                <li><button type="button" onClick={handleFooterPlaceholderClick} className={footerActionClassName}>Preços</button></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-white mb-4">Empresa</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Sobre</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contato</a></li>
+                <li><button type="button" onClick={handleFooterPlaceholderClick} className={footerActionClassName}>Sobre</button></li>
+                <li><button type="button" onClick={handleFooterPlaceholderClick} className={footerActionClassName}>Blog</button></li>
+                <li><button type="button" onClick={handleFooterPlaceholderClick} className={footerActionClassName}>Contato</button></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-white mb-4">Legal</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Privacidade</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Termos</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">LGPD</a></li>
+                <li><button type="button" onClick={handleFooterPlaceholderClick} className={footerActionClassName}>Privacidade</button></li>
+                <li><button type="button" onClick={handleFooterPlaceholderClick} className={footerActionClassName}>Termos</button></li>
+                <li><button type="button" onClick={handleFooterPlaceholderClick} className={footerActionClassName}>LGPD</button></li>
               </ul>
             </div>
           </div>

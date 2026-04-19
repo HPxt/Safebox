@@ -84,7 +84,7 @@ class FoldersService {
 
   async deleteFolder(id: string): Promise<void> {
     // Verificar se há credenciais na pasta
-    const user = await this.getCurrentUser()
+    await this.getCurrentUser()
     
     // Para este exemplo, vamos permitir deletar mesmo com credenciais
     // Em produção, você pode querer implementar lógica de verificação

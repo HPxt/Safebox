@@ -207,28 +207,6 @@ const Dashboard: React.FC = () => {
     return
   }
 
-  // Antigo handleOpenModal para o modal legado
-  const handleOpenLegacyModal = async () => {
-    const cryptoKey = await CryptoService.getStoredKey()
-    if (!cryptoKey) {
-      setIsVaultUnlocked(false)
-      setIsFirstTimeSetup(false)
-      setShowMasterPasswordModal(true)
-      return
-    }
-    
-    setShowModal(true)
-    setFormData({
-      title: '',
-      username: '',
-      email: '',
-      password: '',
-      website: '',
-      notes: '',
-      isFavorite: false
-    })
-  }
-
   const handleCloseModal = () => {
     setShowModal(false)
     setEditingCredential(null)
@@ -557,9 +535,6 @@ const Dashboard: React.FC = () => {
       return false
     }
   })
-
-  // Contar credenciais ocultas para exibir no botão
-  const hiddenCredentialsCount = (Array.isArray(safeCredentials) ? safeCredentials : []).filter(c => c?.isHidden === true).length
 
   // Não mostrar tela branca de loading - apenas continua renderizando normalmente
   // O loading será indicado de forma mais sutil dentro da página

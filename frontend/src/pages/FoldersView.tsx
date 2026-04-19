@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { Credential, CredentialFormData, Folder } from '../types'
+import { Credential, CredentialFormData } from '../types'
 import { credentialsService } from '../services/credentialsService'
-import { foldersService } from '../services/foldersService'
 import FolderManager from '../components/FolderManager'
 import ProtectedRoute from '../components/ProtectedRoute'
 import { 
@@ -15,7 +14,6 @@ import {
   Copy, 
   Edit, 
   Trash2,
-  Star,
   ExternalLink,
   Menu,
   X,
@@ -25,7 +23,7 @@ import {
 } from 'lucide-react'
 
 const FoldersView: React.FC = () => {
-  const { user, signOut } = useAuth()
+  const { signOut } = useAuth()
   const navigate = useNavigate()
   const [credentials, setCredentials] = useState<Credential[]>([])
   const [loading, setLoading] = useState(true)

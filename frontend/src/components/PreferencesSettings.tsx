@@ -7,7 +7,6 @@ import {
   LayoutGrid, 
   Key, 
   Clipboard,
-  Save,
   Loader2
 } from 'lucide-react'
 import { usePreferences } from '../contexts/PreferencesContext'

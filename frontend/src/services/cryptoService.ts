@@ -18,7 +18,6 @@ const PBKDF2_CONFIG = {
 }
 
 // Tamanhos para AES-GCM
-const AES_KEY_SIZE = 256
 const NONCE_SIZE = 12 // 96 bits para GCM
 const TAG_SIZE = 16   // 128 bits
 
@@ -278,15 +277,10 @@ export class CryptoService {
     
     // Removido console.log por segurança - informações sensíveis
     
-    // Adicionar timer para medir o tempo real
-    const totalStartTime = Date.now()
-    
     try {
       // Passo 1: Usar PBKDF2 para criar uma chave inicial (compatível com Web Crypto)
       const encoder = new TextEncoder()
       const passwordBytes = encoder.encode(password)
-      
-      const pbkdf2StartTime = Date.now()
       
       // Importar senha como chave para PBKDF2
       const passwordKey = await crypto.subtle.importKey(
@@ -309,15 +303,10 @@ export class CryptoService {
         256 // 32 bytes
       )
       
-      const pbkdf2Time = Date.now() - pbkdf2StartTime
-      // Timing removido em produção por segurança
-      
       // Passo 2: Usar o resultado do PBKDF2 como entrada para Argon2id
       const pbkdf2Result = new Uint8Array(pbkdf2Bits)
       const combinedPassword = btoa(String.fromCharCode(...Array.from(pbkdf2Result))) + password
-      
-      const argon2StartTime = Date.now()
-      
+
       // Derivar chave final com Argon2id
       const hashResult = await argon2id({
         password: combinedPassword,
@@ -328,9 +317,6 @@ export class CryptoService {
         hashLength: config.hashLength,
         outputType: 'binary'
       })
-
-      const argon2Time = Date.now() - argon2StartTime
-      // Timing removido em produção por segurança
 
       // Garantir que temos uma Uint8Array de 32 bytes
       if (!(hashResult instanceof Uint8Array) || hashResult.length !== 32) {

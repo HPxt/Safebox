@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Shield, Lock, AlertCircle, Info, CheckCircle } from 'lucide-react'
+import { Shield, Lock, AlertCircle, CheckCircle } from 'lucide-react'
 import CryptoService from '../services/cryptoService'
 import { supabase } from '../config/supabase'
 import { useAuth } from '../contexts/AuthContext'

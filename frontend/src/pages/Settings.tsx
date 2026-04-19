@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Shield, User, Bell, Lock, Database, Settings2 } from 'lucide-react'
+import { ArrowLeft, Shield, User, Bell, Database, Settings2 } from 'lucide-react'
 import MasterPasswordSettings from '../components/MasterPasswordSettings'
 import PreferencesSettings from '../components/PreferencesSettings'
 import { useAuth } from '../contexts/AuthContext'

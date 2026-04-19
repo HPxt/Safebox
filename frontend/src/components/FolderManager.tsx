@@ -8,8 +8,7 @@ import {
   Edit, 
   Trash2, 
   ChevronRight, 
-  ChevronDown,
-  Settings
+  ChevronDown
 } from 'lucide-react'
 
 interface FolderManagerProps {
@@ -91,7 +90,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
   const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const newFolder = await foldersService.createFolder({
+      await foldersService.createFolder({
         userId: '', // Será preenchido pelo serviço
         name: formData.name,
         color: formData.color || FOLDER_COLORS[0],

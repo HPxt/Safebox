@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { 
   RefreshCw, 
@@ -33,6 +33,14 @@ interface PasswordHistory {
   strength: number
 }
 
+const PASSWORD_CHARS = {
+  uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+  lowercase: 'abcdefghijklmnopqrstuvwxyz',
+  numbers: '0123456789',
+  symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?',
+  ambiguous: '0O1lI|`'
+}
+
 const PasswordGeneratorPage: React.FC = () => {
   const { user } = useAuth()
   const [password, setPassword] = useState('')
@@ -53,40 +61,45 @@ const PasswordGeneratorPage: React.FC = () => {
     minSpecial: 0
   })
 
-  // Caracteres disponíveis
-  const chars = {
-    uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-    lowercase: 'abcdefghijklmnopqrstuvwxyz',
-    numbers: '0123456789',
-    symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?',
-    ambiguous: '0O1lI|`'
-  }
+  const calculateStrength = useCallback((pwd: string) => {
+    if (!pwd) return 0
+    
+    let score = 0
+    if (pwd.length >= 8) score += 1
+    if (pwd.length >= 12) score += 1
+    if (/[a-z]/.test(pwd)) score += 1
+    if (/[A-Z]/.test(pwd)) score += 1
+    if (/[0-9]/.test(pwd)) score += 1
+    if (/[^A-Za-z0-9]/.test(pwd)) score += 1
 
-  const generatePassword = () => {
+    return Math.min(score, 6)
+  }, [])
+
+  const generatePassword = useCallback(() => {
     let charset = ''
     let requiredChars = ''
 
     // Construir conjunto de caracteres
     if (options.includeUppercase) {
       const upperChars = options.excludeAmbiguous 
-        ? chars.uppercase.replace(/[O]/g, '') 
-        : chars.uppercase
+        ? PASSWORD_CHARS.uppercase.replace(/[O]/g, '') 
+        : PASSWORD_CHARS.uppercase
       charset += upperChars
       requiredChars += upperChars[Math.floor(Math.random() * upperChars.length)]
     }
 
     if (options.includeLowercase) {
       const lowerChars = options.excludeAmbiguous 
-        ? chars.lowercase.replace(/[l]/g, '') 
-        : chars.lowercase
+        ? PASSWORD_CHARS.lowercase.replace(/[l]/g, '') 
+        : PASSWORD_CHARS.lowercase
       charset += lowerChars
       requiredChars += lowerChars[Math.floor(Math.random() * lowerChars.length)]
     }
 
     if (options.includeNumbers) {
       const numberChars = options.excludeAmbiguous 
-        ? chars.numbers.replace(/[01]/g, '') 
-        : chars.numbers
+        ? PASSWORD_CHARS.numbers.replace(/[01]/g, '') 
+        : PASSWORD_CHARS.numbers
       charset += numberChars
       
       // Adicionar números mínimos
@@ -97,8 +110,8 @@ const PasswordGeneratorPage: React.FC = () => {
 
     if (options.includeSymbols) {
       const symbolChars = options.excludeAmbiguous 
-        ? chars.symbols.replace(/[|`]/g, '') 
-        : chars.symbols
+        ? PASSWORD_CHARS.symbols.replace(/[|`]/g, '') 
+        : PASSWORD_CHARS.symbols
       charset += symbolChars
       
       // Adicionar símbolos mínimos
@@ -123,9 +136,9 @@ const PasswordGeneratorPage: React.FC = () => {
     result = result.split('').sort(() => Math.random() - 0.5).join('')
 
     return result
-  }
+  }, [options])
 
-  const handleGenerate = () => {
+  const handleGenerate = useCallback(() => {
     const newPassword = generatePassword()
     setPassword(newPassword)
     setCopied(false)
@@ -139,7 +152,7 @@ const PasswordGeneratorPage: React.FC = () => {
     }
     
     setHistory(prev => [newEntry, ...prev.slice(0, 9)]) // Manter apenas 10 últimas
-  }
+  }, [calculateStrength, generatePassword])
 
   const copyToClipboard = async (text: string = password) => {
     try {
@@ -153,20 +166,6 @@ const PasswordGeneratorPage: React.FC = () => {
 
   const updateOption = (key: keyof GeneratorOptions, value: any) => {
     setOptions(prev => ({ ...prev, [key]: value }))
-  }
-
-  const calculateStrength = (pwd: string) => {
-    if (!pwd) return 0
-    
-    let score = 0
-    if (pwd.length >= 8) score += 1
-    if (pwd.length >= 12) score += 1
-    if (/[a-z]/.test(pwd)) score += 1
-    if (/[A-Z]/.test(pwd)) score += 1
-    if (/[0-9]/.test(pwd)) score += 1
-    if (/[^A-Za-z0-9]/.test(pwd)) score += 1
-
-    return Math.min(score, 6)
   }
 
   const getPasswordStrength = (pwd: string = password) => {
@@ -204,7 +203,7 @@ const PasswordGeneratorPage: React.FC = () => {
   // Gerar senha inicial
   useEffect(() => {
     handleGenerate()
-  }, [options])
+  }, [handleGenerate])
 
   const strength = getPasswordStrength()
 
