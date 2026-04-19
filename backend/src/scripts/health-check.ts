@@ -182,7 +182,7 @@ class HealthChecker {
 const runHealthCheck = async () => {
   try {
     const checker = new HealthChecker()
-    const results = await checker.runAllChecks()
+    await checker.runAllChecks()
     const overallStatus = checker.getOverallStatus()
 
     console.log('\n=== HEALTH CHECK SUMMARY ===')

@@ -1,12 +1,11 @@
 import { supabase } from '../config/database'
-import { logger } from '../utils/logger'
 
 async function testSupabaseConnection() {
   console.log('🔍 Testing Supabase connection...')
   
   try {
     // Test basic connection with a simple query
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('credentials')
       .select('id')
       .limit(1)
@@ -98,7 +97,7 @@ async function testRowLevelSecurity() {
   
   try {
     // Try to access credentials table without authentication (should fail)
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('credentials')
       .select('*')
 
