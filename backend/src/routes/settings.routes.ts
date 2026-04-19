@@ -137,17 +137,17 @@ router.put('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) =
 
   const { data, error } = await scopedClient
     .from('user_settings')
-    .update(updateData)
-    .eq('user_id', user.userId)
+    .upsert({
+      user_id: user.userId,
+      ...updateData,
+    }, {
+      onConflict: 'user_id',
+    })
     .select('*')
     .maybeSingle()
 
   if (error) {
     throw error
-  }
-
-  if (!data) {
-    throw new NotFoundError('User settings not found')
   }
 
   await logSettingsAudit(
