@@ -4,6 +4,32 @@ import { z } from 'zod'
 // Load environment variables
 dotenv.config()
 
+const applyTestDefaults = () => {
+  if (process.env['NODE_ENV'] !== 'test') {
+    return
+  }
+
+  const testDefaults: Record<string, string> = {
+    NODE_ENV: 'test',
+    SUPABASE_URL: 'https://example.supabase.co',
+    SUPABASE_ANON_KEY: 'test-anon-key',
+    SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key',
+    JWT_SECRET: 'test-jwt-secret-with-at-least-32-characters',
+    TWO_FACTOR_ENCRYPTION_SECRET: 'test-2fa-encryption-secret-at-least-32',
+    ENABLE_AUDIT_LOGS: 'false',
+    ENABLE_EMAIL_NOTIFICATIONS: 'false',
+    ENABLE_BACKUP_CLEANUP: 'false',
+  }
+
+  for (const [key, value] of Object.entries(testDefaults)) {
+    if (!process.env[key]) {
+      process.env[key] = value
+    }
+  }
+}
+
+applyTestDefaults()
+
 // Environment validation schema
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
