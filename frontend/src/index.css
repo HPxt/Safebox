@@ -1,0 +1,224 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Touch targets for mobile */
+@layer utilities {
+  .touch-target {
+    @apply min-w-[44px] min-h-[44px] flex items-center justify-center;
+  }
+}
+
+@layer base {
+  html {
+    overflow-x: hidden;
+  }
+  
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+      monospace;
+  }
+  
+  /* Prevenir overflow em todos containers */
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-safebox-500 focus:ring-offset-2 dark:focus:ring-offset-dark-100;
+    background-color: #175DDC !important;
+  }
+  
+  .btn-primary:hover {
+    background-color: #1d4ed8 !important;
+  }
+  
+  .btn-primary:disabled {
+    opacity: 0.5;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary-100 hover:bg-secondary-200 text-secondary-900 font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 dark:bg-dark-200 dark:hover:bg-dark-300 dark:text-dark-900 dark:focus:ring-offset-dark-100;
+  }
+  
+  .input-field {
+    @apply block w-full px-3 py-2 border border-secondary-300 rounded-lg shadow-sm placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-safebox-500 focus:border-safebox-500 sm:text-sm bg-white text-gray-900 dark:bg-dark-100 dark:border-dark-300 dark:text-dark-900 dark:placeholder-dark-500 dark:focus:ring-safebox-400 dark:focus:border-safebox-400;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-lg border border-secondary-200 dark:bg-dark-100 dark:border-dark-200 dark:shadow-xl;
+  }
+  
+  .form-group {
+    @apply space-y-1;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-secondary-700 dark:text-dark-700;
+  }
+  
+  .form-error {
+    @apply text-red-600 text-sm mt-1 dark:text-red-400;
+  }
+  
+  .form-success {
+    @apply text-green-600 text-sm mt-1 dark:text-green-400;
+  }
+}
+
+/* Scrollbar personalizada */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-dark-200;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-dark-400;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-dark-500;
+}
+
+/* Para Firefox */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+/* Dark mode scrollbar para Firefox */
+@media (prefers-color-scheme: dark) {
+  .scrollbar-thin {
+    scrollbar-color: #52525b #3f3f46;
+  }
+}
+
+/* Garantir que inputs tenham cor de texto visível */
+input, textarea, select {
+  @apply text-gray-900 dark:text-dark-900;
+}
+
+/* Fix para inputs do Chrome em dark mode */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+/* Fix para autofill em dark mode */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #27272a inset !important;
+  -webkit-text-fill-color: #fafafa !important;
+}
+
+/* 
+ * Estilos para inputs que respeitam o tema
+ * Light mode: fundo claro, texto escuro
+ * Dark mode: fundo escuro/azulado, texto claro
+ */
+
+/* Checkboxes - estilo consistente para light e dark mode */
+input[type="checkbox"] {
+  accent-color: #3b82f6;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #fff;
+  margin: 0;
+  font: inherit;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.25rem;
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+}
+
+input[type="checkbox"]::before {
+  content: "";
+  width: 0.65rem;
+  height: 0.65rem;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em #fff;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+input[type="checkbox"]:checked {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+/* Dark mode checkboxes */
+.dark input[type="checkbox"] {
+  background-color: #3f3f46;
+  border-color: #71717a;
+}
+
+.dark input[type="checkbox"]:checked {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* Amber checkbox (para ocultar) */
+input[type="checkbox"].text-amber-600:checked {
+  background-color: #d97706;
+  border-color: #d97706;
+}
+
+/* Placeholder styling */
+::placeholder {
+  @apply text-gray-400 dark:text-gray-500;
+}
+
+/* Fix para páginas de login/registro - sempre tema claro */
+.bg-gradient-to-br input,
+.bg-gradient-to-br textarea,
+.bg-gradient-to-br select {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  -webkit-text-fill-color: #1f2937 !important;
+}
+
+.bg-gradient-to-br input::placeholder,
+.bg-gradient-to-br textarea::placeholder {
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
+}
+
+/* Input focus rings */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+}

@@ -1,0 +1,167 @@
+import React, { useState } from 'react'
+import { Star, Plus } from 'lucide-react'
+
+// Classes reutilizáveis para inputs que respeitam o tema
+const inputClasses = "w-full px-3 py-2 bg-gray-100 dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+const selectClasses = "w-full px-3 py-2 bg-gray-100 dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100"
+const textareaClasses = "w-full px-3 py-2 bg-gray-100 dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-y"
+
+interface NoteFormData {
+  title: string
+  folderId: string | null
+  notes: string
+  requireMasterPassword: boolean
+  isFavorite: boolean
+}
+
+interface Folder {
+  id: string
+  name: string
+  color: string
+}
+
+interface NoteFormProps {
+  initialData?: Partial<NoteFormData>
+  folders: Folder[]
+  onSubmit: (data: NoteFormData) => void
+  onCancel: () => void
+  isLoading?: boolean
+  isEditing?: boolean
+}
+
+const NoteForm: React.FC<NoteFormProps> = ({
+  initialData,
+  folders,
+  onSubmit,
+  onCancel,
+  isLoading = false,
+  isEditing = false,
+}) => {
+  const [formData, setFormData] = useState<NoteFormData>({
+    title: initialData?.title || '',
+    folderId: initialData?.folderId || null,
+    notes: initialData?.notes || '',
+    requireMasterPassword: initialData?.requireMasterPassword || false,
+    isFavorite: initialData?.isFavorite || false,
+  })
+
+  const handleChange = (field: keyof NoteFormData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSubmit(formData)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Detalhes do Item */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Detalhes do item
+          </h3>
+          <button
+            type="button"
+            onClick={() => handleChange('isFavorite', !formData.isFavorite)}
+            className={`p-1 rounded ${formData.isFavorite ? 'text-yellow-500' : 'text-gray-400'}`}
+          >
+            <Star className={`h-5 w-5 ${formData.isFavorite ? 'fill-current' : ''}`} />
+          </button>
+        </div>
+
+        <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 space-y-4">
+          {/* Nome do item */}
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+              Nome do item <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => handleChange('title', e.target.value)}
+              className={inputClasses}
+              placeholder="Ex: Notas importantes"
+              required
+            />
+          </div>
+
+          {/* Pasta */}
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+              Pasta
+            </label>
+            <select
+              value={formData.folderId || ''}
+              onChange={(e) => handleChange('folderId', e.target.value || null)}
+              className={selectClasses}
+            >
+              <option value="">Sem pasta</option>
+              {folders.map(folder => (
+                <option key={folder.id} value={folder.id}>
+                  {folder.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Opções Adicionais */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          Opções adicionais
+        </h3>
+
+        <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 space-y-4">
+          {/* Notas - Campo principal */}
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+              Anotações
+            </label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => handleChange('notes', e.target.value)}
+              rows={8}
+              className={textareaClasses}
+              placeholder="Digite suas anotações aqui..."
+            />
+          </div>
+
+          {/* Resolicitar senha mestre - Desativado temporariamente */}
+
+          {/* Adicionar campo customizado */}
+          <button
+            type="button"
+            className="flex items-center gap-2 text-blue-500 hover:text-blue-600 text-sm font-medium"
+          >
+            <Plus className="h-4 w-4" />
+            Adicionar campo
+          </button>
+        </div>
+      </div>
+
+      {/* Botões */}
+      <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-zinc-700">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 py-2 px-4 border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-700"
+          disabled={isLoading}
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          className="btn-primary flex-1 disabled:opacity-50"
+          disabled={isLoading || !formData.title}
+        >
+          {isLoading ? 'Salvando...' : 'Criar'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+export default NoteForm

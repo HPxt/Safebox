@@ -1,0 +1,25 @@
+{
+  "short_name": "SafeBox",
+  "name": "SafeBox - Gerenciador de Senhas",
+  "icons": [
+    {
+      "src": "safebox-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "safebox-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192"
+    },
+    {
+      "src": "safebox-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1E88E5",
+  "background_color": "#ffffff"
+}

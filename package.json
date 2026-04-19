@@ -1,0 +1,19 @@
+{
+  "name": "safebox-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix backend run dev:api",
+    "dev:backend": "npm --prefix backend run dev:api",
+    "dev:ai": "npm --prefix backend run dev:ai",
+    "dev:frontend": "npm --prefix frontend start",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:backend": "npm --prefix backend run build",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "npm --prefix frontend test -- --watchAll=false",
+    "test:backend": "npm --prefix backend test -- --runInBand",
+    "lint:backend": "npm --prefix backend run lint",
+    "typecheck:backend": "npm --prefix backend run type-check"
+  }
+}
