@@ -127,6 +127,21 @@ const Dashboard: React.FC = () => {
     }
   }, [user])
 
+  useEffect(() => {
+    if (!showSecurityDetails) {
+      return
+    }
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowSecurityDetails(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleEscapeKey)
+    return () => window.removeEventListener('keydown', handleEscapeKey)
+  }, [showSecurityDetails])
+
   const fetchCredentials = async () => {
     try {
       const data = await credentialsService.getCredentials()
@@ -1174,16 +1189,27 @@ const Dashboard: React.FC = () => {
 
         {/* Modal de Detalhes de Segurança */}
         {showSecurityDetails && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full">
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            onClick={() => setShowSecurityDetails(false)}
+          >
+            <div
+              className="bg-white rounded-lg max-w-md w-full"
+              onClick={(event) => event.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="security-details-title"
+            >
               <div className="flex items-center justify-between p-6 border-b">
-                <h2 className="text-lg font-semibold text-secondary-900 flex items-center">
+                <h2 id="security-details-title" className="text-lg font-semibold text-secondary-900 flex items-center">
                   <Shield className="h-5 w-5 mr-2 text-green-600" />
                   Detalhes de Segurança
                 </h2>
                 <button
+                  type="button"
                   onClick={() => setShowSecurityDetails(false)}
-                  className="p-2 hover:bg-secondary-100 rounded-lg"
+                  className="p-2 text-secondary-500 hover:text-secondary-900 hover:bg-secondary-100 rounded-lg transition-colors"
+                  aria-label="Fechar detalhes de segurança"
                 >
                   <X className="h-5 w-5" />
                 </button>
