@@ -4,6 +4,121 @@ Este arquivo e a base de handoff para quando o limite semanal estiver perto de a
 Atualize este documento quando restarem cerca de `2%` de uso, para que o trabalho possa
 continuar no Cursor ou em outra conta do Codex sem perda de contexto.
 
+## Estado pronto para troca de conta
+
+- Workspace canonico:
+  - `C:\Users\KABUM\Documents\SafeBox\Safebox-3`
+- Branch esperada:
+  - `main`
+- Commit atual confirmado:
+  - `0e4b83ed2eb1bb2a7b0f8b5f8759c6afc3568b49`
+- `git status` no momento deste handoff:
+  - limpo
+- Regra operacional:
+  - continuar com commits pequenos por subetapa
+  - apos cada commit, validar build/test e conferir o deploy
+
+## Diagnostico recente mais importante
+
+### Credenciais nao sumiram do banco
+
+- O banco nao foi apagado.
+- Foi confirmado diretamente no Supabase que o usuario `quantumdark77@gmail.com`
+  ainda possui um snapshot salvo com:
+  - `5` itens totais
+  - `4` visiveis
+  - `1` oculto
+- Itens confirmados no snapshot:
+  - `teste`
+  - `teste`
+  - `Ts7`
+  - `wsddsds`
+  - `links Manga` (`oculto`)
+
+### Causa real do dashboard vazio no deploy
+
+- No deploy estatico da Vercel, `GET /api/vault` pode responder HTML da SPA com `200`.
+- O frontend tratava isso como resposta valida sem dados e mostrava cofre vazio.
+- A correcao foi:
+  - rejeitar resposta invalida do backend em [backendApi.ts](C:/Users/KABUM/Documents/SafeBox/Safebox-3/frontend/src/services/backendApi.ts)
+  - cair em fallback direto para Supabase em [credentialsService.ts](C:/Users/KABUM/Documents/SafeBox/Safebox-3/frontend/src/services/credentialsService.ts)
+
+### Causa real da falha ao salvar preferencias
+
+- Alguns usuarios nao tinham linha em `user_settings`.
+- O backend fazia `update` simples e falhava quando nao havia registro.
+- Em deploy estatico, o frontend tambem dependia do backend para ler/gravar preferencias.
+- A correcao foi:
+  - backend com `upsert` em [settings.routes.ts](C:/Users/KABUM/Documents/SafeBox/Safebox-3/backend/src/routes/settings.routes.ts)
+  - fallback direto para Supabase em [settingsService.ts](C:/Users/KABUM/Documents/SafeBox/Safebox-3/frontend/src/services/settingsService.ts)
+
+## Commits recentes que a outra conta precisa conhecer
+
+- `e8a05623`
+  - `chore: clean frontend build warnings`
+- `97c687c5`
+  - `fix: restore vault compatibility for static deploys`
+- `c73b27d3`
+  - `fix: reject invalid backend responses on static deploys`
+- `925cf104`
+  - `fix: improve security details modal dismissal`
+- `5840c62c`
+  - `fix: upsert user settings preferences`
+- `0e4b83ed`
+  - `fix: fallback preferences to supabase on static deploys`
+
+## O que esta confirmado como funcionando
+
+- Frontend:
+  - `npm test -- --watchAll=false`
+  - `npm run build`
+- Backend:
+  - `npm run lint`
+  - `npm run type-check`
+  - `npm test -- --runInBand`
+
+Resultados mais recentes conhecidos:
+
+- frontend testes:
+  - `5/5`
+- backend testes:
+  - `17/17`
+
+## Pendencias imediatas apos trocar de conta
+
+### P0
+
+- Confirmar visualmente no deploy publicado se:
+  - as credenciais apareceram novamente
+  - a preferencia `Mostrar credenciais ocultas` salva corretamente
+  - o modal de seguranca fecha por `X`, clique fora e `Esc`
+- Verificar o deploy do commit mais recente no GitHub Actions/Vercel.
+- Se ainda houver cofre vazio:
+  - inspecionar `GET /api/vault` no navegador
+  - verificar se o fallback do [credentialsService.ts](C:/Users/KABUM/Documents/SafeBox/Safebox-3/frontend/src/services/credentialsService.ts) foi acionado
+  - verificar erro de decrypt ou parse no console
+
+### P1
+
+- Revisar fluxos de salvar/editar:
+  - criar credencial
+  - editar credencial
+  - excluir credencial
+  - favorito
+  - ocultar/desocultar
+  - criar/editar/excluir pasta
+  - preferencias
+  - import/export/backup
+- Procurar todo uso restante de `backendRequest(` no frontend que ainda nao tenha fallback seguro.
+
+### P2
+
+- `2FA` ainda depende do backend por desenho de seguranca.
+- Nao criar fallback inseguro no cliente para `enable/disable/verify`.
+- Se for estabilizar producao de vez:
+  - publicar backend real e configurar `REACT_APP_BACKEND_URL`
+  - ou assumir oficialmente frontend estatico + fallback Supabase
+
 ## Regras de seguranca e continuidade
 
 - Nao fazer `db reset`, `migration` destrutiva, limpeza de dados ou qualquer operacao com risco de perda do banco.
@@ -99,11 +214,11 @@ continuar no Cursor ou em outra conta do Codex sem perda de contexto.
 
 ### Snapshot da sessao
 
-- Branch atual:
-- Commit atual:
-- `git status`:
-- Ultimo objetivo em andamento:
-- Ultimo bloqueio encontrado:
+- Branch atual: `main`
+- Commit atual: `0e4b83ed2eb1bb2a7b0f8b5f8759c6afc3568b49`
+- `git status`: limpo no momento deste handoff
+- Ultimo objetivo em andamento: estabilizar leitura/escrita do frontend no deploy estatico sem tocar destrutivamente no banco
+- Ultimo bloqueio encontrado: confirmar no deploy publicado se o bundle mais recente ja resolveu o cofre vazio e as preferencias
 
 ### Arquivos tocados recentemente
 
