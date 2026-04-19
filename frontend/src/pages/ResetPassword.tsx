@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../config/supabase'
 import { Lock, Shield, Eye, EyeOff, Check } from 'lucide-react'
 
+const GENERIC_RESET_ERROR = 'Link inválido ou expirado. Solicite um novo link de redefinição.'
+
 const ResetPassword: React.FC = () => {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -21,34 +23,29 @@ const ResetPassword: React.FC = () => {
 
   const handleAuthCallback = async () => {
     try {
-      // Verificar se há tokens na URL (hash)
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
       const accessToken = hashParams.get('access_token')
       const type = hashParams.get('type')
       
       if (type === 'recovery' && accessToken) {
-        // Definir a sessão com o token recebido
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
-          refresh_token: accessToken // Em recovery, geralmente é o mesmo
+          refresh_token: accessToken,
         })
         
         if (error) {
           throw error
         }
         
-        // Limpar a URL
         window.history.replaceState({}, document.title, window.location.pathname)
       } else {
-        // Verificar se já há uma sessão ativa
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) {
-          setError('Link inválido ou expirado. Solicite um novo link de redefinição.')
+          setError(GENERIC_RESET_ERROR)
         }
       }
-    } catch (err: any) {
-      console.error('Error processing auth callback:', err)
-      setError('Link inválido ou expirado. Solicite um novo link de redefinição.')
+    } catch {
+      setError(GENERIC_RESET_ERROR)
     }
   }
 
@@ -76,7 +73,6 @@ const ResetPassword: React.FC = () => {
     setLoading(true)
     setError('')
 
-    // Validações
     if (!passwordValidation.isValid) {
       setError('A senha não atende aos critérios de segurança')
       setLoading(false)
@@ -100,16 +96,13 @@ const ResetPassword: React.FC = () => {
 
       setSuccess(true)
       
-      // Fazer logout para forçar novo login com a nova senha
       await supabase.auth.signOut()
       
-      // Redirecionar para login após 3 segundos
       setTimeout(() => {
         navigate('/login')
       }, 3000)
-    } catch (err: any) {
-      console.error('Error:', err)
-      setError(err.message || 'Erro ao redefinir senha')
+    } catch (err: unknown) {
+      setError(err instanceof Error && err.message ? err.message : 'Erro ao redefinir senha')
     } finally {
       setLoading(false)
     }
