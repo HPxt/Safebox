@@ -115,15 +115,15 @@ router.post('/logout', authenticateToken, asyncHandler(async (req, res) => {
   })
 }))
 
-router.get('/profile', authenticateToken, asyncHandler(async (req, res) => {
-  const user = requireAuthenticatedUser(req)
+router.get('/profile', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+  const user = requireSupabaseAuthenticatedUser(req)
   const profile = await authService.getProfile(user.userId)
 
   sendSuccess(res, { data: profile })
 }))
 
-router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
-  const user = requireAuthenticatedUser(req)
+router.put('/profile', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+  const user = requireSupabaseAuthenticatedUser(req)
   const validatedData = validateWithSchema(updateProfileSchema, req.body)
   const updates = {
     ...(validatedData.fullName !== undefined ? { full_name: validatedData.fullName } : {}),
@@ -138,8 +138,8 @@ router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
   })
 }))
 
-router.post('/change-password', authenticateToken, passwordChangeRateLimit, asyncHandler(async (req, res) => {
-  const user = requireAuthenticatedUser(req)
+router.post('/change-password', authenticateSupabaseAccessToken, passwordChangeRateLimit, asyncHandler(async (req, res) => {
+  const user = requireSupabaseAuthenticatedUser(req)
   const { currentPassword, newPassword } = validateWithSchema(changePasswordSchema, req.body)
 
   await authService.changePassword(user.userId, currentPassword, newPassword)
@@ -306,8 +306,8 @@ router.post('/2fa/disable', authenticateSupabaseAccessToken, asyncHandler(async 
   })
 }))
 
-router.delete('/account', authenticateToken, asyncHandler(async (req, res) => {
-  const user = requireAuthenticatedUser(req)
+router.delete('/account', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+  const user = requireSupabaseAuthenticatedUser(req)
   await authService.deleteAccount(user.userId)
 
   sendSuccess(res, {
