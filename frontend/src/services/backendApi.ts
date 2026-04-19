@@ -41,9 +41,22 @@ export const backendRequest = async <T>(path: string, init?: RequestInit): Promi
     },
   })
 
-  const payload = await response.json().catch(() => ({}))
+  let invalidJson = false
+  const payload = await response.json().catch(() => {
+    invalidJson = true
+    return {}
+  })
+
+  if (invalidJson) {
+    throw new Error('Resposta invalida do backend')
+  }
+
   if (!response.ok || payload.success === false) {
     throw new Error(payload.error || payload.message || 'Erro na comunicacao com o backend')
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(payload, 'data')) {
+    throw new Error('Resposta invalida do backend')
   }
 
   return payload.data as T
