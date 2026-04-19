@@ -19,6 +19,16 @@ type EncryptedVaultEnvelope = {
   encrypted: string
 }
 
+type DirectVaultRecord = {
+  id: string
+  encryptedData: string
+  dataHash: string
+  version: number
+  createdAt: string
+  updatedAt: string
+  storageMode: 'credentials' | 'vaults'
+}
+
 class CredentialsService {
   private masterKey: string | null = null
   private vaultUnlocked = false
@@ -85,17 +95,84 @@ class CredentialsService {
     throw new Error('Unsupported vault payload format')
   }
 
+  private isVersionConflictError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error)
+    return message.toLowerCase().includes('version conflict')
+  }
+
+  private async getVaultDirectFromSupabase(userId: string): Promise<DirectVaultRecord | null> {
+    const { data: credentialRows, error: credentialError } = await supabase
+      .from('credentials')
+      .select('id, enc_blob, data_hash, version, created_at, updated_at')
+      .eq('user_id', userId)
+      .not('enc_blob', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+
+    if (credentialError) {
+      throw credentialError
+    }
+
+    const credentialVault = credentialRows?.[0]
+    if (credentialVault?.enc_blob) {
+      return {
+        id: credentialVault.id,
+        encryptedData: credentialVault.enc_blob,
+        dataHash: credentialVault.data_hash,
+        version: credentialVault.version ?? 1,
+        createdAt: credentialVault.created_at,
+        updatedAt: credentialVault.updated_at,
+        storageMode: 'credentials',
+      }
+    }
+
+    const { data: legacyVault, error: legacyError } = await supabase
+      .from('vaults')
+      .select('id, encrypted_data, data_hash, version, created_at, updated_at')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (legacyError) {
+      throw legacyError
+    }
+
+    if (!legacyVault) {
+      return null
+    }
+
+    return {
+      id: legacyVault.id,
+      encryptedData: JSON.stringify(legacyVault.encrypted_data),
+      dataHash: legacyVault.data_hash,
+      version: legacyVault.version ?? 1,
+      createdAt: legacyVault.created_at,
+      updatedAt: legacyVault.updated_at,
+      storageMode: 'vaults',
+    }
+  }
+
   private async getVault(): Promise<VaultApiResponse | null> {
+    const user = await this.getCurrentUser()
+
     try {
       return await backendRequest<VaultApiResponse | null>('/vault', {
         method: 'GET',
       })
-    } catch (error: any) {
-      if (error?.message?.toLowerCase().includes('not found')) {
-        return null
-      }
+    } catch (error) {
+      try {
+        const fallbackVault = await this.getVaultDirectFromSupabase(user.id)
+        if (!fallbackVault) {
+          return null
+        }
 
-      throw error
+        return fallbackVault
+      } catch (fallbackError: any) {
+        if (fallbackError?.message?.toLowerCase().includes('not found')) {
+          return null
+        }
+
+        throw fallbackError
+      }
     }
   }
 
@@ -216,7 +293,7 @@ class CredentialsService {
 
   private async saveAllCredentials(credentials: Credential[]): Promise<void> {
     try {
-      await this.getCurrentUser()
+      const user = await this.getCurrentUser()
       const cryptoKey = await CryptoService.getStoredKey()
       if (!cryptoKey) {
         throw new Error('Vault esta bloqueado. Por favor, desbloqueie primeiro.')
@@ -225,23 +302,96 @@ class CredentialsService {
       const snapshot = await this.createEncryptedVaultSnapshot(credentials, cryptoKey)
 
       if (this.currentVaultVersion === null) {
-        const createdVault = await backendRequest<VaultApiResponse>('/vault', {
-          method: 'POST',
-          body: JSON.stringify(snapshot),
-        })
-        this.currentVaultVersion = createdVault.version
+        try {
+          const createdVault = await backendRequest<VaultApiResponse>('/vault', {
+            method: 'POST',
+            body: JSON.stringify(snapshot),
+          })
+          this.currentVaultVersion = createdVault.version
+        } catch (error) {
+          const { data, error: insertError } = await supabase
+            .from('credentials')
+            .insert({
+              user_id: user.id,
+              title: 'vault',
+              encrypted_password: 'enc_blob_mode',
+              enc_blob: snapshot.encryptedData,
+              data_hash: snapshot.dataHash,
+              version: 1,
+            })
+            .select('version')
+            .maybeSingle()
+
+          if (insertError) {
+            throw insertError
+          }
+
+          this.currentVaultVersion = data?.version ?? 1
+        }
         return
       }
 
-      const updatedVault = await backendRequest<VaultApiResponse>('/vault', {
-        method: 'PUT',
-        body: JSON.stringify({
-          ...snapshot,
-          expectedVersion: this.currentVaultVersion,
-        }),
-      })
+      try {
+        const updatedVault = await backendRequest<VaultApiResponse>('/vault', {
+          method: 'PUT',
+          body: JSON.stringify({
+            ...snapshot,
+            expectedVersion: this.currentVaultVersion,
+          }),
+        })
 
-      this.currentVaultVersion = updatedVault.version
+        this.currentVaultVersion = updatedVault.version
+      } catch (error) {
+        if (this.isVersionConflictError(error)) {
+          throw error
+        }
+
+        const currentVault = await this.getVaultDirectFromSupabase(user.id)
+        if (!currentVault) {
+          throw error
+        }
+
+        if (currentVault.storageMode === 'credentials') {
+          const { data, error: updateError } = await supabase
+            .from('credentials')
+            .update({
+              enc_blob: snapshot.encryptedData,
+              data_hash: snapshot.dataHash,
+              version: currentVault.version + 1,
+            })
+            .eq('id', currentVault.id)
+            .eq('user_id', user.id)
+            .eq('version', this.currentVaultVersion)
+            .select('version')
+            .maybeSingle()
+
+          if (updateError || !data) {
+            throw new Error('Conflito de versao do cofre. Recarregue os dados antes de salvar novamente.')
+          }
+
+          this.currentVaultVersion = data.version
+          return
+        }
+
+        const { data, error: legacyUpdateError } = await supabase
+          .from('vaults')
+          .update({
+            encrypted_data: JSON.parse(snapshot.encryptedData),
+            data_hash: snapshot.dataHash,
+            version: currentVault.version + 1,
+          })
+          .eq('id', currentVault.id)
+          .eq('user_id', user.id)
+          .eq('version', this.currentVaultVersion)
+          .select('version')
+          .maybeSingle()
+
+        if (legacyUpdateError || !data) {
+          throw new Error('Conflito de versao do cofre. Recarregue os dados antes de salvar novamente.')
+        }
+
+        this.currentVaultVersion = data.version
+      }
     } catch (error: any) {
       if (error?.message?.includes('version conflict')) {
         throw new Error('Conflito de versao do cofre. Recarregue os dados antes de salvar novamente.')

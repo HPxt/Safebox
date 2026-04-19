@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import crypto from 'crypto'
 import { z } from 'zod'
-import { supabase } from '@/config/database'
+import { createSupabaseUserClient } from '@/config/database'
 import { authService } from '@/services/auth.service'
 import { authenticateSupabaseAccessToken, authenticateToken } from '@/middleware/auth.middleware'
 import {
@@ -57,14 +57,18 @@ const hashBackupCode = (code: string): string => {
   return crypto.createHash('sha256').update(code).digest('hex')
 }
 
+const createScopedClient = (authToken: string) => createSupabaseUserClient(authToken)
+
 const logTwoFactorAttempt = async (
+  authToken: string,
   userId: string,
   success: boolean,
   errorMessage: string | undefined,
   ipAddress: string | undefined,
   userAgent: string | undefined,
 ): Promise<void> => {
-  await supabase
+  const scopedClient = createScopedClient(authToken)
+  await scopedClient
     .from('two_factor_attempts' as never)
     .insert({
       user_id: userId,
@@ -157,7 +161,8 @@ router.post('/refresh-token', authenticateToken, asyncHandler(async (req, res) =
 
 router.get('/2fa/status', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
-  const { data, error } = await supabase
+  const scopedClient = createScopedClient(req.authToken!)
+  const { data, error } = await scopedClient
     .from('users')
     .select('two_factor_enabled')
     .eq('id', user.userId)
@@ -177,16 +182,17 @@ router.get('/2fa/status', authenticateSupabaseAccessToken, asyncHandler(async (r
 router.post('/2fa/enable', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const { secret, verificationCode, backupCodes } = validateWithSchema(twoFactorEnableSchema, req.body)
+  const scopedClient = createScopedClient(req.authToken!)
 
   if (!verifyTwoFactorToken(secret, verificationCode)) {
-    await logTwoFactorAttempt(user.userId, false, 'Invalid activation code', req.ip, req.get('User-Agent'))
+    await logTwoFactorAttempt(req.authToken!, user.userId, false, 'Invalid activation code', req.ip, req.get('User-Agent'))
     throw new Error('Invalid 2FA verification code')
   }
 
   const encryptedSecret = encryptTwoFactorSecret(secret)
   const hashedBackupCodes = backupCodes.map(hashBackupCode)
 
-  const { error } = await supabase
+  const { error } = await scopedClient
     .from('users')
     .update({
       two_factor_secret: encryptedSecret,
@@ -200,7 +206,7 @@ router.post('/2fa/enable', authenticateSupabaseAccessToken, asyncHandler(async (
     throw error
   }
 
-  await logTwoFactorAttempt(user.userId, true, 'Activated', req.ip, req.get('User-Agent'))
+  await logTwoFactorAttempt(req.authToken!, user.userId, true, 'Activated', req.ip, req.get('User-Agent'))
 
   sendSuccess(res, {
     message: '2FA enabled successfully',
@@ -210,8 +216,9 @@ router.post('/2fa/enable', authenticateSupabaseAccessToken, asyncHandler(async (
 router.post('/2fa/verify', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const { code } = validateWithSchema(twoFactorVerifySchema, req.body)
+  const scopedClient = createScopedClient(req.authToken!)
 
-  const { data, error } = await supabase
+  const { data, error } = await scopedClient
     .from('users')
     .select('two_factor_enabled, two_factor_secret, two_factor_backup_codes')
     .eq('id', user.userId)
@@ -236,7 +243,7 @@ router.post('/2fa/verify', authenticateSupabaseAccessToken, asyncHandler(async (
     const secret = decryptTwoFactorSecret(data.two_factor_secret)
     verified = verifyTwoFactorToken(secret, normalizedCode)
   } catch (error) {
-    await logTwoFactorAttempt(user.userId, false, 'Unable to decrypt 2FA secret', req.ip, req.get('User-Agent'))
+    await logTwoFactorAttempt(req.authToken!, user.userId, false, 'Unable to decrypt 2FA secret', req.ip, req.get('User-Agent'))
     throw error
   }
 
@@ -247,7 +254,7 @@ router.post('/2fa/verify', authenticateSupabaseAccessToken, asyncHandler(async (
 
     if (verified) {
       const remainingCodes = data.two_factor_backup_codes.filter((item: string) => item !== hashedCode)
-      const { error: updateError } = await supabase
+      const { error: updateError } = await scopedClient
         .from('users')
         .update({ two_factor_backup_codes: remainingCodes })
         .eq('id', user.userId)
@@ -259,6 +266,7 @@ router.post('/2fa/verify', authenticateSupabaseAccessToken, asyncHandler(async (
   }
 
   await logTwoFactorAttempt(
+    req.authToken!,
     user.userId,
     verified,
     verified ? (usedBackupCode ? 'Backup code' : 'Verified') : 'Invalid code',
@@ -276,7 +284,8 @@ router.post('/2fa/verify', authenticateSupabaseAccessToken, asyncHandler(async (
 
 router.post('/2fa/disable', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
-  const { error } = await supabase
+  const scopedClient = createScopedClient(req.authToken!)
+  const { error } = await scopedClient
     .from('users')
     .update({
       two_factor_secret: null,
@@ -290,7 +299,7 @@ router.post('/2fa/disable', authenticateSupabaseAccessToken, asyncHandler(async 
     throw error
   }
 
-  await logTwoFactorAttempt(user.userId, true, 'Deactivated', req.ip, req.get('User-Agent'))
+  await logTwoFactorAttempt(req.authToken!, user.userId, true, 'Deactivated', req.ip, req.get('User-Agent'))
 
   sendSuccess(res, {
     message: '2FA disabled successfully',
