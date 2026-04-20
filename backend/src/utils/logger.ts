@@ -1,7 +1,8 @@
 import winston from 'winston'
 import path from 'path'
-import { supabase } from '@/config/database'
+import { privilegedRpcLogAuditEvent } from '@/config/privilegedDb'
 import { redactObject } from '@/security/redaction'
+import type { Json } from '@/types/database'
 
 // Custom log levels
 const levels = {
@@ -106,19 +107,22 @@ export const logAuditEvent = async (
   // Log to winston
   logger.log('audit', 'Audit Event', auditData)
 
-  // Store in database if available
+  // Store in database via privileged RPC (same path as logPrivilegedAuditEvent; RLS-safe insert)
   try {
-    if (process.env['ENABLE_AUDIT_LOGS'] === 'true') {
-      await supabase.from('audit_logs').insert({
-        user_id: userId,
-        event_type: eventType,
-        event_data: redactObject(eventData),
-        ip_address: ipAddress,
-        user_agent: userAgent,
+    if (process.env['ENABLE_AUDIT_LOGS'] === 'true' && userId) {
+      await privilegedRpcLogAuditEvent({
+        p_user_id: userId,
+        p_event_type: eventType,
+        p_event_data: redactObject(eventData) as Json,
+        p_ip_address: ipAddress ?? null,
+        p_user_agent: userAgent ?? null,
       })
     }
   } catch (error) {
-    logger.error('Failed to store audit log in database:', error)
+    logger.warn('Failed to store audit log in database', {
+      eventType,
+      code: error instanceof Error ? error.name : 'UNKNOWN_AUDIT_ERROR',
+    })
   }
 }
 

@@ -134,4 +134,58 @@ describe('VaultSnapshotService', () => {
       4,
     )
   })
+
+  it('exports only the authenticated tenant vault and its scoped backups', async () => {
+    const { service, vaultRepository, backupRepository } = createService()
+    const tenantVault = {
+      id: 'vault-tenant-a',
+      encryptedData: 'cipher-a',
+      dataHash: 'hash-a',
+      version: 4,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      storageMode: 'credentials' as const,
+    }
+    const tenantBackups = [
+      { id: 'backup-a-1', version: 4 },
+      { id: 'backup-a-2', version: 3 },
+    ] as any
+
+    vaultRepository.getCurrentVault.mockResolvedValue(tenantVault)
+    backupRepository.listBackups.mockResolvedValue(tenantBackups)
+
+    const exported = await service.exportVault('tenant-a')
+
+    expect(vaultRepository.getCurrentVault).toHaveBeenCalledWith('tenant-a')
+    expect(backupRepository.listBackups).toHaveBeenCalledWith('tenant-a', 'credentials', 5)
+    expect(exported.vault).toBe(tenantVault)
+    expect(exported.backups).toEqual(tenantBackups)
+    expect(exported.exportedAt).toEqual(expect.any(String))
+  })
+
+  it('creates backups scoped to the authenticated tenant vault', async () => {
+    const { service, vaultRepository, backupRepository } = createService()
+    const tenantVault = {
+      id: 'vault-tenant-b',
+      encryptedData: 'cipher-b',
+      dataHash: 'hash-b',
+      version: 8,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      storageMode: 'credentials' as const,
+    }
+    const createdBackup = { id: 'backup-tenant-b', version: 8 } as any
+
+    vaultRepository.getCurrentVault.mockResolvedValue(tenantVault)
+    backupRepository.createBackup.mockResolvedValue(createdBackup)
+
+    const result = await service.createBackup('tenant-b')
+
+    expect(vaultRepository.getCurrentVault).toHaveBeenCalledWith('tenant-b')
+    expect(backupRepository.createBackup).toHaveBeenCalledWith('tenant-b', tenantVault)
+    expect(result).toEqual({
+      vault: tenantVault,
+      backup: createdBackup,
+    })
+  })
 })

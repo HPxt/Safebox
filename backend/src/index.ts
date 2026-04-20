@@ -136,7 +136,9 @@ app.get('/health', async (_req, res) => {
       const dbConnected = await testDatabaseConnection()
       checks.database = dbConnected
     } catch (error) {
-      logger.warn('Health check - database connection failed:', error)
+      logger.warn('Health check - database connection failed', {
+        message: error instanceof Error ? error.message : 'Unknown database health error',
+      })
     }
 
     // Redis check if configured
@@ -148,7 +150,9 @@ app.get('/health', async (_req, res) => {
         checks.redis = true
         await redis.disconnect()
       } catch (error) {
-        logger.warn('Health check - Redis connection failed:', error)
+        logger.warn('Health check - Redis connection failed', {
+          message: error instanceof Error ? error.message : 'Unknown redis health error',
+        })
       }
     } else {
       checks.redis = null // Not configured
@@ -170,7 +174,9 @@ app.get('/health', async (_req, res) => {
       },
     })
   } catch (error) {
-    logger.error('Health check endpoint error:', error)
+    logger.error('Health check endpoint error', {
+      message: error instanceof Error ? error.message : 'Unknown health endpoint error',
+    })
     res.status(503).json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
@@ -199,7 +205,7 @@ app.use((error: any, _req: express.Request, res: express.Response, _next: expres
     code: normalizedError.code,
     statusCode: normalizedError.statusCode,
     details: normalizedError.details,
-    error,
+    message: normalizedError.message,
   })
 
   res.status(normalizedError.statusCode).json(
@@ -250,7 +256,10 @@ const startServer = async () => {
       if (error.code === 'EADDRINUSE') {
         logger.error(`Port ${config.server.port} is already in use`)
       } else {
-        logger.error('Server error:', error)
+        logger.error('Server error', {
+          code: error?.code,
+          message: error instanceof Error ? error.message : 'Unknown server error',
+        })
       }
       process.exit(1)
     })
@@ -261,7 +270,9 @@ const startServer = async () => {
     
     return serverInstance
   } catch (error) {
-    logger.error('Failed to start server:', error)
+    logger.error('Failed to start server', {
+      message: error instanceof Error ? error.message : 'Unknown startup error',
+    })
     process.exit(1)
   }
 }

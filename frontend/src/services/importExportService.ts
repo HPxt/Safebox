@@ -57,7 +57,6 @@ export class ImportExportService {
           throw new Error('Formato de exportação não suportado')
       }
     } catch (error) {
-      console.error('Erro ao exportar dados:', error)
       throw error
     }
   }
@@ -88,7 +87,6 @@ export class ImportExportService {
           throw new Error('Formato de importação não suportado')
       }
     } catch (error) {
-      console.error('Erro ao importar dados:', error)
       throw error
     }
   }

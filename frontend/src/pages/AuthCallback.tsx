@@ -22,15 +22,15 @@ const AuthCallback: React.FC = () => {
   }, [navigate])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-100 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-100 dark:from-dark-50 dark:to-dark-100 flex items-center justify-center">
       <div className="text-center">
         <div className="mx-auto h-16 w-16 bg-primary-600 rounded-full flex items-center justify-center animate-pulse">
           <Shield className="h-8 w-8 text-white" />
         </div>
-        <h2 className="mt-6 text-2xl font-semibold text-secondary-900">
+        <h2 className="mt-6 text-2xl font-semibold text-secondary-900 dark:text-dark-900">
           Processando...
         </h2>
-        <p className="mt-2 text-secondary-600">
+        <p className="mt-2 text-secondary-600 dark:text-dark-700">
           Você será redirecionado em instantes.
         </p>
         <div className="mt-4">

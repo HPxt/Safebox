@@ -62,8 +62,7 @@ const ItemFormModal: React.FC<ItemFormModalProps> = ({
     try {
       await onSave(selectedType, data)
       handleClose()
-    } catch (error) {
-      console.error('Erro ao salvar:', error)
+    } catch {
     } finally {
       setIsLoading(false)
     }

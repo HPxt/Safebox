@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../config/supabase'
 import { Mail, Shield, ArrowLeft } from 'lucide-react'
+import { supabase } from '../config/supabase'
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState('')
@@ -9,84 +9,76 @@ const ForgotPassword: React.FC = () => {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
     setLoading(true)
     setError('')
     setSuccess(false)
 
     try {
-      // Obter a URL base da aplicação
       const resetUrl = `${window.location.origin}/auth/callback`
-      
-      console.log('Enviando email de recuperação para:', email)
-      console.log('URL de redirecionamento:', resetUrl)
-      
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: resetUrl,
       })
 
-      console.log('Resposta do Supabase:', { data, error })
-
-      if (error) {
-        // Tratamento específico de erros
-        if (error.message.includes('rate limit')) {
+      if (resetError) {
+        if (resetError.message.includes('rate limit')) {
           throw new Error('Limite de emails atingido. Tente novamente em alguns minutos.')
         }
-        if (error.message.includes('not found')) {
-          throw new Error('Email não cadastrado no sistema.')
+
+        if (resetError.message.includes('not found')) {
+          throw new Error('Email nao cadastrado no sistema.')
         }
-        throw error
+
+        throw resetError
       }
 
       setSuccess(true)
       setEmail('')
-    } catch (err: any) {
-      console.error('Error completo:', err)
-      setError(err.message || 'Erro ao enviar email de redefinição')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao enviar email de redefinicao'
+      setError(message)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-100 dark:from-dark-50 dark:to-dark-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        {/* Header */}
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-primary-600 rounded-full flex items-center justify-center">
             <Shield className="h-8 w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-secondary-900">
+          <h2 className="mt-6 text-3xl font-bold text-secondary-900 dark:text-dark-900">
             Esqueceu sua senha?
           </h2>
-          <p className="mt-2 text-sm text-secondary-600">
-            Não se preocupe! Digite seu email e enviaremos instruções.
+          <p className="mt-2 text-sm text-secondary-600 dark:text-dark-700">
+            Nao se preocupe. Digite seu email e enviaremos as instrucoes.
           </p>
         </div>
 
-        {/* Form */}
         <div className="card p-8">
           {success ? (
             <div className="text-center">
               <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
                 <Mail className="h-8 w-8 text-green-600" />
               </div>
-              <h3 className="text-lg font-medium text-secondary-900 mb-2">
-                Email enviado!
+              <h3 className="text-lg font-medium text-secondary-900 dark:text-dark-900 mb-2">
+                Email enviado
               </h3>
-              <p className="text-sm text-secondary-600 mb-4">
-                Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.
+              <p className="text-sm text-secondary-600 dark:text-dark-700 mb-4">
+                Verifique sua caixa de entrada e siga as instrucoes para redefinir sua senha.
               </p>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-yellow-800">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
                   <strong>Importante:</strong>
                 </p>
-                <ul className="text-sm text-yellow-700 mt-2 space-y-1">
-                  <li>• Verifique também a pasta de <strong>Spam/Lixo Eletrônico</strong></li>
+                <ul className="text-sm text-yellow-700 dark:text-yellow-300 mt-2 space-y-1">
+                  <li>• Verifique tambem a pasta de <strong>Spam/Lixo Eletronico</strong></li>
                   <li>• O email pode demorar alguns minutos para chegar</li>
-                  <li>• Você pode enviar apenas 3 emails por hora</li>
-                  <li>• O link é válido por apenas 1 hora</li>
+                  <li>• Voce pode enviar apenas 3 emails por hora</li>
+                  <li>• O link e valido por apenas 1 hora</li>
                 </ul>
               </div>
               <Link
@@ -100,7 +92,7 @@ const ForgotPassword: React.FC = () => {
           ) : (
             <form className="space-y-6" onSubmit={handleSubmit}>
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
                   {error}
                 </div>
               )}
@@ -122,7 +114,7 @@ const ForgotPassword: React.FC = () => {
                     className="input-field pl-10"
                     placeholder="seu@email.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(event) => setEmail(event.target.value)}
                   />
                 </div>
               </div>
@@ -135,11 +127,11 @@ const ForgotPassword: React.FC = () => {
                 >
                   {loading ? (
                     <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
                       Enviando...
                     </div>
                   ) : (
-                    'Enviar instruções'
+                    'Enviar instrucoes'
                   )}
                 </button>
               </div>
@@ -147,7 +139,7 @@ const ForgotPassword: React.FC = () => {
               <div className="text-center">
                 <Link
                   to="/login"
-                  className="inline-flex items-center text-sm text-secondary-600 hover:text-secondary-900"
+                  className="inline-flex items-center text-sm text-secondary-600 dark:text-dark-700 hover:text-secondary-900 dark:hover:text-dark-900"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Voltar ao login
@@ -161,4 +153,4 @@ const ForgotPassword: React.FC = () => {
   )
 }
 
-export default ForgotPassword 
+export default ForgotPassword

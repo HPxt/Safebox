@@ -93,26 +93,26 @@ const LandingPage: React.FC = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md fixed top-0 w-full z-50 border-b border-gray-100">
+      <header className="bg-white/80 dark:bg-dark-100/90 backdrop-blur-md fixed top-0 w-full z-50 border-b border-gray-100 dark:border-dark-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
               <Shield className="h-8 w-8 text-blue-600 mr-2" />
-              <span className="text-2xl font-bold text-gray-900">SafeBox</span>
+              <span className="text-2xl font-bold text-gray-900 dark:text-dark-900">SafeBox</span>
             </div>
             <div className="flex items-center space-x-6">
               <nav className="hidden md:flex space-x-8">
-                <a href="#benefits" className="text-gray-600 hover:text-blue-600 transition-colors">Benefícios</a>
-                <a href="#how-it-works" className="text-gray-600 hover:text-blue-600 transition-colors">Como Funciona</a>
-                <a href="#features" className="text-gray-600 hover:text-blue-600 transition-colors">Recursos</a>
-                <a href="#security" className="text-gray-600 hover:text-blue-600 transition-colors">Segurança</a>
+                <a href="#benefits" className="text-gray-600 dark:text-dark-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Benefícios</a>
+                <a href="#how-it-works" className="text-gray-600 dark:text-dark-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Como Funciona</a>
+                <a href="#features" className="text-gray-600 dark:text-dark-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Recursos</a>
+                <a href="#security" className="text-gray-600 dark:text-dark-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Segurança</a>
               </nav>
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => navigate('/login')}
-                  className="text-gray-700 border border-gray-300 px-5 py-2 rounded-lg hover:bg-gray-100 hover:border-gray-400 transition-colors font-medium"
+                  className="text-gray-700 dark:text-dark-700 border border-gray-300 dark:border-dark-300 px-5 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 hover:border-gray-400 dark:hover:border-dark-400 transition-colors font-medium"
                 >
                   Entrar
                 </button>
@@ -132,11 +132,11 @@ const LandingPage: React.FC = () => {
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
-            <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-6">
+            <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-dark-900 mb-6">
               Suas senhas protegidas com
               <span className="text-blue-600"> criptografia militar</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-dark-700 mb-8 max-w-3xl mx-auto">
               Nunca mais esqueça uma senha. Armazene todas as suas credenciais com segurança 
               em um único lugar e acesse de qualquer dispositivo.
             </p>
@@ -150,7 +150,7 @@ const LandingPage: React.FC = () => {
               </button>
               <button
                 onClick={() => navigate('/login')}
-                className="bg-white text-gray-700 px-8 py-4 rounded-lg hover:bg-gray-50 transition-colors text-lg font-medium border border-gray-300"
+                className="bg-white dark:bg-dark-100 text-gray-700 dark:text-dark-700 px-8 py-4 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors text-lg font-medium border border-gray-300 dark:border-dark-300"
               >
                 Já tenho conta
               </button>
@@ -159,25 +159,25 @@ const LandingPage: React.FC = () => {
           
           {/* Hero Image/Illustration */}
           <div className="mt-16 relative">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 sm:p-12">
-              <div className="bg-white rounded-xl shadow-2xl p-8">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-dark-100 dark:to-dark-200 rounded-2xl p-8 sm:p-12">
+              <div className="bg-white dark:bg-dark-100 rounded-xl shadow-2xl dark:shadow-dark-200/20 p-8 border border-transparent dark:border-dark-200">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900">Minhas Credenciais</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-dark-900">Minhas Credenciais</h3>
                   <Lock className="h-6 w-6 text-green-500" />
                 </div>
                 <div className="space-y-4">
                   {['Netflix', 'GitHub', 'Gmail'].map((service, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-200 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
                           <Key className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{service}</p>
-                          <p className="text-sm text-gray-500">••••••••</p>
+                          <p className="font-medium text-gray-900 dark:text-dark-900">{service}</p>
+                          <p className="text-sm text-gray-500 dark:text-dark-600">••••••••</p>
                         </div>
                       </div>
-                      <Shield className="h-5 w-5 text-gray-400" />
+                      <Shield className="h-5 w-5 text-gray-400 dark:text-dark-500" />
                     </div>
                   ))}
                 </div>
@@ -188,25 +188,25 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Benefits Section */}
-      <section id="benefits" className="py-20 bg-white">
+      <section id="benefits" className="py-20 bg-white dark:bg-dark-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-dark-900 mb-4">
               Por que escolher o SafeBox?
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 dark:text-dark-700">
               Segurança de ponta com a praticidade que você merece
             </p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
             {benefits.map((benefit, index) => (
-              <div key={index} className="text-center p-8 rounded-2xl hover:bg-gray-50 transition-colors">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-full mb-4">
+              <div key={index} className="text-center p-8 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-primary-900/30 text-blue-600 dark:text-blue-300 rounded-full mb-4">
                   {benefit.icon}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{benefit.title}</h3>
-                <p className="text-gray-600">{benefit.description}</p>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-dark-900 mb-2">{benefit.title}</h3>
+                <p className="text-gray-600 dark:text-dark-700">{benefit.description}</p>
               </div>
             ))}
           </div>
@@ -214,13 +214,13 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* How it Works */}
-      <section id="how-it-works" className="py-20 bg-gray-50">
+      <section id="how-it-works" className="py-20 bg-gray-50 dark:bg-dark-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-dark-900 mb-4">
               Como funciona?
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 dark:text-dark-700">
               Comece a proteger suas senhas em 3 passos simples
             </p>
           </div>
@@ -229,16 +229,16 @@ const LandingPage: React.FC = () => {
             {steps.map((step, index) => (
               <div key={index} className="relative">
                 {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-12 left-full w-full h-0.5 bg-gray-300 -translate-x-1/2 z-0">
-                    <ChevronRight className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-400 bg-gray-50" />
+                  <div className="hidden md:block absolute top-12 left-full w-full h-0.5 bg-gray-300 dark:bg-dark-300 -translate-x-1/2 z-0">
+                    <ChevronRight className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-500 bg-gray-50 dark:bg-dark-50" />
                   </div>
                 )}
                 <div className="relative z-10 text-center">
                   <div className="inline-flex items-center justify-center w-24 h-24 bg-blue-600 text-white rounded-full mb-4 text-2xl font-bold">
                     {step.number}
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{step.title}</h3>
-                  <p className="text-gray-600">{step.description}</p>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-dark-900 mb-2">{step.title}</h3>
+                  <p className="text-gray-600 dark:text-dark-700">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -247,25 +247,25 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Features Grid */}
-      <section id="features" className="py-20 bg-white">
+      <section id="features" className="py-20 bg-white dark:bg-dark-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-dark-900 mb-4">
               Recursos poderosos para sua segurança
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 dark:text-dark-700">
               Tudo que você precisa para gerenciar suas senhas com eficiência
             </p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="p-6 bg-gray-50 rounded-xl hover:shadow-lg transition-shadow">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 text-blue-600 rounded-lg mb-4">
+              <div key={index} className="p-6 bg-gray-50 dark:bg-dark-200 rounded-xl hover:shadow-lg dark:hover:shadow-dark-200/20 transition-shadow">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-primary-900/30 text-blue-600 dark:text-blue-300 rounded-lg mb-4">
                   {feature.icon}
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-900 mb-2">{feature.title}</h3>
+                <p className="text-gray-600 dark:text-dark-700">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -273,75 +273,75 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Security Section */}
-      <section id="security" className="py-20 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <section id="security" className="py-20 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-dark-50 dark:to-dark-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              <h2 className="text-4xl font-bold text-gray-900 dark:text-dark-900 mb-6">
                 Segurança é nossa prioridade #1
               </h2>
               <div className="space-y-4">
                 <div className="flex items-start">
                   <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Derivação de Chave com Argon2id</h3>
-                    <p className="text-gray-600">Algoritmo vencedor da Password Hashing Competition, resistente a ataques de força bruta e rainbow tables</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-dark-900 mb-1">Derivação de Chave com Argon2id</h3>
+                    <p className="text-gray-600 dark:text-dark-700">Algoritmo vencedor da Password Hashing Competition, resistente a ataques de força bruta e rainbow tables</p>
                   </div>
                 </div>
                 <div className="flex items-start">
                   <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Criptografia AES-256-GCM</h3>
-                    <p className="text-gray-600">Padrão militar de criptografia com autenticação integrada, garantindo confidencialidade e integridade</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-dark-900 mb-1">Criptografia AES-256-GCM</h3>
+                    <p className="text-gray-600 dark:text-dark-700">Padrão militar de criptografia com autenticação integrada, garantindo confidencialidade e integridade</p>
                   </div>
                 </div>
                 <div className="flex items-start">
                   <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Salt e Nonce Únicos</h3>
-                    <p className="text-gray-600">Cada usuário tem seu salt único e cada operação usa um nonce diferente, impossibilitando ataques de repetição</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-dark-900 mb-1">Salt e Nonce Únicos</h3>
+                    <p className="text-gray-600 dark:text-dark-700">Cada usuário tem seu salt único e cada operação usa um nonce diferente, impossibilitando ataques de repetição</p>
                   </div>
                 </div>
                 <div className="flex items-start">
                   <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Arquitetura Zero-Knowledge</h3>
-                    <p className="text-gray-600">Sua senha-mestra nunca sai do seu dispositivo. Nem nós podemos acessar seus dados</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-dark-900 mb-1">Arquitetura Zero-Knowledge</h3>
+                    <p className="text-gray-600 dark:text-dark-700">Sua senha-mestra nunca sai do seu dispositivo. Nem nós podemos acessar seus dados</p>
                   </div>
                 </div>
                 <div className="flex items-start">
                   <Check className="h-6 w-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Conformidade LGPD</h3>
-                    <p className="text-gray-600">Totalmente adequado às leis de proteção de dados brasileiras e internacionais</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-dark-900 mb-1">Conformidade LGPD</h3>
+                    <p className="text-gray-600 dark:text-dark-700">Totalmente adequado às leis de proteção de dados brasileiras e internacionais</p>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="bg-white p-8 rounded-2xl shadow-xl">
+            <div className="bg-white dark:bg-dark-100 p-8 rounded-2xl shadow-xl dark:shadow-dark-200/20 border border-transparent dark:border-dark-200">
               <div className="text-center">
                 <Shield className="h-24 w-24 text-blue-600 mx-auto mb-6" />
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Tecnologias de Segurança</h3>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-dark-900 mb-4">Tecnologias de Segurança</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="bg-gray-50 dark:bg-dark-200 p-4 rounded-lg">
                     <Key className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-700">Argon2id</p>
-                    <p className="text-xs text-gray-500">64MB, 3 iterações</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-dark-700">Argon2id</p>
+                    <p className="text-xs text-gray-500 dark:text-dark-600">64MB, 3 iterações</p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="bg-gray-50 dark:bg-dark-200 p-4 rounded-lg">
                     <Shield className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-700">AES-256-GCM</p>
-                    <p className="text-xs text-gray-500">Criptografia autenticada</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-dark-700">AES-256-GCM</p>
+                    <p className="text-xs text-gray-500 dark:text-dark-600">Criptografia autenticada</p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="bg-gray-50 dark:bg-dark-200 p-4 rounded-lg">
                     <Lock className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-700">PBKDF2</p>
-                    <p className="text-xs text-gray-500">Backup seguro</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-dark-700">PBKDF2</p>
+                    <p className="text-xs text-gray-500 dark:text-dark-600">Backup seguro</p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="bg-gray-50 dark:bg-dark-200 p-4 rounded-lg">
                     <Star className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-700">WebCrypto API</p>
-                    <p className="text-xs text-gray-500">Nativo do navegador</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-dark-700">WebCrypto API</p>
+                    <p className="text-xs text-gray-500 dark:text-dark-600">Nativo do navegador</p>
                   </div>
                 </div>
               </div>
@@ -361,7 +361,7 @@ const LandingPage: React.FC = () => {
           </p>
           <button
             onClick={() => navigate('/register')}
-            className="bg-white text-blue-600 px-8 py-4 rounded-lg hover:bg-gray-100 transition-colors text-lg font-medium inline-flex items-center"
+            className="bg-white dark:bg-dark-100 text-blue-600 dark:text-blue-300 px-8 py-4 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors text-lg font-medium inline-flex items-center border border-transparent dark:border-dark-300"
           >
             Criar Conta Gratuita
             <ArrowRight className="ml-2 h-5 w-5" />

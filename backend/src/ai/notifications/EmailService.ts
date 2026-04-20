@@ -24,6 +24,9 @@ export interface EmailConfig {
 export class EmailService {
   private transporter: nodemailer.Transporter;
   private config: EmailConfig;
+  private static getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Unknown email service error';
+  }
 
   constructor(config?: Partial<EmailConfig>) {
     this.config = {
@@ -51,7 +54,6 @@ export class EmailService {
     });
 
     logger.info('EmailService initialized', {
-      host: this.config.smtpHost,
       port: this.config.smtpPort,
       enabled: this.config.enabled && Boolean(this.config.to),
     });
@@ -99,7 +101,6 @@ export class EmailService {
 
       logger.info('Email sent successfully', {
         messageId: info.messageId,
-        to: this.config.to,
         agentType,
         executionId
       });
@@ -108,7 +109,7 @@ export class EmailService {
 
     } catch (error: any) {
       logger.error('Failed to send email', {
-        error: error.message,
+        message: EmailService.getErrorMessage(error),
         agentType,
         executionId
       });
@@ -153,7 +154,7 @@ export class EmailService {
 
     } catch (error: any) {
       logger.error('Failed to send critical alert', {
-        error: error.message
+        message: EmailService.getErrorMessage(error)
       });
 
       return false;
@@ -170,7 +171,7 @@ export class EmailService {
       return true;
     } catch (error: any) {
       logger.error('SMTP connection failed', {
-        error: error.message
+        message: EmailService.getErrorMessage(error)
       });
       return false;
     }

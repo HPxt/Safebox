@@ -159,8 +159,7 @@ const PasswordGeneratorPage: React.FC = () => {
       await navigator.clipboard.writeText(text)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (error) {
-      console.error('Erro ao copiar senha:', error)
+    } catch {
     }
   }
 
@@ -208,15 +207,15 @@ const PasswordGeneratorPage: React.FC = () => {
   const strength = getPasswordStrength()
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="min-h-screen bg-secondary-50 dark:bg-dark-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-secondary-200">
+      <header className="bg-white dark:bg-dark-100 shadow-sm border-b border-secondary-200 dark:border-dark-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
               <Link
                 to="/dashboard"
-                className="p-2 text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100 rounded-lg"
+                className="p-2 text-secondary-600 dark:text-dark-700 hover:text-secondary-900 dark:hover:text-dark-900 hover:bg-secondary-100 dark:hover:bg-dark-200 rounded-lg transition-colors"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Link>
@@ -224,7 +223,7 @@ const PasswordGeneratorPage: React.FC = () => {
                 <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
                   <Shield className="h-5 w-5 text-white" />
                 </div>
-                <h1 className="ml-3 text-xl font-bold text-secondary-900">Gerador de Senhas</h1>
+                <h1 className="ml-3 text-xl font-bold text-secondary-900 dark:text-dark-900">Gerador de Senhas</h1>
               </div>
             </div>
             
@@ -233,13 +232,13 @@ const PasswordGeneratorPage: React.FC = () => {
                 onClick={() => setShowHistory(!showHistory)}
                 className={`p-2 rounded-lg transition-colors ${
                   showHistory 
-                    ? 'bg-primary-100 text-primary-600' 
-                    : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300' 
+                    : 'text-secondary-600 dark:text-dark-700 hover:text-secondary-900 dark:hover:text-dark-900 hover:bg-secondary-100 dark:hover:bg-dark-200'
                 }`}
               >
                 <History className="h-5 w-5" />
               </button>
-              <span className="text-sm text-secondary-600">
+              <span className="text-sm text-secondary-600 dark:text-dark-700">
                 {user?.email?.split('@')[0] || 'Usuário'}
               </span>
             </div>
@@ -251,15 +250,15 @@ const PasswordGeneratorPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Gerador Principal */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white dark:bg-dark-100 rounded-lg shadow-sm dark:shadow-dark-200/20 border border-gray-200 dark:border-dark-200 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">Configurações</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-900">Configurações</h2>
                 <button
                   onClick={() => setShowAdvanced(!showAdvanced)}
                   className={`p-2 rounded-lg transition-colors ${
                     showAdvanced 
-                      ? 'bg-blue-100 text-blue-600' 
-                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300' 
+                      : 'text-gray-400 dark:text-dark-500 hover:text-gray-600 dark:hover:text-dark-800 hover:bg-gray-100 dark:hover:bg-dark-200'
                   }`}
                 >
                   <Settings className="h-4 w-4" />
@@ -268,7 +267,7 @@ const PasswordGeneratorPage: React.FC = () => {
 
               {/* Senha Gerada */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2">
                   Senha Gerada
                 </label>
                 <div className="flex items-center space-x-2 mb-3">
@@ -277,12 +276,12 @@ const PasswordGeneratorPage: React.FC = () => {
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       readOnly
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg font-mono text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-200 border border-gray-200 dark:border-dark-300 rounded-lg font-mono text-lg text-gray-900 dark:text-dark-900 placeholder-gray-400 dark:placeholder-dark-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Senha gerada aparecerá aqui"
                     />
                     <button
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-12 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                      className="absolute right-12 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 dark:text-dark-500 hover:text-gray-600 dark:hover:text-dark-800 transition-colors"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -292,8 +291,8 @@ const PasswordGeneratorPage: React.FC = () => {
                     onClick={() => copyToClipboard()}
                     className={`p-3 rounded-lg transition-colors ${
                       copied 
-                        ? 'bg-green-100 text-green-600' 
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                        ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-300' 
+                        : 'bg-gray-100 dark:bg-dark-200 hover:bg-gray-200 dark:hover:bg-dark-300 text-gray-600 dark:text-dark-700'
                     }`}
                   >
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -310,7 +309,7 @@ const PasswordGeneratorPage: React.FC = () => {
                 {/* Indicador de Força */}
                 {password && (
                   <div className="flex items-center space-x-3">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div className="flex-1 bg-gray-200 dark:bg-dark-300 rounded-full h-2">
                       <div 
                         className={`h-2 rounded-full transition-all duration-300 ${strength.color}`}
                         style={{ width: `${(calculateStrength(password) / 6) * 100}%` }}
@@ -328,10 +327,10 @@ const PasswordGeneratorPage: React.FC = () => {
                 {/* Comprimento */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-gray-700 dark:text-dark-700">
                       Comprimento
                     </label>
-                    <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                    <span className="text-sm font-mono bg-gray-100 dark:bg-dark-200 text-gray-900 dark:text-dark-900 px-2 py-1 rounded">
                       {options.length}
                     </span>
                   </div>
@@ -341,9 +340,9 @@ const PasswordGeneratorPage: React.FC = () => {
                     max="128"
                     value={options.length}
                     onChange={(e) => updateOption('length', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    className="w-full h-2 bg-gray-200 dark:bg-dark-300 rounded-lg appearance-none cursor-pointer"
                   />
-                  <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <div className="flex justify-between text-xs text-gray-400 dark:text-dark-500 mt-1">
                     <span>4</span>
                     <span>Use 14 caracteres ou mais para senhas fortes</span>
                     <span>128</span>
@@ -352,11 +351,11 @@ const PasswordGeneratorPage: React.FC = () => {
 
                 {/* Tipos de Caracteres */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-3 block">
+                  <label className="text-sm font-medium text-gray-700 dark:text-dark-700 mb-3 block">
                     Incluir
                   </label>
                   <div className="grid grid-cols-2 gap-4">
-                    <label className="flex items-center space-x-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <label className="flex items-center space-x-3 cursor-pointer p-3 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors">
                       <input
                         type="checkbox"
                         checked={options.includeUppercase}
@@ -364,12 +363,12 @@ const PasswordGeneratorPage: React.FC = () => {
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <div>
-                        <span className="text-sm font-medium text-gray-700">A-Z</span>
-                        <p className="text-xs text-gray-500">Letras maiúsculas</p>
+                        <span className="text-sm font-medium text-gray-700 dark:text-dark-700">A-Z</span>
+                        <p className="text-xs text-gray-500 dark:text-dark-600">Letras maiúsculas</p>
                       </div>
                     </label>
 
-                    <label className="flex items-center space-x-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <label className="flex items-center space-x-3 cursor-pointer p-3 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors">
                       <input
                         type="checkbox"
                         checked={options.includeLowercase}
@@ -377,12 +376,12 @@ const PasswordGeneratorPage: React.FC = () => {
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <div>
-                        <span className="text-sm font-medium text-gray-700">a-z</span>
-                        <p className="text-xs text-gray-500">Letras minúsculas</p>
+                        <span className="text-sm font-medium text-gray-700 dark:text-dark-700">a-z</span>
+                        <p className="text-xs text-gray-500 dark:text-dark-600">Letras minúsculas</p>
                       </div>
                     </label>
 
-                    <label className="flex items-center space-x-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <label className="flex items-center space-x-3 cursor-pointer p-3 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors">
                       <input
                         type="checkbox"
                         checked={options.includeNumbers}
@@ -390,12 +389,12 @@ const PasswordGeneratorPage: React.FC = () => {
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <div>
-                        <span className="text-sm font-medium text-gray-700">0-9</span>
-                        <p className="text-xs text-gray-500">Números</p>
+                        <span className="text-sm font-medium text-gray-700 dark:text-dark-700">0-9</span>
+                        <p className="text-xs text-gray-500 dark:text-dark-600">Números</p>
                       </div>
                     </label>
 
-                    <label className="flex items-center space-x-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <label className="flex items-center space-x-3 cursor-pointer p-3 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors">
                       <input
                         type="checkbox"
                         checked={options.includeSymbols}
@@ -403,8 +402,8 @@ const PasswordGeneratorPage: React.FC = () => {
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <div>
-                        <span className="text-sm font-medium text-gray-700">!@#$%^&*</span>
-                        <p className="text-xs text-gray-500">Símbolos especiais</p>
+                        <span className="text-sm font-medium text-gray-700 dark:text-dark-700">!@#$%^&*</span>
+                        <p className="text-xs text-gray-500 dark:text-dark-600">Símbolos especiais</p>
                       </div>
                     </label>
                   </div>
@@ -412,8 +411,8 @@ const PasswordGeneratorPage: React.FC = () => {
 
                 {/* Opções Avançadas */}
                 {showAdvanced && (
-                  <div className="border-t border-gray-200 pt-6 space-y-6">
-                    <h3 className="text-sm font-medium text-gray-700">Opções Avançadas</h3>
+                  <div className="border-t border-gray-200 dark:border-dark-200 pt-6 space-y-6">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-dark-700">Opções Avançadas</h3>
                     
                     {/* Evitar Caracteres Ambíguos */}
                     <label className="flex items-center space-x-3 cursor-pointer">
@@ -424,8 +423,8 @@ const PasswordGeneratorPage: React.FC = () => {
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <div>
-                        <span className="text-sm font-medium text-gray-700">Evitar caracteres ambíguos</span>
-                        <p className="text-xs text-gray-500">Exclui: 0, O, 1, l, I, |, `</p>
+                        <span className="text-sm font-medium text-gray-700 dark:text-dark-700">Evitar caracteres ambíguos</span>
+                        <p className="text-xs text-gray-500 dark:text-dark-600">Exclui: 0, O, 1, l, I, |, `</p>
                       </div>
                     </label>
 
@@ -433,10 +432,10 @@ const PasswordGeneratorPage: React.FC = () => {
                     {options.includeNumbers && (
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <label className="text-sm font-medium text-gray-700">
+                          <label className="text-sm font-medium text-gray-700 dark:text-dark-700">
                             Números Mínimos
                           </label>
-                          <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                          <span className="text-sm font-mono bg-gray-100 dark:bg-dark-200 text-gray-900 dark:text-dark-900 px-2 py-1 rounded">
                             {options.minNumbers}
                           </span>
                         </div>
@@ -446,7 +445,7 @@ const PasswordGeneratorPage: React.FC = () => {
                           max="9"
                           value={options.minNumbers}
                           onChange={(e) => updateOption('minNumbers', parseInt(e.target.value))}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                          className="w-full h-2 bg-gray-200 dark:bg-dark-300 rounded-lg appearance-none cursor-pointer"
                         />
                       </div>
                     )}
@@ -455,10 +454,10 @@ const PasswordGeneratorPage: React.FC = () => {
                     {options.includeSymbols && (
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <label className="text-sm font-medium text-gray-700">
+                          <label className="text-sm font-medium text-gray-700 dark:text-dark-700">
                             Símbolos Mínimos
                           </label>
-                          <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                          <span className="text-sm font-mono bg-gray-100 dark:bg-dark-200 text-gray-900 dark:text-dark-900 px-2 py-1 rounded">
                             {options.minSpecial}
                           </span>
                         </div>
@@ -468,7 +467,7 @@ const PasswordGeneratorPage: React.FC = () => {
                           max="9"
                           value={options.minSpecial}
                           onChange={(e) => updateOption('minSpecial', parseInt(e.target.value))}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                          className="w-full h-2 bg-gray-200 dark:bg-dark-300 rounded-lg appearance-none cursor-pointer"
                         />
                       </div>
                     )}
@@ -491,13 +490,13 @@ const PasswordGeneratorPage: React.FC = () => {
 
           {/* Histórico */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white dark:bg-dark-100 rounded-lg shadow-sm dark:shadow-dark-200/20 border border-gray-200 dark:border-dark-200 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Histórico</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-900">Histórico</h3>
                 {history.length > 0 && (
                   <button
                     onClick={exportHistory}
-                    className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                    className="p-2 text-gray-400 dark:text-dark-500 hover:text-gray-600 dark:hover:text-dark-800 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors"
                   >
                     <Download className="h-4 w-4" />
                   </button>
@@ -506,8 +505,8 @@ const PasswordGeneratorPage: React.FC = () => {
 
               {history.length === 0 ? (
                 <div className="text-center py-8">
-                  <History className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-500">
+                  <History className="h-12 w-12 text-gray-300 dark:text-dark-400 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500 dark:text-dark-600">
                     Senhas geradas aparecerão aqui
                   </p>
                 </div>
@@ -518,7 +517,7 @@ const PasswordGeneratorPage: React.FC = () => {
                     return (
                       <div
                         key={item.id}
-                        className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 group"
+                        className="p-3 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 group transition-colors"
                       >
                         <div className="flex items-center justify-between mb-2">
                           <span className={`text-xs font-medium ${itemStrength.textColor}`}>
@@ -526,15 +525,15 @@ const PasswordGeneratorPage: React.FC = () => {
                           </span>
                           <button
                             onClick={() => copyToClipboard(item.password)}
-                            className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 transition-opacity"
+                            className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 dark:text-dark-500 hover:text-gray-600 dark:hover:text-dark-800 transition-opacity"
                           >
                             <Copy className="h-3 w-3" />
                           </button>
                         </div>
-                        <p className="font-mono text-sm text-gray-700 truncate mb-1">
+                        <p className="font-mono text-sm text-gray-700 dark:text-dark-700 truncate mb-1">
                           {item.password}
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-400 dark:text-dark-500">
                           {item.timestamp.toLocaleTimeString()}
                         </p>
                       </div>

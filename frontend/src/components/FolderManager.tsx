@@ -47,6 +47,9 @@ const FOLDER_ICONS = [
   'globe'
 ]
 
+const folderModalInputClasses = 'w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500'
+const folderModalSecondaryButtonClasses = 'px-4 py-2 text-gray-600 dark:text-dark-700 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-md transition-colors'
+
 const FolderManager: React.FC<FolderManagerProps> = ({
   selectedFolderId,
   onFolderSelect,
@@ -80,8 +83,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
       setLoading(true)
       const folderData = await foldersService.getFolders()
       setFolders(folderData)
-    } catch (error) {
-      console.error('Error loading folders:', error)
+    } catch {
     } finally {
       setLoading(false)
     }
@@ -103,8 +105,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
       onFolderChange()
       setShowCreateModal(false)
       resetForm()
-    } catch (error) {
-      console.error('Error creating folder:', error)
+    } catch {
       alert('Erro ao criar pasta')
     }
   }
@@ -126,8 +127,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
       setShowEditModal(false)
       setEditingFolder(null)
       resetForm()
-    } catch (error) {
-      console.error('Error editing folder:', error)
+    } catch {
       alert('Erro ao editar pasta')
     }
   }
@@ -147,7 +147,6 @@ const FolderManager: React.FC<FolderManagerProps> = ({
         onFolderSelect(undefined)
       }
     } catch (error: any) {
-      console.error('Error deleting folder:', error)
       alert(error.message || 'Erro ao excluir pasta')
     }
   }
@@ -198,10 +197,10 @@ const FolderManager: React.FC<FolderManagerProps> = ({
     return (
       <div key={folder.id} className="select-none">
         <div 
-          className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${
+          className={`group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors border ${
             isSelected 
-              ? 'bg-blue-100 text-blue-700 border border-blue-200' 
-              : 'hover:bg-gray-100 text-gray-700'
+              ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-800' 
+              : 'border-transparent hover:bg-gray-100 text-gray-700 dark:text-dark-700 dark:hover:bg-dark-200'
           }`}
           style={{ marginLeft: `${level * 16}px` }}
         >
@@ -215,7 +214,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
                   e.stopPropagation()
                   toggleFolderExpansion(folder.id)
                 }}
-                className="mr-1 p-1 hover:bg-gray-200 rounded"
+                className="mr-1 p-1 hover:bg-gray-200 dark:hover:bg-dark-300 rounded transition-colors"
               >
                 {isExpanded ? (
                   <ChevronDown className="h-3 w-3" />
@@ -247,7 +246,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
                 e.stopPropagation()
                 openEditModal(folder)
               }}
-              className="p-1 hover:bg-gray-200 rounded"
+              className="p-1 hover:bg-gray-200 dark:hover:bg-dark-300 rounded transition-colors"
               title="Editar pasta"
             >
               <Edit className="h-3 w-3" />
@@ -258,7 +257,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
                 e.stopPropagation()
                 openCreateModal(folder.id)
               }}
-              className="p-1 hover:bg-gray-200 rounded"
+              className="p-1 hover:bg-gray-200 dark:hover:bg-dark-300 rounded transition-colors"
               title="Criar subpasta"
             >
               <Plus className="h-3 w-3" />
@@ -269,7 +268,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
                 e.stopPropagation()
                 handleDeleteFolder(folder)
               }}
-              className="p-1 hover:bg-gray-200 rounded text-red-500"
+              className="p-1 hover:bg-gray-200 dark:hover:bg-dark-300 rounded text-red-500 dark:text-red-400 transition-colors"
               title="Excluir pasta"
             >
               <Trash2 className="h-3 w-3" />
@@ -288,24 +287,24 @@ const FolderManager: React.FC<FolderManagerProps> = ({
 
   if (loading) {
     return (
-      <div className="p-4">
+      <div className="p-4 bg-white dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-200">
         <div className="animate-pulse space-y-2">
-          <div className="h-8 bg-gray-200 rounded"></div>
-          <div className="h-6 bg-gray-100 rounded"></div>
-          <div className="h-6 bg-gray-100 rounded ml-4"></div>
+          <div className="h-8 bg-gray-200 dark:bg-dark-300 rounded"></div>
+          <div className="h-6 bg-gray-100 dark:bg-dark-200 rounded"></div>
+          <div className="h-6 bg-gray-100 dark:bg-dark-200 rounded ml-4"></div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
-      <div className="p-4 border-b border-gray-200 flex-shrink-0">
+    <div className="bg-white dark:bg-dark-100 rounded-lg shadow-sm dark:shadow-dark-200/20 border border-gray-200 dark:border-dark-200 h-full flex flex-col">
+      <div className="p-4 border-b border-gray-200 dark:border-dark-200 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Pastas</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-900">Pastas</h3>
           <button
             onClick={() => openCreateModal()}
-            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
             title="Nova pasta"
           >
             <Plus className="h-4 w-4" />
@@ -318,8 +317,8 @@ const FolderManager: React.FC<FolderManagerProps> = ({
         <div 
           className={`flex items-center p-2 rounded-lg cursor-pointer transition-colors ${
             !selectedFolderId 
-              ? 'bg-blue-100 text-blue-700 border border-blue-200' 
-              : 'hover:bg-gray-100 text-gray-700'
+              ? 'bg-blue-100 text-blue-700 border border-blue-200 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-800' 
+              : 'hover:bg-gray-100 text-gray-700 dark:text-dark-700 dark:hover:bg-dark-200'
           }`}
           onClick={() => onFolderSelect(undefined)}
         >
@@ -330,12 +329,12 @@ const FolderManager: React.FC<FolderManagerProps> = ({
         {folderTree.map(folder => renderFolder(folder))}
         
         {folderTree.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-dark-600">
             <FolderIcon className="h-8 w-8 mx-auto mb-2" />
             <p className="text-sm">Nenhuma pasta criada</p>
             <button
               onClick={() => openCreateModal()}
-              className="mt-2 text-blue-600 text-sm hover:underline"
+              className="mt-2 text-blue-600 dark:text-blue-400 text-sm hover:underline"
             >
               Criar primeira pasta
             </button>
@@ -346,26 +345,26 @@ const FolderManager: React.FC<FolderManagerProps> = ({
       {/* Modal de Criar Pasta */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Nova Pasta</h3>
+          <div className="bg-white dark:bg-dark-100 rounded-lg p-6 w-full max-w-md border border-gray-200 dark:border-dark-200 shadow-xl">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-900">Nova Pasta</h3>
             
             <form onSubmit={handleCreateFolder} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-1">
                   Nome da pasta
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={folderModalInputClasses}
                   placeholder="Ex: Trabalho, Pessoal..."
                   required
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-1">
                   Cor
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -375,7 +374,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, color }))}
                       className={`w-8 h-8 rounded-full border-2 ${
-                        formData.color === color ? 'border-gray-800' : 'border-gray-300'
+                        formData.color === color ? 'border-gray-800 dark:border-dark-900' : 'border-gray-300 dark:border-dark-300'
                       }`}
                       style={{ backgroundColor: color }}
                     />
@@ -390,7 +389,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
                     setShowCreateModal(false)
                     resetForm()
                   }}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+                  className={folderModalSecondaryButtonClasses}
                 >
                   Cancelar
                 </button>
@@ -409,25 +408,25 @@ const FolderManager: React.FC<FolderManagerProps> = ({
       {/* Modal de Editar Pasta */}
       {showEditModal && editingFolder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Editar Pasta</h3>
+          <div className="bg-white dark:bg-dark-100 rounded-lg p-6 w-full max-w-md border border-gray-200 dark:border-dark-200 shadow-xl">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-900">Editar Pasta</h3>
             
             <form onSubmit={handleEditFolder} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-1">
                   Nome da pasta
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={folderModalInputClasses}
                   required
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-1">
                   Cor
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -437,7 +436,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, color }))}
                       className={`w-8 h-8 rounded-full border-2 ${
-                        formData.color === color ? 'border-gray-800' : 'border-gray-300'
+                        formData.color === color ? 'border-gray-800 dark:border-dark-900' : 'border-gray-300 dark:border-dark-300'
                       }`}
                       style={{ backgroundColor: color }}
                     />
@@ -453,7 +452,7 @@ const FolderManager: React.FC<FolderManagerProps> = ({
                     setEditingFolder(null)
                     resetForm()
                   }}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+                  className={folderModalSecondaryButtonClasses}
                 >
                   Cancelar
                 </button>

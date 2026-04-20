@@ -18,6 +18,10 @@ const SENSITIVE_KEY_FRAGMENTS = [
   'credential',
   'service_role',
   'anon_key',
+  'ip',
+  'ip_address',
+  'useragent',
+  'user_agent',
 ]
 
 const REDACTED_VALUE = '[REDACTED]'

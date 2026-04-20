@@ -22,6 +22,9 @@ import {
   ArrowLeft
 } from 'lucide-react'
 
+const credentialInputClasses = 'w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500'
+const modalSecondaryButtonClasses = 'px-4 py-2 text-gray-600 dark:text-dark-700 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-md transition-colors'
+
 const FoldersView: React.FC = () => {
   const { signOut } = useAuth()
   const navigate = useNavigate()
@@ -67,8 +70,7 @@ const FoldersView: React.FC = () => {
       })) : []
       
       setCredentials(normalizedData)
-    } catch (error) {
-      console.error('Error loading credentials:', error)
+    } catch {
     } finally {
       setLoading(false)
     }
@@ -77,7 +79,6 @@ const FoldersView: React.FC = () => {
   const getFilteredCredentials = () => {
     try {
       if (!Array.isArray(credentials)) {
-        console.warn('Credentials is not an array:', credentials)
         return []
       }
 
@@ -85,7 +86,6 @@ const FoldersView: React.FC = () => {
         try {
           // Triple verification for credential object
           if (!credential || typeof credential !== 'object') {
-            console.warn('Invalid credential object:', credential)
             return false
           }
 
@@ -103,8 +103,7 @@ const FoldersView: React.FC = () => {
               matchesSearch = [title, username, email, website].some(field => 
                 field.toLowerCase().includes(search)
               )
-            } catch (err) {
-              console.warn('Error in search filter:', err)
+            } catch {
               matchesSearch = false
             }
           }
@@ -114,20 +113,17 @@ const FoldersView: React.FC = () => {
           if (selectedFolderId) {
             try {
               matchesFolder = credential.folderId === selectedFolderId
-            } catch (err) {
-              console.warn('Error in folder filter:', err)
+            } catch {
               matchesFolder = false
             }
           }
 
           return matchesSearch && matchesFolder
-        } catch (err) {
-          console.warn('Error filtering credential:', err, credential)
+        } catch {
           return false
         }
       })
-    } catch (err) {
-      console.error('Critical error in getFilteredCredentials:', err)
+    } catch {
       return []
     }
   }
@@ -142,8 +138,7 @@ const FoldersView: React.FC = () => {
       }
       await loadCredentials()
       resetForm()
-    } catch (error) {
-      console.error('Error saving credential:', error)
+    } catch {
       alert('Erro ao salvar credencial')
     }
   }
@@ -171,8 +166,7 @@ const FoldersView: React.FC = () => {
     try {
       await credentialsService.deleteCredential(id)
       await loadCredentials()
-    } catch (error) {
-      console.error('Error deleting credential:', error)
+    } catch {
       alert('Erro ao excluir credencial')
     }
   }
@@ -203,8 +197,7 @@ const FoldersView: React.FC = () => {
     try {
       await navigator.clipboard.writeText(text)
       alert(`${field} copiado para a área de transferência!`)
-    } catch (error) {
-      console.error('Error copying to clipboard:', error)
+    } catch {
       alert('Erro ao copiar para a área de transferência')
     }
   }
@@ -222,7 +215,7 @@ const FoldersView: React.FC = () => {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50 flex relative">
+      <div className="min-h-screen bg-gray-50 dark:bg-dark-50 flex relative">
         {/* Mobile Overlay */}
         {sidebarOpen && (
           <div 
@@ -232,13 +225,13 @@ const FoldersView: React.FC = () => {
         )}
         
         {/* Sidebar */}
-        <div className={`fixed lg:relative bg-white border-r border-gray-200 transition-all duration-300 z-50 h-full flex flex-col ${
+        <div className={`fixed lg:relative bg-white dark:bg-dark-100 border-r border-gray-200 dark:border-dark-200 transition-all duration-300 z-50 h-full flex flex-col ${
           sidebarOpen ? 'w-80 translate-x-0' : 'w-80 -translate-x-full lg:w-0'
         } lg:translate-x-0 ${sidebarOpen ? 'lg:w-80' : 'lg:w-0'}`}>
-          <div className="p-4 border-b border-gray-200 flex-shrink-0">
+          <div className="p-4 border-b border-gray-200 dark:border-dark-200 flex-shrink-0">
             <div className="flex items-center justify-between">
               <h2 
-                className="text-xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                className="text-xl font-bold text-gray-900 dark:text-dark-900 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 onClick={() => navigate('/dashboard')}
                 title="Voltar ao Dashboard"
               >
@@ -246,12 +239,12 @@ const FoldersView: React.FC = () => {
               </h2>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg lg:hidden"
+                className="p-2 text-gray-400 dark:text-dark-500 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors lg:hidden"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <p className="text-sm text-gray-600 mt-1">Organize suas credenciais</p>
+            <p className="text-sm text-gray-600 dark:text-dark-700 mt-1">Organize suas credenciais</p>
           </div>
 
           <div className="p-4 overflow-y-auto flex-1">
@@ -262,17 +255,17 @@ const FoldersView: React.FC = () => {
             />
           </div>
 
-          <div className="p-4 border-t border-gray-200 bg-white">
+          <div className="p-4 border-t border-gray-200 dark:border-dark-200 bg-white dark:bg-dark-100">
             <button
               onClick={() => navigate('/dashboard')}
-              className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg mb-2 flex items-center"
+              className="w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-dark-700 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg mb-2 flex items-center transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar ao Dashboard
             </button>
             <button
               onClick={signOut}
-              className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="w-full text-left px-3 py-2 text-sm text-gray-600 dark:text-dark-700 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors"
             >
               Sair
             </button>
@@ -282,31 +275,31 @@ const FoldersView: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4">
+          <header className="bg-white dark:bg-dark-100 border-b border-gray-200 dark:border-dark-200 px-4 sm:px-6 py-3 sm:py-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2">
                 {!sidebarOpen && (
                   <button
                     onClick={() => setSidebarOpen(true)}
-                    className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg"
+                    className="p-2 text-gray-400 dark:text-dark-500 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors"
                   >
                     <Menu className="h-5 w-5" />
                   </button>
                 )}
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-dark-900 truncate">
                   {selectedFolderId ? 'Credenciais' : 'Pastas'}
                 </h1>
               </div>
               
               <div className="flex items-center gap-2 sm:gap-4">
                 <div className="relative flex-1 sm:flex-initial">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-dark-500 h-4 w-4" />
                   <input
                     type="text"
                     placeholder="Buscar..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+                    className="pl-10 pr-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
                   />
                 </div>
                 
@@ -344,12 +337,12 @@ const FoldersView: React.FC = () => {
                     return (
                       <div
                         key={credential.id}
-                        className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                        className="bg-white dark:bg-dark-100 rounded-lg shadow-sm dark:shadow-dark-200/20 border border-gray-200 dark:border-dark-200 p-4 hover:shadow-md dark:hover:shadow-dark-200/30 transition-shadow"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2 min-w-0">
                             <Key className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                            <h3 className="font-semibold text-gray-900 truncate">{title}</h3>
+                            <h3 className="font-semibold text-gray-900 dark:text-dark-900 truncate">{title}</h3>
                           </div>
                           
                           <div className="flex items-center gap-1 flex-shrink-0">
@@ -358,14 +351,14 @@ const FoldersView: React.FC = () => {
                             )}
                             <button
                               onClick={() => handleEdit(credential)}
-                              className="p-1 text-gray-400 hover:text-blue-600 touch-target"
+                              className="p-1 text-gray-400 dark:text-dark-500 hover:text-blue-600 dark:hover:text-blue-400 touch-target transition-colors"
                               title="Editar"
                             >
                               <Edit className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(credential.id)}
-                              className="p-1 text-gray-400 hover:text-red-600 touch-target"
+                              className="p-1 text-gray-400 dark:text-dark-500 hover:text-red-600 dark:hover:text-red-400 touch-target transition-colors"
                               title="Excluir"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -376,12 +369,12 @@ const FoldersView: React.FC = () => {
                         <div className="space-y-2">
                           {username && (
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm text-gray-600 flex-shrink-0">Usuário:</span>
+                              <span className="text-sm text-gray-600 dark:text-dark-700 flex-shrink-0">Usuário:</span>
                               <div className="flex items-center gap-1 min-w-0">
-                                <span className="text-sm font-medium truncate">{username}</span>
+                                <span className="text-sm font-medium text-gray-900 dark:text-dark-900 truncate">{username}</span>
                                 <button
                                   onClick={() => copyToClipboard(username, 'Usuário')}
-                                  className="p-1 text-gray-400 hover:text-blue-600 touch-target flex-shrink-0"
+                                  className="p-1 text-gray-400 dark:text-dark-500 hover:text-blue-600 dark:hover:text-blue-400 touch-target flex-shrink-0 transition-colors"
                                 >
                                   <Copy className="h-3 w-3" />
                                 </button>
@@ -391,12 +384,12 @@ const FoldersView: React.FC = () => {
 
                           {email && (
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm text-gray-600 flex-shrink-0">Email:</span>
+                              <span className="text-sm text-gray-600 dark:text-dark-700 flex-shrink-0">Email:</span>
                               <div className="flex items-center gap-1 min-w-0">
-                                <span className="text-sm font-medium truncate">{email}</span>
+                                <span className="text-sm font-medium text-gray-900 dark:text-dark-900 truncate">{email}</span>
                                 <button
                                   onClick={() => copyToClipboard(email, 'Email')}
-                                  className="p-1 text-gray-400 hover:text-blue-600 touch-target flex-shrink-0"
+                                  className="p-1 text-gray-400 dark:text-dark-500 hover:text-blue-600 dark:hover:text-blue-400 touch-target flex-shrink-0 transition-colors"
                                 >
                                   <Copy className="h-3 w-3" />
                                 </button>
@@ -405,14 +398,14 @@ const FoldersView: React.FC = () => {
                           )}
 
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm text-gray-600 flex-shrink-0">Senha:</span>
+                            <span className="text-sm text-gray-600 dark:text-dark-700 flex-shrink-0">Senha:</span>
                             <div className="flex items-center gap-1">
-                              <span className="text-sm font-medium font-mono">
+                              <span className="text-sm font-medium font-mono text-gray-900 dark:text-dark-900">
                                 {showPassword[credential.id] ? credential.encryptedPassword : '••••••••'}
                               </span>
                               <button
                                 onClick={() => togglePasswordVisibility(credential.id)}
-                                className="p-1 text-gray-400 hover:text-blue-600 touch-target"
+                                className="p-1 text-gray-400 dark:text-dark-500 hover:text-blue-600 dark:hover:text-blue-400 touch-target transition-colors"
                               >
                                 {showPassword[credential.id] ? 
                                   <EyeOff className="h-3 w-3" /> : 
@@ -421,7 +414,7 @@ const FoldersView: React.FC = () => {
                               </button>
                               <button
                                 onClick={() => copyToClipboard(credential.encryptedPassword, 'Senha')}
-                                className="p-1 text-gray-400 hover:text-blue-600 touch-target"
+                                className="p-1 text-gray-400 dark:text-dark-500 hover:text-blue-600 dark:hover:text-blue-400 touch-target transition-colors"
                               >
                                 <Copy className="h-3 w-3" />
                               </button>
@@ -430,7 +423,7 @@ const FoldersView: React.FC = () => {
 
                           {website && (
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm text-gray-600 flex-shrink-0">Site:</span>
+                              <span className="text-sm text-gray-600 dark:text-dark-700 flex-shrink-0">Site:</span>
                               <div className="flex items-center gap-1 min-w-0">
                                 <a
                                   href={website.startsWith('http') ? website : `https://${website}`}
@@ -440,26 +433,25 @@ const FoldersView: React.FC = () => {
                                 >
                                   {website}
                                 </a>
-                                <ExternalLink className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                                <ExternalLink className="h-3 w-3 text-gray-400 dark:text-dark-500 flex-shrink-0" />
                               </div>
                             </div>
                           )}
                         </div>
                       </div>
                     )
-                  } catch (err) {
-                    console.warn('Error rendering credential:', err, credential)
+                  } catch {
                     return null
                   }
                 })}
                 
                 {filteredCredentials.length === 0 && !loading && (
                   <div className="col-span-full text-center py-8 sm:py-12 px-4">
-                    <Key className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
+                    <Key className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 dark:text-dark-500 mx-auto mb-3 sm:mb-4" />
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-dark-900 mb-2">
                       {selectedFolderId ? 'Nenhuma credencial nesta pasta' : 'Nenhuma credencial encontrada'}
                     </h3>
-                    <p className="text-sm sm:text-base text-gray-600 mb-4 max-w-sm mx-auto">
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-dark-700 mb-4 max-w-sm mx-auto">
                       {searchTerm ? 
                         'Tente ajustar os termos de busca' : 
                         'Comece adicionando suas primeiras credenciais'
@@ -485,83 +477,83 @@ const FoldersView: React.FC = () => {
         {/* Modal de Formulário */}
         {showForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50">
-            <div className="bg-white rounded-t-2xl sm:rounded-lg w-full sm:max-w-md max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="bg-white dark:bg-dark-100 rounded-t-2xl sm:rounded-lg w-full sm:max-w-md max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-gray-200 dark:border-dark-200 shadow-xl">
               <div className="p-4 sm:p-6 overflow-y-auto flex-1">
-                <h3 className="text-lg font-semibold mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-900 mb-4">
                   {editingCredential ? 'Editar Credencial' : 'Nova Credencial'}
                 </h3>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-1">
                       Título *
                     </label>
                     <input
                       type="text"
                       value={formData.title}
                       onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={credentialInputClasses}
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-1">
                       Usuário
                     </label>
                     <input
                       type="text"
                       value={formData.username}
                       onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={credentialInputClasses}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-1">
                       Email
                     </label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={credentialInputClasses}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-1">
                       Senha *
                     </label>
                     <input
                       type="password"
                       value={formData.password}
                       onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={credentialInputClasses}
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-1">
                       Website
                     </label>
                     <input
                       type="url"
                       value={formData.website}
                       onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={credentialInputClasses}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-1">
                       Notas
                     </label>
                     <textarea
                       value={formData.notes}
                       onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={credentialInputClasses}
                       rows={3}
                     />
                   </div>
@@ -574,7 +566,7 @@ const FoldersView: React.FC = () => {
                       onChange={(e) => setFormData(prev => ({ ...prev, isFavorite: e.target.checked }))}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
-                    <label htmlFor="isFavorite" className="ml-2 block text-sm text-gray-900">
+                    <label htmlFor="isFavorite" className="ml-2 block text-sm text-gray-900 dark:text-dark-900">
                       Marcar como favorito
                     </label>
                   </div>
@@ -583,7 +575,7 @@ const FoldersView: React.FC = () => {
                     <button
                       type="button"
                       onClick={resetForm}
-                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+                      className={modalSecondaryButtonClasses}
                     >
                       Cancelar
                     </button>

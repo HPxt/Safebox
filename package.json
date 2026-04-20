@@ -2,6 +2,10 @@
   "name": "safebox-workspace",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
     "dev": "npm --prefix backend run dev:api",
     "dev:backend": "npm --prefix backend run dev:api",
@@ -17,6 +21,8 @@
     "audit:frontend": "npm --prefix frontend audit",
     "audit:frontend:prod": "npm --prefix frontend run audit:prod",
     "lint:backend": "npm --prefix backend run lint",
-    "typecheck:backend": "npm --prefix backend run type-check"
-  }
+    "typecheck:backend": "npm --prefix backend run type-check",
+    "quality:gate": "npm run test && npm run build && npm run lint:backend && npm run typecheck:backend"
+  },
+  "packageManager": "npm@10.9.2"
 }

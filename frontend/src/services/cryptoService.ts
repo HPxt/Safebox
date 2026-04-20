@@ -71,8 +71,7 @@ export class CryptoService {
       )
       
       return true
-    } catch (error) {
-      console.error('Web Crypto API test failed:', error)
+    } catch (error: any) {
       return false
     }
   }
@@ -137,14 +136,8 @@ export class CryptoService {
     // Aplicar delay progressivo baseado nas tentativas
     if (attempts > 0) {
       const delay = Math.min(attempts * 2000, 30000) // Máximo 30 segundos
-      console.log(`⏳ Rate limiting ativo: aguardando ${delay/1000}s devido a ${attempts} tentativas falhadas`)
       
       await new Promise(resolve => setTimeout(resolve, delay))
-    }
-    
-    // Avisar sobre muitas tentativas
-    if (attempts >= 5) {
-      console.warn(`🚨 MUITAS TENTATIVAS FALHADAS (${attempts}). Sistema pode estar sob ataque!`)
     }
     
     try {
@@ -155,10 +148,10 @@ export class CryptoService {
       this.clearFailedAttempts(userId)
       
       return key
-    } catch (error) {
+    } catch (error: any) {
       // Registrar tentativa falhada
       this.recordFailedAttempt(userId)
-      throw error
+      throw new Error('Falha ao derivar a chave criptografica')
     }
   }
 
@@ -259,7 +252,7 @@ export class CryptoService {
       if (onProgress) {
         onProgress(0, `Erro na derivação: ${error.message}`)
       }
-      throw error
+      throw new Error('Falha ao derivar a chave criptografica')
     }
   }
 
@@ -274,8 +267,6 @@ export class CryptoService {
     
     // Converter salt de base64 para Uint8Array
     const saltBytes = Uint8Array.from(atob(salt), c => c.charCodeAt(0))
-    
-    // Removido console.log por segurança - informações sensíveis
     
     try {
       // Passo 1: Usar PBKDF2 para criar uma chave inicial (compatível com Web Crypto)
@@ -336,9 +327,8 @@ export class CryptoService {
       
       return key
       
-    } catch (error: any) {
-      console.error('Erro na derivação de chave:', error)
-      throw error
+    } catch {
+      throw new Error('Falha ao derivar a chave criptografica')
     }
   }
 
@@ -445,10 +435,8 @@ export class CryptoService {
       // Limpar chaves expiradas periodicamente
       this.cleanupExpiredKeys()
       
-      console.log('🔐 Chave armazenada com sucesso. Expira após 1h de inatividade.')
       
-    } catch (error) {
-      console.error('Erro ao armazenar chave:', error)
+    } catch {
       throw new Error('Failed to store cryptographic key securely')
     }
   }
@@ -479,7 +467,6 @@ export class CryptoService {
     })
 
     this.activityListenersSetup = true
-    console.log('🔐 Activity listeners configurados para controle de sessão')
   }
 
   /**
@@ -504,7 +491,6 @@ export class CryptoService {
 
       // Verificar se expirou por OCIOSIDADE REAL do usuário (não apenas tempo desde armazenamento)
       if (this.hasExpiredByInactivity()) {
-        console.warn('🔒 Chave criptográfica expirou por 1 hora de inatividade')
         this.keyStore.delete(storageKey)
         return null
       }
@@ -513,8 +499,7 @@ export class CryptoService {
       // O timestamp de atividade é atualizado pelos listeners
 
       return stored.key
-    } catch (error) {
-      console.error('Erro ao recuperar chave:', error)
+    } catch {
       return null
     }
   }
@@ -558,7 +543,6 @@ export class CryptoService {
   private static cleanupExpiredKeys(): void {
     // Se o usuário estiver inativo por mais de 1 hora, limpar todas as chaves
     if (this.hasExpiredByInactivity()) {
-      console.log('🧹 Limpando chaves expiradas por inatividade')
       this.keyStore.clear()
     }
   }
@@ -583,9 +567,8 @@ export class CryptoService {
       // Converter para base64
       const hashArray = new Uint8Array(hashBuffer)
       return btoa(String.fromCharCode(...Array.from(hashArray)))
-    } catch (error) {
-      console.error('Erro ao criar hash da chave:', error)
-      throw error
+    } catch {
+      throw new Error('Falha ao gerar hash da chave criptografica')
     }
   }
 
@@ -784,7 +767,6 @@ export class CryptoService {
       // Obter usuário atual
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        console.error('Usuário não autenticado')
         return false
       }
 
@@ -796,7 +778,6 @@ export class CryptoService {
         .single()
 
       if (error || !userData?.kdf_salt) {
-        console.error('Erro ao buscar dados KDF:', error)
         return false
       }
 
@@ -810,7 +791,6 @@ export class CryptoService {
       // Obter a chave armazenada na sessão
       const storedKey = await this.getStoredKey()
       if (!storedKey) {
-        console.error('Nenhuma chave armazenada na sessão')
         return false
       }
 
@@ -833,8 +813,7 @@ export class CryptoService {
       }
 
       return result === 0
-    } catch (error) {
-      console.error('Erro ao verificar senha mestre:', error)
+    } catch {
       return false
     }
   }

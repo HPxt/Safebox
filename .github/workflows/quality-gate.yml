@@ -37,6 +37,8 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
     defaults:
       run:
         working-directory: backend

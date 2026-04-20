@@ -129,8 +129,7 @@ const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
       await navigator.clipboard.writeText(password)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (error) {
-      console.error('Erro ao copiar senha:', error)
+    } catch {
     }
   }
 

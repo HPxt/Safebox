@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit'
 import slowDown from 'express-slow-down'
 import Redis from 'ioredis'
 import { config } from '@/config/environment'
+import { redactObject } from '@/security/redaction'
 import { logger } from '@/utils/logger'
 
 // Configuração do Redis para rate limiting distribuído
@@ -12,7 +13,9 @@ if (config.redis.url) {
   try {
     redisClient = new Redis(config.redis.url)
     redisClient.on('error', (err) => {
-      logger.error('Redis connection error:', err)
+      logger.error('Redis connection error', {
+        message: err instanceof Error ? err.message : 'Unknown redis error',
+      })
     })
     redisClient.on('connect', () => {
       logger.info('Redis connected for rate limiting')
@@ -79,11 +82,11 @@ export const loginRateLimit = rateLimit({
   },
   handler: (req: Request, res: Response) => {
     const ip = req.ip || 'unknown'
-    logger.warn(`Rate limit exceeded for login`, {
+    logger.warn('Rate limit exceeded for login', redactObject({
       ip,
       userAgent: req.get('User-Agent'),
       path: req.path
-    })
+    }))
     
     res.status(429).json({
       success: false,
@@ -107,10 +110,10 @@ export const registerRateLimit = rateLimit({
   ...(redisClient ? { store: new RedisStore(redisClient, 'register:') as any } : {}),
   keyGenerator: (req: Request) => req.ip || 'unknown',
   handler: (req: Request, res: Response) => {
-    logger.warn(`Rate limit exceeded for registration`, {
+    logger.warn('Rate limit exceeded for registration', redactObject({
       ip: req.ip,
       userAgent: req.get('User-Agent')
-    })
+    }))
     
     res.status(429).json({
       success: false,
@@ -138,10 +141,10 @@ export const passwordChangeRateLimit = rateLimit({
     return userId ? `user:${userId}` : `ip:${req.ip}`
   },
   handler: (req: Request, res: Response) => {
-    logger.warn(`Rate limit exceeded for password change`, {
+    logger.warn('Rate limit exceeded for password change', redactObject({
       userId: req.user?.userId,
       ip: req.ip
-    })
+    }))
     
     res.status(429).json({
       success: false,
@@ -165,11 +168,11 @@ export const generalRateLimit = rateLimit({
   ...(redisClient ? { store: new RedisStore(redisClient, 'general:') as any } : {}),
   keyGenerator: (req: Request) => req.ip || 'unknown',
   handler: (req: Request, res: Response) => {
-    logger.warn(`General rate limit exceeded`, {
+    logger.warn('General rate limit exceeded', redactObject({
       ip: req.ip,
       path: req.path,
       method: req.method
-    })
+    }))
     
     res.status(429).json({
       success: false,
@@ -211,11 +214,11 @@ export const suspiciousActivityDetector = (req: Request, res: Response, next: Ne
   const isSuspicious = suspiciousPatterns.some(pattern => pattern.test(userAgent))
   
   if (isSuspicious) {
-    logger.warn(`Suspicious user agent detected`, {
+    logger.warn('Suspicious user agent detected', redactObject({
       ip,
       userAgent,
       path: req.path
-    })
+    }))
     
     // Aplicar rate limit mais restritivo para atividade suspeita
     return rateLimit({
@@ -249,11 +252,11 @@ export const vaultRateLimit = rateLimit({
     return userId ? `user:${userId}` : `ip:${req.ip}`
   },
   handler: (req: Request, res: Response) => {
-    logger.warn(`Vault rate limit exceeded`, {
+    logger.warn('Vault rate limit exceeded', redactObject({
       userId: req.user?.userId,
       ip: req.ip,
       operation: req.method + ' ' + req.path
-    })
+    }))
     
     res.status(429).json({
       success: false,
@@ -272,7 +275,7 @@ export const clearRateLimit = async (req: Request, res: Response, next: NextFunc
       const keys = await redisClient.keys(`*${ip}*`)
       if (keys.length > 0) {
         await redisClient.del(...keys)
-        logger.info(`Rate limits cleared for IP: ${ip}`)
+        logger.info('Rate limits cleared in development mode')
       }
     }
     

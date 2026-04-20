@@ -32,6 +32,9 @@ export abstract class ContextAwareAgent {
   protected contextManager: ContextManager;
   protected llmClient: LLMClient;
   protected status: AgentStatus = AgentStatus.IDLE;
+  protected static getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Unknown AI agent error';
+  }
 
   constructor(agentType: AgentType, config?: Partial<AgentConfig>) {
     this.agentType = agentType;
@@ -48,7 +51,7 @@ export abstract class ContextAwareAgent {
 
     logger.info(`${this.agentType} agent initialized`, {
       automationLevel: this.config.automationLevel,
-      schedule: this.config.schedule
+      scheduleConfigured: Boolean(this.config.schedule)
     });
   }
 
@@ -122,8 +125,7 @@ export abstract class ContextAwareAgent {
 
       logger.error(`${this.agentType} agent execution failed`, {
         executionId,
-        error: error.message,
-        stack: error.stack
+        message: ContextAwareAgent.getErrorMessage(error)
       });
 
       return {
@@ -131,7 +133,7 @@ export abstract class ContextAwareAgent {
         executionTime: Date.now() - startTime,
         findings: [],
         actions: [],
-        errors: [error.message],
+        errors: [ContextAwareAgent.getErrorMessage(error)],
         metadata: {
           dataProcessed: 0,
           anomaliesDetected: 0,
@@ -289,7 +291,13 @@ export abstract class ContextAwareAgent {
     };
 
     // TODO: Persistir auditLog no Supabase
-    logger.info(`${this.agentType} execution audited`, auditLog);
+    logger.info(`${this.agentType} execution audited`, {
+      executionId,
+      findingsCount: findings.length,
+      actionsCount: actions.length,
+      actionsExecuted: actions.filter(a => a.executed).length,
+      dataTypesAccessed: auditLog.dataAccessed.length
+    });
   }
 
   /**
@@ -318,7 +326,12 @@ export abstract class ContextAwareAgent {
    */
   updateConfig(newConfig: Partial<AgentConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    logger.info(`${this.agentType} config updated`, newConfig);
+    logger.info(`${this.agentType} config updated`, {
+      enabled: this.config.enabled,
+      automationLevel: this.config.automationLevel,
+      timeout: this.config.timeout,
+      maxRetries: this.config.maxRetries
+    });
   }
 
   // ===== MÉTODOS ABSTRATOS (devem ser implementados pelos agentes específicos) =====

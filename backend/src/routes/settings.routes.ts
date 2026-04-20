@@ -1,7 +1,8 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import { createSupabaseUserClient, supabaseAdmin } from '@/config/database'
+import { createSupabaseUserClient } from '@/config/database'
 import { authenticateSupabaseAccessToken } from '@/middleware/auth.middleware'
+import { logPrivilegedAuditEvent } from '@/security/audit'
 import { requireSupabaseAuthenticatedUser } from '@/security/authorization'
 import { ConflictError, NotFoundError } from '@/security/errors'
 import { asyncHandler, sendSuccess } from '@/security/http'
@@ -77,22 +78,6 @@ const mapSettings = (settings: any) => ({
 
 const createScopedClient = (authToken: string) => createSupabaseUserClient(authToken)
 
-const logSettingsAudit = async (
-  userId: string,
-  eventType: string,
-  eventData: Record<string, unknown>,
-  ipAddress: string | undefined,
-  userAgent: string | undefined,
-) => {
-  await supabaseAdmin.rpc('log_audit_event', {
-    p_user_id: userId,
-    p_event_type: eventType,
-    p_event_data: eventData,
-    p_ip_address: ipAddress,
-    p_user_agent: userAgent,
-  })
-}
-
 router.get('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const scopedClient = createScopedClient(req.authToken!)
@@ -150,16 +135,16 @@ router.put('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) =
     throw error
   }
 
-  await logSettingsAudit(
-    user.userId,
-    'settings_updated',
-    {
+  await logPrivilegedAuditEvent({
+    userId: user.userId,
+    eventType: 'settings_updated',
+    eventData: {
       event: 'user_settings_updated',
       updatedFields: Object.keys(updateData),
     },
-    req.ip,
-    req.get('User-Agent'),
-  )
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent'),
+  })
 
   sendSuccess(res, {
     data: mapSettings(data),

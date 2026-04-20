@@ -1,43 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
 import { config } from './environment'
+import { getPrivilegedSupabase } from '@/config/privilegedDb'
 import { logger } from '@/utils/logger'
 import { AppError } from '@/security/errors'
 
-// Create Supabase client with service role key for backend operations
-export const supabase = createClient<Database>(
-  config.supabase.url,
-  config.supabase.serviceRoleKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-    db: {
-      schema: 'public',
-    },
-    global: {
-      headers: {
-        'X-Client-Info': 'safebox-backend',
-      },
-    },
-  }
-)
+/** @deprecated Prefer getPrivilegedSupabase() or createSupabaseUserClient — service_role bypasses RLS */
+export const supabase = getPrivilegedSupabase()
 
-// Create admin client for administrative operations
-export const supabaseAdmin = createClient<Database>(
-  config.supabase.url,
-  config.supabase.serviceRoleKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-    db: {
-      schema: 'public',
-    },
-  }
-)
+/** @deprecated Alias of supabase — use getPrivilegedSupabase() for new code */
+export const supabaseAdmin = getPrivilegedSupabase()
 
 export const createSupabaseAuthClient = () => createClient<Database>(
   config.supabase.url,
@@ -78,20 +50,25 @@ export const createSupabaseUserClient = (accessToken: string) => createClient<Da
 // Database connection test
 export async function testDatabaseConnection(): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await getPrivilegedSupabase()
       .from('credentials')
       .select('id')
       .limit(1)
 
     if (error && error.code !== 'PGRST116') {
-      logger.error('Database connection test failed:', error)
+      logger.error('Database connection test failed', {
+        code: error.code,
+        message: error.message,
+      })
       return false
     }
 
     logger.info('Database connection successful')
     return true
   } catch (error) {
-    logger.error('Database connection error:', error)
+    logger.error('Database connection error', {
+      message: error instanceof Error ? error.message : 'Unknown database error',
+    })
     return false
   }
 }
@@ -101,7 +78,7 @@ export async function getDatabaseHealth() {
   try {
     const startTime = Date.now()
     
-    const { error } = await supabase
+    const { error } = await getPrivilegedSupabase()
       .from('credentials')
       .select('id')
       .limit(1)
@@ -142,7 +119,9 @@ export async function executeQuery<T = any>(
       expose: true,
     })
   } catch (error) {
-    logger.error('Query execution error:', error)
+    logger.error('Query execution blocked', {
+      code: error instanceof AppError ? error.code : 'UNKNOWN_QUERY_ERROR',
+    })
     return { data: null, error }
   }
 }

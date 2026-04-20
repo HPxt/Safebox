@@ -1,11 +1,12 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import { createSupabaseUserClient, supabaseAdmin } from '@/config/database'
+import { createSupabaseUserClient } from '@/config/database'
 import { VaultBackupRepository } from '@/domain/vault/VaultBackupRepository'
 import { VaultSnapshotRepository } from '@/domain/vault/VaultSnapshotRepository'
 import { VaultSnapshotService } from '@/domain/vault/VaultSnapshotService'
 import { authenticateSupabaseAccessToken } from '@/middleware/auth.middleware'
 import { vaultRateLimit } from '@/middleware/rateLimiting.middleware'
+import { logPrivilegedAuditEvent } from '@/security/audit'
 import { requireSupabaseAuthenticatedUser } from '@/security/authorization'
 import { asyncHandler, sendSuccess } from '@/security/http'
 import { parseIntegerQuery, validateWithSchema } from '@/security/validation'
@@ -41,22 +42,6 @@ const restoreSchema = z.object({
   expectedVersion: z.number().int().min(1).optional(),
 }).strict()
 
-const logVaultAudit = async (
-  userId: string,
-  eventType: string,
-  eventData: Record<string, unknown>,
-  ipAddress: string | undefined,
-  userAgent: string | undefined,
-) => {
-  await supabaseAdmin.rpc('log_audit_event', {
-    p_user_id: userId,
-    p_event_type: eventType,
-    p_event_data: eventData,
-    p_ip_address: ipAddress,
-    p_user_agent: userAgent,
-  })
-}
-
 router.use(vaultRateLimit)
 
 router.get('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
@@ -73,17 +58,17 @@ router.post('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) 
   const vaultService = createVaultService(req.authToken!)
   const createdVault = await vaultService.createVault(user.userId, payload)
 
-  await logVaultAudit(
-    user.userId,
-    'credential_created',
-    {
+  await logPrivilegedAuditEvent({
+    userId: user.userId,
+    eventType: 'credential_created',
+    eventData: {
       event: 'vault_created',
       storageMode: createdVault.storageMode,
       version: createdVault.version,
     },
-    req.ip,
-    req.get('User-Agent'),
-  )
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent'),
+  })
 
   sendSuccess(res, {
     statusCode: 201,
@@ -98,17 +83,17 @@ router.put('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) =
   const vaultService = createVaultService(req.authToken!)
   const updatedVault = await vaultService.updateVault(user.userId, payload)
 
-  await logVaultAudit(
-    user.userId,
-    'credential_updated',
-    {
+  await logPrivilegedAuditEvent({
+    userId: user.userId,
+    eventType: 'credential_updated',
+    eventData: {
       event: 'vault_updated',
       storageMode: updatedVault.storageMode,
       version: updatedVault.version,
     },
-    req.ip,
-    req.get('User-Agent'),
-  )
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent'),
+  })
 
   sendSuccess(res, {
     data: updatedVault,
@@ -122,17 +107,17 @@ router.delete('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res
   const vaultService = createVaultService(req.authToken!)
   const deletedVault = await vaultService.deleteVault(user.userId, expectedVersion)
 
-  await logVaultAudit(
-    user.userId,
-    'credential_deleted',
-    {
+  await logPrivilegedAuditEvent({
+    userId: user.userId,
+    eventType: 'credential_deleted',
+    eventData: {
       event: 'vault_deleted',
       storageMode: deletedVault.storageMode,
       version: deletedVault.version,
     },
-    req.ip,
-    req.get('User-Agent'),
-  )
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent'),
+  })
 
   sendSuccess(res, {
     message: 'Vault deleted successfully',
@@ -152,18 +137,18 @@ router.post('/backup', authenticateSupabaseAccessToken, asyncHandler(async (req,
   const vaultService = createVaultService(req.authToken!)
   const { vault, backup } = await vaultService.createBackup(user.userId)
 
-  await logVaultAudit(
-    user.userId,
-    'credential_updated',
-    {
+  await logPrivilegedAuditEvent({
+    userId: user.userId,
+    eventType: 'credential_updated',
+    eventData: {
       event: 'vault_backup_created',
       backupId: backup.id,
       storageMode: vault.storageMode,
       version: vault.version,
     },
-    req.ip,
-    req.get('User-Agent'),
-  )
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent'),
+  })
 
   sendSuccess(res, {
     statusCode: 201,
@@ -193,18 +178,18 @@ router.post('/restore/:backupId', authenticateSupabaseAccessToken, asyncHandler(
   const vaultService = createVaultService(req.authToken!)
   const restoredVault = await vaultService.restoreBackup(user.userId, backupId, expectedVersion)
 
-  await logVaultAudit(
-    user.userId,
-    'credential_updated',
-    {
+  await logPrivilegedAuditEvent({
+    userId: user.userId,
+    eventType: 'credential_updated',
+    eventData: {
       event: 'vault_restored',
       backupId,
       storageMode: restoredVault.storageMode,
       version: restoredVault.version,
     },
-    req.ip,
-    req.get('User-Agent'),
-  )
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent'),
+  })
 
   sendSuccess(res, {
     data: restoredVault,
@@ -217,17 +202,17 @@ router.get('/export', authenticateSupabaseAccessToken, asyncHandler(async (req, 
   const vaultService = createVaultService(req.authToken!)
   const exportedVault = await vaultService.exportVault(user.userId)
 
-  await logVaultAudit(
-    user.userId,
-    'credential_updated',
-    {
+  await logPrivilegedAuditEvent({
+    userId: user.userId,
+    eventType: 'credential_updated',
+    eventData: {
       event: 'vault_exported',
       storageMode: exportedVault.vault.storageMode,
       version: exportedVault.vault.version,
     },
-    req.ip,
-    req.get('User-Agent'),
-  )
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent'),
+  })
 
   sendSuccess(res, { data: exportedVault })
 }))

@@ -1,9 +1,10 @@
 import { Router } from 'express'
 import crypto from 'crypto'
 import { z } from 'zod'
+import { config } from '@/config/environment'
 import { createSupabaseUserClient } from '@/config/database'
 import { authService } from '@/services/auth.service'
-import { authenticateSupabaseAccessToken, authenticateToken } from '@/middleware/auth.middleware'
+import { authenticateSupabaseAccessToken } from '@/middleware/auth.middleware'
 import {
   loginRateLimit,
   passwordChangeRateLimit,
@@ -11,7 +12,8 @@ import {
   suspiciousActivityDetector,
 } from '@/middleware/rateLimiting.middleware'
 import { bruteForcePrevention } from '@/middleware/security.middleware'
-import { requireAuthenticatedUser, requireSupabaseAuthenticatedUser } from '@/security/authorization'
+import { requireSupabaseAuthenticatedUser } from '@/security/authorization'
+import { AppError } from '@/security/errors'
 import { asyncHandler, sendSuccess } from '@/security/http'
 import { validateWithSchema } from '@/security/validation'
 import {
@@ -59,6 +61,17 @@ const hashBackupCode = (code: string): string => {
 
 const createScopedClient = (authToken: string) => createSupabaseUserClient(authToken)
 
+const ensureLegacyBackendAuthEnabled = () => {
+  if (!config.features.legacyBackendAuth) {
+    throw new AppError(
+      'Legacy backend auth is disabled. Use Supabase authentication flows instead.',
+      410,
+      'LEGACY_BACKEND_AUTH_DISABLED',
+      { expose: true },
+    )
+  }
+}
+
 const logTwoFactorAttempt = async (
   authToken: string,
   userId: string,
@@ -69,17 +82,18 @@ const logTwoFactorAttempt = async (
 ): Promise<void> => {
   const scopedClient = createScopedClient(authToken)
   await scopedClient
-    .from('two_factor_attempts' as never)
+    .from('two_factor_attempts')
     .insert({
       user_id: userId,
       success,
       error_message: errorMessage ?? null,
       ip_address: ipAddress ?? null,
       user_agent: userAgent ?? null,
-    } as never)
+    })
 }
 
 router.post('/register', suspiciousActivityDetector, registerRateLimit, asyncHandler(async (req, res) => {
+  ensureLegacyBackendAuthEnabled()
   const { email, password, fullName } = validateWithSchema(registerSchema, req.body)
   const result = await authService.register(
     email,
@@ -97,6 +111,7 @@ router.post('/register', suspiciousActivityDetector, registerRateLimit, asyncHan
 }))
 
 router.post('/login', bruteForcePrevention, suspiciousActivityDetector, loginRateLimit, asyncHandler(async (req, res) => {
+  ensureLegacyBackendAuthEnabled()
   const { email, password } = validateWithSchema(loginSchema, req.body)
   const result = await authService.login(email, password, req.ip, req.get('User-Agent'))
 
@@ -106,9 +121,9 @@ router.post('/login', bruteForcePrevention, suspiciousActivityDetector, loginRat
   })
 }))
 
-router.post('/logout', authenticateToken, asyncHandler(async (req, res) => {
-  const user = requireAuthenticatedUser(req)
-  await authService.logout(user.userId, user.sessionId)
+router.post('/logout', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+  const user = requireSupabaseAuthenticatedUser(req)
+  await authService.logoutAllSessions(user.userId, req.authToken)
 
   sendSuccess(res, {
     message: 'Logout successful',
@@ -117,7 +132,7 @@ router.post('/logout', authenticateToken, asyncHandler(async (req, res) => {
 
 router.get('/profile', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
-  const profile = await authService.getProfile(user.userId)
+  const profile = await authService.getProfile(user.userId, req.authToken)
 
   sendSuccess(res, { data: profile })
 }))
@@ -130,7 +145,7 @@ router.put('/profile', authenticateSupabaseAccessToken, asyncHandler(async (req,
     ...(validatedData.avatarUrl !== undefined ? { avatar_url: validatedData.avatarUrl } : {}),
   }
 
-  const profile = await authService.updateProfile(user.userId, updates)
+  const profile = await authService.updateProfile(user.userId, updates, req.authToken)
 
   sendSuccess(res, {
     data: profile,
@@ -142,20 +157,17 @@ router.post('/change-password', authenticateSupabaseAccessToken, passwordChangeR
   const user = requireSupabaseAuthenticatedUser(req)
   const { currentPassword, newPassword } = validateWithSchema(changePasswordSchema, req.body)
 
-  await authService.changePassword(user.userId, currentPassword, newPassword)
+  await authService.changePassword(user.userId, currentPassword, newPassword, req.authToken)
 
   sendSuccess(res, {
     message: 'Password changed successfully. Please login again on your devices.',
   })
 }))
 
-router.post('/refresh-token', authenticateToken, asyncHandler(async (req, res) => {
-  const user = requireAuthenticatedUser(req)
-  const token = await authService.refreshToken(user.userId, user.sessionId)
-
+router.post('/refresh-token', authenticateSupabaseAccessToken, asyncHandler(async (_req, res) => {
   sendSuccess(res, {
-    data: { token },
-    message: 'Token refreshed successfully',
+    data: { managedBy: 'supabase-session' },
+    message: 'Session refresh is managed by Supabase. No backend refresh token is issued.',
   })
 }))
 
@@ -308,7 +320,7 @@ router.post('/2fa/disable', authenticateSupabaseAccessToken, asyncHandler(async 
 
 router.delete('/account', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
-  await authService.deleteAccount(user.userId)
+  await authService.deleteAccount(user.userId, req.authToken)
 
   sendSuccess(res, {
     message: 'Account deleted successfully',

@@ -123,4 +123,58 @@ describe('importExportUtils', () => {
       totpSecret: 'TOTP-ATUAL',
     }))
   })
+
+  it('preserves hidden, favorite and card fields in backup-style round trips', () => {
+    const snapshot = [
+      buildCredential({
+        id: 'card-1',
+        title: 'Cartao principal',
+        itemType: 'card',
+        encryptedPassword: '',
+        isFavorite: true,
+        isHidden: true,
+        cardHolderName: 'Quantum Dark',
+        cardNumber: '4111111111111111',
+        cardBrand: 'visa',
+        cardExpMonth: '12',
+        cardExpYear: '2030',
+        cardCvv: '999',
+      }),
+    ]
+
+    const exported = snapshot.map(toExportCredential)
+    const importedSnapshot = exported.map((item, index) => buildCredential({
+      id: `roundtrip-${index + 1}`,
+      title: item.title,
+      username: item.username,
+      encryptedPassword: item.password,
+      website: item.url,
+      notes: item.notes,
+      itemType: item.itemType,
+      totpSecret: item.totp ?? null,
+      isFavorite: item.favorite,
+      isHidden: item.isHidden,
+      cardHolderName: item.cardHolderName,
+      cardNumber: item.cardNumber,
+      cardBrand: item.cardBrand,
+      cardExpMonth: item.cardExpMonth,
+      cardExpYear: item.cardExpYear,
+      cardCvv: item.cardCvv,
+    }))
+
+    const roundTrip = mergeCredentialSnapshots([], importedSnapshot)
+
+    expect(roundTrip.importedCount).toBe(1)
+    expect(roundTrip.mergedCredentials[0]).toEqual(expect.objectContaining({
+      isFavorite: true,
+      isHidden: true,
+      itemType: 'card',
+      cardHolderName: 'Quantum Dark',
+      cardNumber: '4111111111111111',
+      cardBrand: 'visa',
+      cardExpMonth: '12',
+      cardExpYear: '2030',
+      cardCvv: '999',
+    }))
+  })
 })

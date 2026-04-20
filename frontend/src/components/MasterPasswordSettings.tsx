@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Shield, Lock, AlertCircle, CheckCircle } from 'lucide-react'
 import CryptoService from '../services/cryptoService'
+import { credentialsService } from '../services/credentialsService'
 import { supabase } from '../config/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -85,8 +86,7 @@ const MasterPasswordSettings: React.FC = () => {
             setCurrentLevel(currentLevelObj.label)
           }
         }
-      } catch (error) {
-        console.error('Erro ao carregar nível atual:', error)
+      } catch {
       }
     }
 
@@ -156,6 +156,16 @@ const MasterPasswordSettings: React.FC = () => {
       }
 
       // Gerar novo salt
+      const currentKey = await CryptoService.deriveKeyWithRateLimit(
+        currentPassword,
+        userData.kdf_salt,
+        userData.kdf_params,
+        user.id
+      )
+
+      await CryptoService.storeKey(currentKey)
+      const currentCredentials = await credentialsService.getCredentials()
+
       const newSalt = CryptoService.generateSalt()
       
       // Derivar nova chave com os parâmetros selecionados
@@ -172,70 +182,36 @@ const MasterPasswordSettings: React.FC = () => {
 
       const newKeyHash = await CryptoService.hashKey(newKey)
 
-      // Re-criptografar todas as credenciais com a nova chave
-      const { data: credentials } = await supabase
-        .from('credentials')
-        .select('*')
-        .eq('user_id', user.id)
-
-      if (credentials && credentials.length > 0) {
-        // Descriptografar com a chave antiga e re-criptografar com a nova
-        const currentKey = await CryptoService.deriveKeyWithRateLimit(
-          currentPassword,
-          userData.kdf_salt,
-          userData.kdf_params,
-          user.id
-        )
-
-        for (const cred of credentials) {
-          try {
-            // Descriptografar com chave antiga
-            const decryptedPassword = await CryptoService.decrypt(
-              cred.encrypted_password,
-              currentKey,
-              cred.nonce
-            )
-
-            // Re-criptografar com nova chave
-            const { encrypted, nonce } = await CryptoService.encrypt(
-              decryptedPassword,
-              newKey
-            )
-
-            // Atualizar no banco
-            await supabase
-              .from('credentials')
-              .update({
-                encrypted_password: encrypted,
-                nonce: nonce
-              })
-              .eq('id', cred.id)
-          } catch (error) {
-            console.error(`Erro ao re-criptografar credencial ${cred.id}:`, error)
-          }
-        }
-      }
-
-      // Atualizar parâmetros do usuário
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          kdf_salt: newSalt,
-          kdf_params: {
-            algorithm: 'argon2id',
-            memorySize: selectedLevel.memorySize,
-            iterations: selectedLevel.iterations,
-            parallelism: 4,
-            hashLength: 32
-          },
-          key_hash: newKeyHash
-        })
-        .eq('id', user.id)
-
-      if (updateError) throw updateError
-
-      // Armazenar nova chave na sessão
+      // Recriptografar sempre a partir do snapshot canônico atual e fazer rollback
+      // caso a atualização do perfil criptográfico falhe.
       await CryptoService.storeKey(newKey)
+
+      try {
+        await credentialsService.replaceCredentialsSnapshot(currentCredentials)
+
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            kdf_salt: newSalt,
+            kdf_params: {
+              algorithm: 'argon2id',
+              memorySize: selectedLevel.memorySize,
+              iterations: selectedLevel.iterations,
+              parallelism: 4,
+              hashLength: 32
+            },
+            key_hash: newKeyHash
+          })
+          .eq('id', user.id)
+
+        if (updateError) {
+          throw updateError
+        }
+      } catch (rotationError) {
+        await CryptoService.storeKey(currentKey)
+        await credentialsService.replaceCredentialsSnapshot(currentCredentials)
+        throw rotationError
+      }
 
       setSuccess(`Senha mestre alterada com sucesso! Nível de segurança: ${selectedLevel.label}`)
       setCurrentLevel(selectedLevel.label)
@@ -244,9 +220,9 @@ const MasterPasswordSettings: React.FC = () => {
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-    } catch (err: any) {
-      console.error('Erro ao alterar senha mestre:', err)
-      setError(err.message || 'Erro ao alterar senha mestre')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao alterar senha mestre'
+      setError(message)
     } finally {
       setLoading(false)
     }

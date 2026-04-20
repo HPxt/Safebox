@@ -55,6 +55,7 @@ dump.rdb
 
 # Supabase local
 .supabase/
+/supabase/.temp/
 
 # Sensitive docs
 docs/.supabase-credentials.md

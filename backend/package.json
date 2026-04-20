@@ -21,6 +21,8 @@
     "test:supabase": "tsx src/scripts/test-supabase.ts",
     "health-check": "tsx src/scripts/health-check.ts",
     "db:setup": "echo 'Execute o SQL do arquivo database-optimized.sql no Supabase SQL Editor'",
+    "db:security-inventory": "echo 'Run docs/sql/db-security-inventory.sql in the Supabase SQL editor, then fill docs/reports/db-security-phase-01.md'",
+    "test:db-security-integration": "jest --runInBand src/__tests__/db-security.integration.test.ts",
     "generate:jwt": "tsx src/scripts/generate-jwt-secret.ts",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",

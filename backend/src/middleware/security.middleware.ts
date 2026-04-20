@@ -94,7 +94,7 @@ export const bruteForcePrevention = (req: Request, res: Response, next: NextFunc
       { reason: 'Account locked due to failed login attempts', remainingMinutes: remainingTime },
       req.ip,
       req.get('User-Agent')
-    ).catch(console.error)
+    ).catch(() => undefined)
 
     return res.status(423).json({
       success: false,
@@ -127,7 +127,7 @@ export const recordFailedLogin = (clientId: string, userId?: string) => {
       clientId,
       undefined,
       userId
-    ).catch(console.error)
+    ).catch(() => undefined)
   }
 
   failedLoginAttempts.set(clientId, attempt)
@@ -189,7 +189,7 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction) 
       { reason: 'Invalid or missing CSRF token' },
       req.ip,
       req.get('User-Agent')
-    ).catch(console.error)
+    ).catch(() => undefined)
 
     return res.status(403).json({
       success: false,

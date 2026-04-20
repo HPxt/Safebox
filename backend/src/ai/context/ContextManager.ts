@@ -21,6 +21,8 @@ import { logger } from '../../utils/logger';
 
 export class ContextManager {
   private static readonly DOCS_BASE_PATH = path.join(__dirname, '../../../../docs/implementacao-ia');
+  private static readonly getErrorMessage = (error: unknown): string =>
+    error instanceof Error ? error.message : 'Unknown context manager error';
 
   // Mapeamento de documentos obrigatórios por agente
   private static readonly REQUIRED_DOCS: Record<AgentType, string[]> = {
@@ -112,10 +114,10 @@ export class ContextManager {
 
     } catch (error: any) {
       logger.error(`Failed to load context for ${agentType}`, {
-        error: error.message
+        message: ContextManager.getErrorMessage(error)
       });
 
-      throw new Error(`Context loading failed: ${error.message}`);
+      throw new Error(`Context loading failed: ${ContextManager.getErrorMessage(error)}`);
     }
   }
 
@@ -138,8 +140,8 @@ export class ContextManager {
 
     } catch (error: any) {
       logger.error(`Failed to load document ${fileName}`, {
-        error: error.message,
-        path: filePath
+        message: ContextManager.getErrorMessage(error),
+        document: fileName
       });
 
       throw new Error(`Document ${fileName} not found or unreadable`);
@@ -269,7 +271,10 @@ export class ContextManager {
       const stats = await fs.stat(filePath);
       return stats.mtime > lastLoadedAt;
     } catch (error) {
-      logger.error(`Failed to check document change for ${fileName}`, { error });
+      logger.error(`Failed to check document change for ${fileName}`, {
+        message: ContextManager.getErrorMessage(error),
+        document: fileName
+      });
       return false;
     }
   }
@@ -319,7 +324,9 @@ Context Summary:
       const files = await fs.readdir(ContextManager.DOCS_BASE_PATH);
       return files.filter(f => f.endsWith('.md'));
     } catch (error) {
-      logger.error('Failed to list available documents', { error });
+      logger.error('Failed to list available documents', {
+        message: ContextManager.getErrorMessage(error)
+      });
       return [];
     }
   }

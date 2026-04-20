@@ -41,8 +41,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       setLoading(true)
       const prefs = await settingsService.getPreferences()
       setPreferences(prefs)
-    } catch (error) {
-      console.error('Erro ao carregar preferências:', error)
+    } catch {
     } finally {
       setLoading(false)
     }
@@ -56,7 +55,6 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       // Salvar no banco
       await settingsService.savePreferences(updates)
     } catch (error) {
-      console.error('Erro ao atualizar preferências:', error)
       // Reverter em caso de erro
       await loadPreferences()
       throw error

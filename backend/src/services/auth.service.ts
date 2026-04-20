@@ -2,7 +2,15 @@ import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import type { SignOptions } from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
-import { createSupabaseAuthClient, supabase } from '@/config/database'
+import { createSupabaseAuthClient, createSupabaseUserClient } from '@/config/database'
+import {
+  getPrivilegedSupabase,
+  privilegedRpcUpdateUserLastLogin,
+  privilegedUserSessionsInsert,
+  privilegedUserSessionsListActiveIds,
+  privilegedUserSessionsSelectActive,
+  privilegedUserSessionsUpdate,
+} from '@/config/privilegedDb'
 import { config } from '@/config/environment'
 import {
   AppError,
@@ -12,6 +20,7 @@ import {
   ValidationError,
 } from '@/security/errors'
 import { validatePasswordStrength, recordFailedLogin, clearFailedLogins } from '@/middleware/security.middleware'
+import type { Database } from '@/types/database'
 import { AuthUser, UserUpdate } from '@/types/database'
 import { logger, logAuditEvent } from '@/utils/logger'
 
@@ -46,6 +55,21 @@ const parseDurationToMs = (value: string): number => {
 }
 
 export class AuthService {
+  private getDataClient(accessToken?: string) {
+    return accessToken ? createSupabaseUserClient(accessToken) : getPrivilegedSupabase()
+  }
+
+  private ensureLegacyBackendAuthEnabled(): void {
+    if (!config.features.legacyBackendAuth) {
+      throw new AppError(
+        'Legacy backend auth is disabled. Use Supabase authentication flows instead.',
+        410,
+        'LEGACY_BACKEND_AUTH_DISABLED',
+        { expose: true },
+      )
+    }
+  }
+
   async register(
     email: string,
     password: string,
@@ -53,6 +77,7 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<{ user: AuthUser; token: string }> {
+    this.ensureLegacyBackendAuthEnabled()
     const passwordValidation = validatePasswordStrength(password)
     if (!passwordValidation.isValid) {
       throw new ValidationError('Password does not meet security requirements', {
@@ -72,7 +97,7 @@ export class AuthService {
     })
 
     if (authError) {
-      logger.warn('User registration failed', { message: authError.message })
+      logger.warn('User registration failed')
       throw new ConflictError('Unable to register with the provided email')
     }
 
@@ -80,7 +105,13 @@ export class AuthService {
       throw new AppError('User creation failed', 500, 'REGISTRATION_FAILED')
     }
 
-    const token = await this.issueSession(authData.user.id, email, ipAddress, userAgent)
+    const token = await this.issueSession(
+      authData.user.id,
+      email,
+      ipAddress,
+      userAgent,
+      authData.session?.access_token,
+    )
 
     await logAuditEvent('login_success', authData.user.id, {
       event: 'user_registered',
@@ -105,6 +136,7 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<{ user: AuthUser; token: string }> {
+    this.ensureLegacyBackendAuthEnabled()
     const authClient = createSupabaseAuthClient()
     const { data: authData, error: authError } = await authClient.auth.signInWithPassword({
       email,
@@ -123,16 +155,20 @@ export class AuthService {
       throw new UnauthorizedError('Invalid email or password')
     }
 
-    const profile = await this.getProfile(authData.user.id)
-    const token = await this.issueSession(authData.user.id, profile.email, ipAddress, userAgent)
+    const profile = await this.getProfile(authData.user.id, authData.session?.access_token)
+    const token = await this.issueSession(
+      authData.user.id,
+      profile.email,
+      ipAddress,
+      userAgent,
+      authData.session?.access_token,
+    )
 
     if (ipAddress) {
       clearFailedLogins(ipAddress)
     }
 
-    await supabase.rpc('update_user_last_login', {
-      p_user_id: authData.user.id,
-    })
+    await privilegedRpcUpdateUserLastLogin(authData.user.id)
 
     await logAuditEvent('login_success', authData.user.id, {
       event: 'login_success',
@@ -153,8 +189,29 @@ export class AuthService {
     })
   }
 
-  async getProfile(userId: string): Promise<AuthUser> {
-    const { data, error } = await supabase
+  async logoutAllSessions(userId: string, accessToken?: string): Promise<void> {
+    const client = accessToken ? createSupabaseUserClient(accessToken) : null
+    if (client) {
+      const { error } = await client
+        .from('user_sessions')
+        .update({ is_active: false })
+        .eq('user_id', userId)
+      if (error) {
+        throw error
+      }
+    } else {
+      await privilegedUserSessionsUpdate({ userId }, { is_active: false })
+    }
+
+    await logAuditEvent('vault_lock', userId, {
+      event: 'user_logout',
+      scope: 'all_sessions',
+    })
+  }
+
+  async getProfile(userId: string, accessToken?: string): Promise<AuthUser> {
+    const dataClient = this.getDataClient(accessToken)
+    const { data, error } = await dataClient
       .from('users')
       .select('*')
       .eq('id', userId)
@@ -176,8 +233,9 @@ export class AuthService {
     }
   }
 
-  async updateProfile(userId: string, updates: Partial<UserUpdate>): Promise<AuthUser> {
-    const { data, error } = await supabase
+  async updateProfile(userId: string, updates: Partial<UserUpdate>, accessToken?: string): Promise<AuthUser> {
+    const dataClient = this.getDataClient(accessToken)
+    const { data, error } = await dataClient
       .from('users')
       .update(updates)
       .eq('id', userId)
@@ -205,7 +263,7 @@ export class AuthService {
     }
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  async changePassword(userId: string, currentPassword: string, newPassword: string, accessToken?: string): Promise<void> {
     const passwordValidation = validatePasswordStrength(newPassword)
     if (!passwordValidation.isValid) {
       throw new ValidationError('New password does not meet security requirements', {
@@ -213,7 +271,8 @@ export class AuthService {
       })
     }
 
-    const { data: userData, error: userError } = await supabase
+    const dataClient = this.getDataClient(accessToken)
+    const { data: userData, error: userError } = await dataClient
       .from('users')
       .select('email')
       .eq('id', userId)
@@ -241,10 +300,18 @@ export class AuthService {
       throw new AppError('Failed to update password', 500, 'PASSWORD_CHANGE_FAILED')
     }
 
-    await supabase
-      .from('user_sessions')
-      .update({ is_active: false })
-      .eq('user_id', userId)
+    const sessionClient = accessToken ? createSupabaseUserClient(accessToken) : null
+    if (sessionClient) {
+      const { error: sessionError } = await sessionClient
+        .from('user_sessions')
+        .update({ is_active: false })
+        .eq('user_id', userId)
+      if (sessionError) {
+        throw sessionError
+      }
+    } else {
+      await privilegedUserSessionsUpdate({ userId }, { is_active: false })
+    }
 
     await logAuditEvent('password_changed', userId, {
       event: 'password_changed',
@@ -252,6 +319,7 @@ export class AuthService {
   }
 
   async verifyToken(token: string): Promise<TokenPayload> {
+    this.ensureLegacyBackendAuthEnabled()
     try {
       const decoded = jwt.verify(token, config.jwt.secret) as TokenPayload
 
@@ -262,15 +330,14 @@ export class AuthService {
       await this.ensureSessionIsActive(decoded.userId, decoded.sessionId, token)
 
       return decoded
-    } catch (error) {
-      logger.warn('Token verification failed', {
-        message: error instanceof Error ? error.message : 'unknown',
-      })
+    } catch {
+      logger.warn('Token verification failed')
       throw new UnauthorizedError('Invalid or expired token')
     }
   }
 
   async refreshToken(userId: string, sessionId: string): Promise<string> {
+    this.ensureLegacyBackendAuthEnabled()
     const profile = await this.getProfile(userId)
     const newToken = this.generateToken({
       userId,
@@ -282,13 +349,15 @@ export class AuthService {
     return newToken
   }
 
-  async deleteAccount(userId: string): Promise<void> {
-    await supabase
+  async deleteAccount(userId: string, accessToken?: string): Promise<void> {
+    const dataClient = this.getDataClient(accessToken)
+
+    await dataClient
       .from('users')
       .update({ status: 'deleted' })
       .eq('id', userId)
 
-    await supabase
+    await dataClient
       .from('user_sessions')
       .update({ is_active: false })
       .eq('user_id', userId)
@@ -303,35 +372,40 @@ export class AuthService {
     email: string,
     ipAddress?: string,
     userAgent?: string,
+    supabaseAccessToken?: string,
   ): Promise<string> {
     const sessionId = uuidv4()
     const token = this.generateToken({ userId, email, sessionId })
 
-    await supabase
-      .from('user_sessions')
-      .insert({
-        id: sessionId,
-        user_id: userId,
-        session_token: this.hashToken(token),
-        expires_at: new Date(Date.now() + parseDurationToMs(config.jwt.expiresIn)).toISOString(),
-        ip_address: ipAddress ?? null,
-        user_agent: userAgent ?? null,
-        is_active: true,
-      })
+    const row: Database['public']['Tables']['user_sessions']['Insert'] = {
+      id: sessionId,
+      user_id: userId,
+      session_token: this.hashToken(token),
+      expires_at: new Date(Date.now() + parseDurationToMs(config.jwt.expiresIn)).toISOString(),
+      ip_address: ipAddress ?? null,
+      user_agent: userAgent ?? null,
+      is_active: true,
+    }
 
-    await this.enforceConcurrentSessionLimit(userId)
+    if (supabaseAccessToken) {
+      const { error } = await createSupabaseUserClient(supabaseAccessToken)
+        .from('user_sessions')
+        .insert(row)
+      if (error) {
+        throw error
+      }
+    } else {
+      await privilegedUserSessionsInsert(row)
+    }
+
+    await this.enforceConcurrentSessionLimit(userId, supabaseAccessToken)
     return token
   }
 
   private async ensureSessionIsActive(userId: string, sessionId: string, token: string): Promise<void> {
-    const { data: session, error } = await supabase
-      .from('user_sessions')
-      .select('id, session_token, expires_at, is_active')
-      .eq('id', sessionId)
-      .eq('user_id', userId)
-      .maybeSingle()
+    const session = await privilegedUserSessionsSelectActive(userId, sessionId)
 
-    if (error || !session || !session.is_active) {
+    if (!session || !session.is_active) {
       throw new UnauthorizedError('Session is not active')
     }
 
@@ -344,45 +418,54 @@ export class AuthService {
       throw new UnauthorizedError('Session expired')
     }
 
-    await supabase
-      .from('user_sessions')
-      .update({ last_activity_at: new Date().toISOString() })
-      .eq('id', sessionId)
-      .eq('user_id', userId)
+    await privilegedUserSessionsUpdate(
+      { userId, sessionId },
+      { last_activity_at: new Date().toISOString() },
+    )
   }
 
   private async revokeSession(userId: string, sessionId: string): Promise<void> {
-    await supabase
-      .from('user_sessions')
-      .update({ is_active: false })
-      .eq('id', sessionId)
-      .eq('user_id', userId)
+    await privilegedUserSessionsUpdate({ userId, sessionId }, { is_active: false })
   }
 
   private async persistSessionToken(userId: string, sessionId: string, token: string): Promise<void> {
-    const { error } = await supabase
-      .from('user_sessions')
-      .update({
-        session_token: this.hashToken(token),
-        expires_at: new Date(Date.now() + parseDurationToMs(config.jwt.expiresIn)).toISOString(),
-        last_activity_at: new Date().toISOString(),
-        is_active: true,
-      })
-      .eq('id', sessionId)
-      .eq('user_id', userId)
-
-    if (error) {
+    try {
+      await privilegedUserSessionsUpdate(
+        { userId, sessionId },
+        {
+          session_token: this.hashToken(token),
+          expires_at: new Date(Date.now() + parseDurationToMs(config.jwt.expiresIn)).toISOString(),
+          last_activity_at: new Date().toISOString(),
+          is_active: true,
+        },
+      )
+    } catch {
       throw new AppError('Failed to refresh session', 500, 'SESSION_REFRESH_FAILED')
     }
   }
 
-  private async enforceConcurrentSessionLimit(userId: string): Promise<void> {
-    const { data: sessions, error } = await supabase
-      .from('user_sessions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .order('last_activity_at', { ascending: false })
+  private async enforceConcurrentSessionLimit(userId: string, supabaseAccessToken?: string): Promise<void> {
+    const scoped = supabaseAccessToken ? createSupabaseUserClient(supabaseAccessToken) : null
+
+    let sessions: { id: string }[] | null = null
+    let error: { message: string } | null = null
+
+    if (scoped) {
+      const result = await scoped
+        .from('user_sessions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('last_activity_at', { ascending: false })
+      sessions = result.data
+      error = result.error
+    } else {
+      try {
+        sessions = await privilegedUserSessionsListActiveIds(userId)
+      } catch (e) {
+        error = e instanceof Error ? e : new Error('session list failed')
+      }
+    }
 
     if (error || !sessions || sessions.length <= config.session.maxConcurrentSessions) {
       return
@@ -390,14 +473,24 @@ export class AuthService {
 
     const overflowIds = sessions
       .slice(config.session.maxConcurrentSessions)
-      .map(session => session.id)
+      .map(s => s.id)
 
     if (overflowIds.length > 0) {
-      await supabase
-        .from('user_sessions')
-        .update({ is_active: false })
-        .in('id', overflowIds)
-        .eq('user_id', userId)
+      if (scoped) {
+        const { error: uerr } = await scoped
+          .from('user_sessions')
+          .update({ is_active: false })
+          .in('id', overflowIds)
+          .eq('user_id', userId)
+        if (uerr) {
+          throw uerr
+        }
+      } else {
+        await privilegedUserSessionsUpdate(
+          { userId, sessionIds: overflowIds },
+          { is_active: false },
+        )
+      }
     }
   }
 

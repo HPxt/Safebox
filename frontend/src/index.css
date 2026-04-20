@@ -109,11 +109,13 @@
   scrollbar-width: thin;
 }
 
-/* Dark mode scrollbar para Firefox */
-@media (prefers-color-scheme: dark) {
-  .scrollbar-thin {
-    scrollbar-color: #52525b #3f3f46;
-  }
+/* Scrollbar para Firefox alinhada ao tema por classe */
+.scrollbar-thin {
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+
+.dark .scrollbar-thin {
+  scrollbar-color: #52525b #3f3f46;
 }
 
 /* Garantir que inputs tenham cor de texto visível */
@@ -203,7 +205,7 @@ input[type="checkbox"].text-amber-600:checked {
   @apply text-gray-400 dark:text-gray-500;
 }
 
-/* Fix para páginas de login/registro - sempre tema claro */
+/* Inputs em páginas com gradiente respeitam o tema atual */
 .bg-gradient-to-br input,
 .bg-gradient-to-br textarea,
 .bg-gradient-to-br select {
@@ -212,10 +214,25 @@ input[type="checkbox"].text-amber-600:checked {
   -webkit-text-fill-color: #1f2937 !important;
 }
 
+.dark .bg-gradient-to-br input,
+.dark .bg-gradient-to-br textarea,
+.dark .bg-gradient-to-br select {
+  background-color: #3f3f46 !important;
+  color: #fafafa !important;
+  border-color: #52525b !important;
+  -webkit-text-fill-color: #fafafa !important;
+}
+
 .bg-gradient-to-br input::placeholder,
 .bg-gradient-to-br textarea::placeholder {
   color: #9ca3af !important;
   -webkit-text-fill-color: #9ca3af !important;
+}
+
+.dark .bg-gradient-to-br input::placeholder,
+.dark .bg-gradient-to-br textarea::placeholder {
+  color: #71717a !important;
+  -webkit-text-fill-color: #71717a !important;
 }
 
 /* Input focus rings */

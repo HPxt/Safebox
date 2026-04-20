@@ -5,8 +5,10 @@ describe('redaction', () => {
     const payload = redactObject({
       email: 'user@example.com',
       password: 'super-secret',
+      ip: '127.0.0.1',
       nested: {
         accessToken: 'token-value',
+        userAgent: 'Mozilla/5.0',
         safe: 'ok',
       },
     })
@@ -14,8 +16,10 @@ describe('redaction', () => {
     expect(payload).toEqual({
       email: 'user@example.com',
       password: REDACTION_PLACEHOLDER,
+      ip: REDACTION_PLACEHOLDER,
       nested: {
         accessToken: REDACTION_PLACEHOLDER,
+        userAgent: REDACTION_PLACEHOLDER,
         safe: 'ok',
       },
     })

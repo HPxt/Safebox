@@ -25,13 +25,11 @@ class FoldersService {
         .order('position', { ascending: true })
 
       if (error) {
-        console.error('Error fetching folders:', error)
         throw error
       }
 
       return data || []
-    } catch (error) {
-      console.error('Error in getFolders:', error)
+    } catch {
       return []
     }
   }
@@ -53,7 +51,6 @@ class FoldersService {
       .single()
 
     if (error) {
-      console.error('Error creating folder:', error)
       throw error
     }
 
@@ -75,7 +72,6 @@ class FoldersService {
       .single()
 
     if (error) {
-      console.error('Error updating folder:', error)
       throw error
     }
 
@@ -95,7 +91,6 @@ class FoldersService {
       .eq('id', id)
 
     if (error) {
-      console.error('Error deleting folder:', error)
       throw new Error('Erro ao excluir pasta')
     }
   }
@@ -117,7 +112,6 @@ class FoldersService {
       .eq('id', folderId)
 
     if (error) {
-      console.error('Error moving folder:', error)
       throw error
     }
   }

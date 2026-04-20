@@ -38,8 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             lastLoginAt: session.user.last_sign_in_at,
           })
         }
-      } catch (error) {
-        console.error('Erro ao obter sessao inicial:', error)
+      } catch {
       }
       setLoading(false)
     }

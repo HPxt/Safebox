@@ -77,8 +77,7 @@ const Dashboard: React.FC = () => {
         try {
           const isEnabled = await TwoFactorService.check2FAStatus(user.id)
           setHas2FAEnabled(isEnabled)
-        } catch (error) {
-          console.error('❌ Erro ao verificar status 2FA:', error)
+        } catch {
           setHas2FAEnabled(false)
         }
       }
@@ -114,8 +113,7 @@ const Dashboard: React.FC = () => {
           setIsFirstTimeSetup(false)
           setShowMasterPasswordModal(true)
         }
-      } catch (error) {
-        console.error('Erro ao verificar configuração de criptografia:', error)
+      } catch {
       } finally {
         setLoading(false)
       }
@@ -148,11 +146,9 @@ const Dashboard: React.FC = () => {
       if (Array.isArray(data)) {
         setCredentials(data)
       } else {
-        console.error('Dados recebidos nao sao um array valido')
         setCredentials([])
       }
-    } catch (error) {
-      console.error('Erro ao buscar credenciais:', error)
+    } catch {
       setCredentials([])
     } finally {
       setLoading(false)
@@ -193,16 +189,14 @@ const Dashboard: React.FC = () => {
     try {
       await navigator.clipboard.writeText(text)
       // Aqui você pode adicionar uma notificação de sucesso
-    } catch (error) {
-      console.error('Erro ao copiar:', error)
+    } catch {
     }
   }
 
   const handleLogout = async () => {
     try {
       await signOut()
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error)
+    } catch {
     }
   }
 
@@ -294,7 +288,6 @@ const Dashboard: React.FC = () => {
       await fetchCredentials()
       handleCloseModal()
     } catch (error: any) {
-      console.error('Erro ao salvar credencial:', error)
       
       // Tratar erro específico de vault bloqueado
       if (error?.message?.includes('Vault está bloqueado') || error?.message?.includes('bloqueado')) {
@@ -420,7 +413,6 @@ const Dashboard: React.FC = () => {
       await fetchCredentials()
       setShowItemModal(false)
     } catch (error: any) {
-      console.error('Erro ao salvar item:', error)
       
       if (error?.message?.includes('Vault está bloqueado') || error?.message?.includes('bloqueado')) {
         setShowItemModal(false)
@@ -452,7 +444,6 @@ const Dashboard: React.FC = () => {
       await credentialsService.deleteCredential(id)
       await fetchCredentials()
     } catch (error: any) {
-      console.error('Erro ao deletar credencial:', error)
       
       // Tratar erro de vault bloqueado
       if (error?.message?.includes('Vault está bloqueado') || error?.message?.includes('bloqueado')) {
@@ -480,7 +471,6 @@ const Dashboard: React.FC = () => {
       // Encontrar a credencial atual
       const credential = credentials.find(c => c.id === id)
       if (!credential) {
-        console.error('Credencial não encontrada')
         return
       }
 
@@ -501,7 +491,6 @@ const Dashboard: React.FC = () => {
       // Recarregar credenciais
       await fetchCredentials()
     } catch (error: any) {
-      console.error('Erro ao alterar favorito:', error)
       
       // Tratar erro de vault bloqueado
       if (error?.message?.includes('Vault está bloqueado') || error?.message?.includes('bloqueado')) {
@@ -517,13 +506,6 @@ const Dashboard: React.FC = () => {
 
   // Garantir que credentials seja sempre um array antes de usar filter
   const safeCredentials = Array.isArray(credentials) ? credentials : []
-  
-  // Debug log para verificar o estado de credentials
-  
-  // Proteção adicional - garantir que safeCredentials é realmente um array
-  if (!Array.isArray(safeCredentials)) {
-    console.error('❌ ERRO CRÍTICO: safeCredentials não é um array!', safeCredentials)
-  }
   
   const filteredCredentials = (Array.isArray(safeCredentials) ? safeCredentials : []).filter(credential => {
     // Proteção contra credential undefined ou campos undefined
@@ -545,8 +527,7 @@ const Dashboard: React.FC = () => {
       return title.includes(searchLower) ||
              username.includes(searchLower) ||
              website.includes(searchLower)
-    } catch (error) {
-      console.error('Error filtering credential:', error, credential)
+    } catch {
       return false
     }
   })
@@ -690,8 +671,7 @@ const Dashboard: React.FC = () => {
                     {(() => {
                       try {
                         return Array.isArray(safeCredentials) ? safeCredentials.filter(c => c && c.isFavorite).length : 0
-                      } catch (error) {
-                        console.error('❌ Erro ao contar favoritos:', error, 'safeCredentials:', safeCredentials)
+                      } catch {
                         return 0
                       }
                     })()}
@@ -1194,21 +1174,21 @@ const Dashboard: React.FC = () => {
             onClick={() => setShowSecurityDetails(false)}
           >
             <div
-              className="bg-white rounded-lg max-w-md w-full"
+              className="bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-200 rounded-lg max-w-md w-full shadow-xl"
               onClick={(event) => event.stopPropagation()}
               role="dialog"
               aria-modal="true"
               aria-labelledby="security-details-title"
             >
-              <div className="flex items-center justify-between p-6 border-b">
-                <h2 id="security-details-title" className="text-lg font-semibold text-secondary-900 flex items-center">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-200">
+                <h2 id="security-details-title" className="text-lg font-semibold text-secondary-900 dark:text-dark-900 flex items-center">
                   <Shield className="h-5 w-5 mr-2 text-green-600" />
                   Detalhes de Segurança
                 </h2>
                 <button
                   type="button"
                   onClick={() => setShowSecurityDetails(false)}
-                  className="p-2 text-secondary-500 hover:text-secondary-900 hover:bg-secondary-100 rounded-lg transition-colors"
+                  className="p-2 text-secondary-500 dark:text-dark-500 hover:text-secondary-900 dark:hover:text-dark-900 hover:bg-secondary-100 dark:hover:bg-dark-200 rounded-lg transition-colors"
                   aria-label="Fechar detalhes de segurança"
                 >
                   <X className="h-5 w-5" />
@@ -1220,8 +1200,8 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-start space-x-3">
                     <Lock className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
-                      <p className="font-medium text-secondary-900">Criptografia AES-256-GCM</p>
-                      <p className="text-sm text-secondary-600 mt-1">
+                      <p className="font-medium text-secondary-900 dark:text-dark-900">Criptografia AES-256-GCM</p>
+                      <p className="text-sm text-secondary-600 dark:text-dark-700 mt-1">
                         Padrão militar de criptografia com chaves de 256 bits. Suas senhas são criptografadas localmente antes de serem salvas.
                       </p>
                     </div>
@@ -1230,8 +1210,8 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-start space-x-3">
                     <Key className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
-                      <p className="font-medium text-secondary-900">KDF Híbrido (PBKDF2 + Argon2id)</p>
-                      <p className="text-sm text-secondary-600 mt-1">
+                      <p className="font-medium text-secondary-900 dark:text-dark-900">KDF Híbrido (PBKDF2 + Argon2id)</p>
+                      <p className="text-sm text-secondary-600 dark:text-dark-700 mt-1">
                         Dupla camada de derivação: PBKDF2 com 100.000 iterações seguido de Argon2id com 64MB de memória. Proteção contra ataques de força bruta.
                       </p>
                     </div>
@@ -1240,8 +1220,8 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-start space-x-3">
                     <Shield className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
-                      <p className="font-medium text-secondary-900">Zero-Knowledge</p>
-                      <p className="text-sm text-secondary-600 mt-1">
+                      <p className="font-medium text-secondary-900 dark:text-dark-900">Zero-Knowledge</p>
+                      <p className="text-sm text-secondary-600 dark:text-dark-700 mt-1">
                         Nem mesmo nós temos acesso às suas senhas. Apenas você possui a chave de descriptografia.
                       </p>
                     </div>
@@ -1251,8 +1231,8 @@ const Dashboard: React.FC = () => {
                     <div className="flex items-start space-x-3">
                       <Smartphone className="h-5 w-5 text-green-600 mt-0.5" />
                       <div>
-                        <p className="font-medium text-secondary-900">2FA Ativado ✓</p>
-                        <p className="text-sm text-secondary-600 mt-1">
+                        <p className="font-medium text-secondary-900 dark:text-dark-900">2FA Ativado ✓</p>
+                        <p className="text-sm text-secondary-600 dark:text-dark-700 mt-1">
                           Autenticação de dois fatores ativa. Proteção adicional contra acesso não autorizado.
                         </p>
                       </div>
@@ -1261,8 +1241,8 @@ const Dashboard: React.FC = () => {
                     <div className="flex items-start space-x-3">
                       <Smartphone className="h-5 w-5 text-yellow-600 mt-0.5" />
                       <div>
-                        <p className="font-medium text-secondary-900">2FA Desativado</p>
-                        <p className="text-sm text-secondary-600 mt-1">
+                        <p className="font-medium text-secondary-900 dark:text-dark-900">2FA Desativado</p>
+                        <p className="text-sm text-secondary-600 dark:text-dark-700 mt-1">
                           Recomendamos ativar a autenticação de dois fatores para proteção adicional.
                         </p>
                         <button
@@ -1270,7 +1250,7 @@ const Dashboard: React.FC = () => {
                             setShowSecurityDetails(false)
                             setShow2FASetup(true)
                           }}
-                          className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                          className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
                         >
                           Ativar 2FA agora →
                         </button>
@@ -1281,16 +1261,16 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-start space-x-3">
                     <Eye className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
-                      <p className="font-medium text-secondary-900">Ocultação Automática</p>
-                      <p className="text-sm text-secondary-600 mt-1">
+                      <p className="font-medium text-secondary-900 dark:text-dark-900">Ocultação Automática</p>
+                      <p className="text-sm text-secondary-600 dark:text-dark-700 mt-1">
                         Senhas são ocultadas por padrão e só são reveladas quando você escolhe visualizá-las.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-800">
+                <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <p className="text-sm text-green-800 dark:text-green-200">
                     <strong>Dica de Segurança:</strong> Use senhas únicas e fortes para cada conta. 
                     O gerador de senhas pode criar senhas seguras automaticamente.
                   </p>

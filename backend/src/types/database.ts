@@ -312,6 +312,36 @@ export interface Database {
         }
         Relationships: []
       }
+      two_factor_attempts: {
+        Row: {
+          id: string
+          user_id: string
+          success: boolean
+          error_message: string | null
+          ip_address: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          success: boolean
+          error_message?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          success?: boolean
+          error_message?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       vault_backups: {
         Row: {
           id: string

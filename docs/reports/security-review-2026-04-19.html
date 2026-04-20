@@ -241,7 +241,7 @@
 
     .meter > div {
       height: 100%;
-      width: 72%;
+      width: 78%;
       background: linear-gradient(90deg, var(--teal), var(--blue));
       border-radius: 999px;
     }
@@ -566,6 +566,238 @@
       font-size: 12px;
     }
 
+    .pill.violet { background: rgba(167, 139, 250, 0.14); color: var(--violet); }
+
+    .viz-panel {
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: rgba(6, 14, 28, 0.65);
+      padding: 20px;
+      margin-top: 18px;
+      overflow: hidden;
+    }
+
+    .viz-panel > svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 420px;
+    }
+
+    .viz-caption {
+      margin: 12px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.65;
+      max-width: 85ch;
+    }
+
+    .viz-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px 22px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .viz-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .viz-legend i {
+      width: 22px;
+      height: 4px;
+      border-radius: 99px;
+      display: inline-block;
+    }
+
+    .flow-h {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .flow-h .step {
+      flex: 1 1 120px;
+      min-width: 100px;
+      padding: 14px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      text-align: center;
+      position: relative;
+    }
+
+    .flow-h .step strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .flow-h .step small {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .flow-h .step::after {
+      content: "→";
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--blue);
+      font-weight: 800;
+      font-size: 14px;
+      z-index: 1;
+    }
+
+    .flow-h .step:last-child::after { content: none; }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .compare-card {
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .compare-card h4 {
+      margin: 0 0 10px;
+      font-size: 17px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .compare-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .compare-card .tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: rgba(89, 167, 255, 0.15);
+      color: var(--blue);
+    }
+
+    .compare-card.vault-side .tag {
+      background: rgba(53, 209, 184, 0.15);
+      color: var(--teal);
+    }
+
+    .stack-chart {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+      max-width: 720px;
+    }
+
+    .stack-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 48px;
+      gap: 12px;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .stack-row .bar-bg {
+      height: 22px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+    }
+
+    .stack-row .bar-fill {
+      height: 100%;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #0a1628;
+    }
+
+    .defense-cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .defense-cards article {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      min-height: 120px;
+    }
+
+    .defense-cards h4 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .defense-cards p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .donut-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 220px) 1fr;
+      gap: 24px;
+      align-items: center;
+      margin-top: 16px;
+    }
+
+    .donut-wrap svg {
+      width: 100%;
+      max-width: 220px;
+      height: auto;
+    }
+
+    .donut-legend {
+      display: grid;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .donut-legend div {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .donut-legend i {
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
     @media (max-width: 1180px) {
       .layout {
         grid-template-columns: 1fr;
@@ -587,6 +819,14 @@
         grid-template-columns: 1fr;
       }
 
+      .compare-grid,
+      .defense-cards,
+      .donut-wrap {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-h .step::after { display: none; }
+
       .flow-card::after { display: none; }
       .timeline-item { grid-template-columns: 1fr; gap: 8px; }
     }
@@ -607,6 +847,12 @@
       <nav class="toc">
         <a href="#executive">Resumo Executivo</a>
         <a href="#scoreboard">Scoreboard</a>
+        <a href="#topology">Grafo de confiança</a>
+        <a href="#crypto-pipeline">Criptografia do cofre</a>
+        <a href="#two-passwords">Duas senhas</a>
+        <a href="#vault-boundary">Boundary do vault</a>
+        <a href="#defense-stack">Camadas de defesa</a>
+        <a href="#api-hardening">API e código</a>
         <a href="#boundaries">Auth Boundaries</a>
         <a href="#findings">Falhas e Mitigações</a>
         <a href="#history">Histórico Vulnerável</a>
@@ -637,6 +883,11 @@
           <div>
             <span class="pill blue">Zero-Knowledge Password Manager</span>
             <h2>SafeBox Security Program</h2>
+            <p style="margin:16px 0 0;color:var(--muted);font-size:15px;line-height:1.75;max-width:66ch;">
+              O programa hoje combina proteção do vault no dispositivo, identidade ancorada no Supabase Auth,
+              backend focado em validação e operações sensíveis, e hardening operacional sem reset, sem migration
+              destrutiva e sem apagar os dados existentes.
+            </p>
             <p>
               O projeto saiu de um estado com segredos no histórico, 2FA frágil, import/export inconsistente
               e boundaries misturados entre frontend, backend e Supabase para uma base mais endurecida.
@@ -648,7 +899,7 @@
             <div class="score-card">
               <div class="eyebrow">Security Maturity</div>
               <div class="score-value">
-                <strong>72</strong>
+                <strong>78</strong>
                 <span>de 100</span>
               </div>
               <div class="meter"><div></div></div>
@@ -656,8 +907,9 @@
             <div class="score-card">
               <div class="eyebrow">Mensagem-Chave</div>
               <p style="margin:0;color:var(--muted);line-height:1.7;font-size:14px;">
-                O risco saiu da zona crítica, mas ainda há trabalho estrutural em auth legado,
-                service role residual e dependências de backend em fluxos específicos como 2FA.
+                O boundary de auth esta mais consistente, o CI ficou mais previsivel e a rotacao da senha-mestra
+                passou a operar sobre o snapshot canonico do vault. O risco restante ficou concentrado em auth legado,
+                service role residual e dependencias operacionais do backend para fluxos como 2FA.
               </p>
             </div>
           </div>
@@ -681,18 +933,18 @@
           </article>
           <article class="card">
             <div class="stat-label">Correções Aplicadas</div>
-            <div class="stat-number">18+</div>
-            <div class="stat-copy">Vault boundary, settings resilientes, hardening de auth, CI de qualidade, 2FA server-side e redução de vazamento em UI.</div>
+            <div class="stat-number">34+</div>
+            <div class="stat-copy">Vault boundary, settings resilientes, hardening de auth, CI de qualidade, 2FA server-side, rotação segura da senha-mestra, jobs mais seguros e redução de vazamento em UI e backend.</div>
           </article>
           <article class="card">
             <div class="stat-label">Gate de Validação</div>
-            <div class="stat-number">29</div>
-            <div class="stat-copy">Testes e checks consolidados: <code>7</code> no frontend e <code>17</code> no backend, além de lint, type-check e build.</div>
+            <div class="stat-number">32</div>
+            <div class="stat-copy">Testes e checks consolidados: <code>9</code> no frontend e <code>19</code> no backend, além de lint, type-check e build.</div>
           </article>
           <article class="card">
             <div class="stat-label">Risco Residual Principal</div>
             <div class="stat-number">Médio</div>
-            <div class="stat-copy">Auth legado residual, service role ainda presente em parte da arquitetura e dependência do backend para 2FA.</div>
+            <div class="stat-copy">Service role ainda presente em partes residuais da arquitetura e dependência operacional do backend para 2FA.</div>
           </article>
         </div>
       </section>
@@ -797,6 +1049,390 @@
         </div>
       </section>
 
+      <section class="section">
+        <div class="section-title">
+          <div>
+            <h3>Como a Segurança Funciona Hoje</h3>
+            <p>Leitura por camadas do desenho atual, separando a base original do produto das melhorias aplicadas nesta revisão.</p>
+          </div>
+          <span class="pill blue">Security Design</span>
+        </div>
+
+        <div class="grid-2">
+          <article class="card">
+            <div class="stat-label">Base que já existia no produto</div>
+            <div class="stat-copy" style="margin-top:14px;display:grid;gap:12px;">
+              <div><strong>Vault cifrado no cliente:</strong> o cofre já nascia com a proposta de manter o conteúdo como ciphertext no dispositivo, preservando a ideia de zero-knowledge.</div>
+              <div><strong>Frontend como boundary de unlock:</strong> desbloqueio do vault, rendering das credenciais e uso da chave em sessão já ficavam do lado do navegador.</div>
+              <div><strong>Supabase como base de identidade e persistência:</strong> a plataforma já oferecia um eixo claro para separar sessão, aplicação e armazenamento.</div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="stat-label">Melhorias acrescentadas nesta revisão</div>
+            <div class="stat-copy" style="margin-top:14px;display:grid;gap:12px;">
+              <div><strong>Auth mais coerente:</strong> perfil, logout, refresh, vault, settings e partes sensíveis passaram a convergir para o token do Supabase e não para auth paralelo do backend.</div>
+              <div><strong>Vault canônico:</strong> import/export, backup, restore e rotação da senha-mestra passaram a operar sobre o snapshot atual do cofre.</div>
+              <div><strong>Operação mais segura:</strong> logs, auditoria privilegiada, outbound HTTP, jobs e a trilha auxiliar de IA foram sanitizados e reduzidos a metadados mínimos.</div>
+              <div><strong>Validação obrigatória:</strong> lint, type-check, testes e build agora funcionam como quality gate antes de seguir com novas alterações.</div>
+            </div>
+          </article>
+        </div>
+
+        <div class="grid-3" style="margin-top:18px;">
+          <article class="card">
+            <span class="pill blue">Vault</span>
+            <div class="stat-copy" style="margin-top:14px;">
+              O vault agora é tratado como snapshot canônico. Isso reduz inconsistência entre leitura, gravação,
+              backup, restore e troca da senha-mestra, e deixa mais claro onde mora o estado real do cofre.
+            </div>
+          </article>
+          <article class="card">
+            <span class="pill green">Auth + 2FA</span>
+            <div class="stat-copy" style="margin-top:14px;">
+              A identidade do usuário ficou mais concentrada no Supabase Auth, enquanto o backend ficou reservado
+              para validação, auditoria e verificação server-side de 2FA, sem receber a senha mestra em claro.
+            </div>
+          </article>
+          <article class="card">
+            <span class="pill amber">Operação</span>
+            <div class="stat-copy" style="margin-top:14px;">
+              SQL bruto foi desincentivado, jobs ficaram sob feature flag, o outbound HTTP ganhou allowlist e a
+              telemetria operacional deixou de expor detalhes internos que não eram necessários.
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="topology">
+        <div class="section-title">
+          <div>
+            <h3>Grafo de confiança (rede)</h3>
+            <p>
+              Visão simplificada de quem fala com quem, sobre qual canal e o que atravessa cada hop.
+              O cofre sensível permanece como ciphertext fora do processo de derivação no servidor.
+            </p>
+          </div>
+          <span class="pill violet">Topologia</span>
+        </div>
+
+        <div class="viz-panel" role="img" aria-label="Diagrama de rede do SafeBox">
+          <svg viewBox="0 0 920 340" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <marker id="arrBlue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+                <polygon points="0 0, 10 4, 0 8" fill="#59a7ff" />
+              </marker>
+              <marker id="arrTeal" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+                <polygon points="0 0, 10 4, 0 8" fill="#35d1b8" />
+              </marker>
+              <marker id="arrViolet" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+                <polygon points="0 0, 10 4, 0 8" fill="#a78bfa" />
+              </marker>
+              <marker id="arrAmber" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+                <polygon points="0 0, 10 4, 0 8" fill="#ffbc5d" />
+              </marker>
+              <linearGradient id="nodeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="rgba(89,167,255,0.35)" />
+                <stop offset="100%" stop-color="rgba(53,209,184,0.12)" />
+              </linearGradient>
+            </defs>
+            <text x="24" y="34" fill="#9bb0cf" font-size="13" font-family="Segoe UI, system-ui, sans-serif">Fluxos principais (HTTPS / WSS) — pedido e resposta no mesmo canal</text>
+
+            <!-- Navegador → Supabase Auth (login / refresh) -->
+            <path d="M 172 148 Q 268 88 378 118" fill="none" stroke="#59a7ff" stroke-width="2.4" opacity="0.7" marker-end="url(#arrBlue)" />
+            <!-- Navegador → Backend SafeBox (2FA, rotas API) -->
+            <path d="M 172 198 Q 268 252 358 258" fill="none" stroke="#35d1b8" stroke-width="2.4" opacity="0.75" marker-end="url(#arrTeal)" />
+            <!-- Navegador → Dados (PostgREST / cliente Supabase: vault, users, settings — JWT) -->
+            <path d="M 172 164 Q 440 28 712 148" fill="none" stroke="#59a7ff" stroke-width="2.2" opacity="0.45" marker-end="url(#arrBlue)" />
+            <!-- Backend → Dados (servidor persiste / lê via cliente Supabase com chave de serviço onde aplicável) -->
+            <path d="M 562 258 Q 640 220 718 188" fill="none" stroke="#a78bfa" stroke-width="2.3" opacity="0.75" marker-end="url(#arrViolet)" />
+            <!-- Superfície privilegiada residual (mesmo destino, traço distinto) -->
+            <path d="M 548 272 Q 632 288 712 200" fill="none" stroke="#ffbc5d" stroke-width="2" opacity="0.65" stroke-dasharray="7 6" marker-end="url(#arrAmber)" />
+
+            <text x="255" y="92" fill="#59a7ff" font-size="10" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">login</text>
+            <text x="215" y="248" fill="#35d1b8" font-size="10" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">API Node</text>
+            <text x="455" y="52" fill="#59a7ff" font-size="10" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">REST + JWT</text>
+            <text x="632" y="208" fill="#a78bfa" font-size="10" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">servidor → DB</text>
+            <text x="548" y="332" fill="#ffbc5d" font-size="9" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">legado / service_role (parte do caminho violeta)</text>
+
+            <!-- Nós por cima das linhas -->
+            <rect x="40" y="120" width="130" height="88" rx="18" fill="url(#nodeGrad)" stroke="rgba(154,177,217,0.45)" />
+            <text x="105" y="158" text-anchor="middle" fill="#edf4ff" font-size="15" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">Navegador</text>
+            <text x="105" y="182" text-anchor="middle" fill="#9bb0cf" font-size="11" font-family="Segoe UI, system-ui, sans-serif">Web Crypto + cofre</text>
+
+            <rect x="380" y="96" width="160" height="100" rx="18" fill="rgba(167,139,250,0.14)" stroke="rgba(167,139,250,0.4)" />
+            <text x="460" y="138" text-anchor="middle" fill="#edf4ff" font-size="15" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">Supabase Auth</text>
+            <text x="460" y="162" text-anchor="middle" fill="#9bb0cf" font-size="11" font-family="Segoe UI, system-ui, sans-serif">JWT / sessão</text>
+            <text x="460" y="180" text-anchor="middle" fill="#9bb0cf" font-size="11" font-family="Segoe UI, system-ui, sans-serif">Conta (login)</text>
+
+            <rect x="360" y="220" width="200" height="92" rx="18" fill="rgba(53,209,184,0.12)" stroke="rgba(53,209,184,0.4)" />
+            <text x="460" y="258" text-anchor="middle" fill="#edf4ff" font-size="15" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">Backend SafeBox</text>
+            <text x="460" y="282" text-anchor="middle" fill="#9bb0cf" font-size="11" font-family="Segoe UI, system-ui, sans-serif">2FA, validação, jobs</text>
+
+            <rect x="720" y="110" width="170" height="100" rx="18" fill="rgba(255,188,93,0.1)" stroke="rgba(255,188,93,0.35)" />
+            <text x="805" y="150" text-anchor="middle" fill="#edf4ff" font-size="15" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">Dados Supabase</text>
+            <text x="805" y="174" text-anchor="middle" fill="#9bb0cf" font-size="11" font-family="Segoe UI, system-ui, sans-serif">RLS + Postgres</text>
+            <text x="805" y="192" text-anchor="middle" fill="#9bb0cf" font-size="11" font-family="Segoe UI, system-ui, sans-serif">Blob do vault</text>
+          </svg>
+          <p class="viz-caption">
+            <strong>Azul:</strong> tráfego do <em>browser</em> para Auth (sessão) e para a API de dados do projeto (PostgREST / SDK) com JWT — é assim que o cofre cifrado e os metadados de KDF sobem e descem.
+            <strong>Verde-água:</strong> tráfego do browser para o <em>backend SafeBox</em> (ex.: 2FA e rotas que não devem ficar só no cliente).
+            <strong>Violeta:</strong> tráfego <em>servidor → Postgres</em> via cliente Supabase (persistência, leituras privilegiadas, jobs).
+            <strong>Âmbar tracejado:</strong> camada conceptual de caminhos ainda privilegiados ou legados (<code>service_role</code> residual) — mesmo destino, risco a reduzir.
+            As respostas HTTP/WSS seguem as mesmas linhas no sentido inverso (omitidas para legibilidade).
+          </p>
+          <div class="viz-legend" aria-hidden="true">
+            <span><i style="background:#59a7ff"></i>Navegador → Auth / dados</span>
+            <span><i style="background:#35d1b8"></i>Navegador → API SafeBox</span>
+            <span><i style="background:#a78bfa"></i>Backend → dados Supabase</span>
+            <span><i style="background:#ffbc5d"></i>Superfície privilegiada (legado)</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="crypto-pipeline">
+        <div class="section-title">
+          <div>
+            <h3>Criptografia do cofre (KDF + AES-GCM)</h3>
+            <p>
+              O que o código faz hoje no cliente: derivação com salt próprio, chave só em memória e cofre em
+              <code>vault-snapshot-v2</code> com nonce por gravação.
+            </p>
+          </div>
+          <span class="pill green">Cliente</span>
+        </div>
+
+        <div class="viz-panel">
+          <svg viewBox="0 0 900 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="pipe" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#59a7ff" stop-opacity="0.9" />
+                <stop offset="100%" stop-color="#35d1b8" stop-opacity="0.85" />
+              </linearGradient>
+            </defs>
+            <rect x="20" y="40" width="860" height="44" rx="22" fill="rgba(255,255,255,0.04)" stroke="rgba(154,177,217,0.2)" />
+            <rect x="24" y="44" width="210" height="36" rx="18" fill="url(#pipe)" opacity="0.25" />
+            <rect x="244" y="44" width="160" height="36" rx="18" fill="url(#pipe)" opacity="0.35" />
+            <rect x="414" y="44" width="160" height="36" rx="18" fill="url(#pipe)" opacity="0.45" />
+            <rect x="584" y="44" width="150" height="36" rx="18" fill="url(#pipe)" opacity="0.55" />
+            <rect x="744" y="44" width="128" height="36" rx="18" fill="url(#pipe)" opacity="0.65" />
+            <text x="127" y="67" text-anchor="middle" fill="#edf4ff" font-size="12" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">Senha mestra</text>
+            <text x="324" y="67" text-anchor="middle" fill="#edf4ff" font-size="12" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">PBKDF2</text>
+            <text x="494" y="67" text-anchor="middle" fill="#edf4ff" font-size="12" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">Argon2id</text>
+            <text x="659" y="67" text-anchor="middle" fill="#edf4ff" font-size="12" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">Chave AES</text>
+            <text x="808" y="67" text-anchor="middle" fill="#edf4ff" font-size="12" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">AES-GCM</text>
+            <text x="450" y="28" text-anchor="middle" fill="#9bb0cf" font-size="11" font-family="Segoe UI, system-ui, sans-serif">Pipeline no navegador (Web Crypto + hash-wasm)</text>
+          </svg>
+          <p class="viz-caption">
+            <strong>Salt:</strong> 32 bytes aleatórios (<code>crypto.getRandomValues</code>), codificados em Base64, guardados em <code>users.kdf_salt</code> junto com <code>kdf_params</code> (memória Argon2, iterações, paralelismo, tamanho da saída).
+            <strong>Não vai para o banco:</strong> a senha mestra em texto claro nem a chave AES exportada de rotina — apenas metadados de KDF e um <code>key_hash</code> (SHA-256 sobre a chave derivada) para verificação futura.
+          </p>
+        </div>
+
+        <div class="flow-h" aria-label="Etapas da derivação">
+          <div class="step"><strong>1 · PBKDF2</strong><small>100k iterações, SHA-256, primeiros 16 bytes do salt</small></div>
+          <div class="step"><strong>2 · Argon2id</strong><small>salt completo, memória e iterações da config LOW</small></div>
+          <div class="step"><strong>3 · Chave</strong><small><code>CryptoKey</code> AES-GCM 256 bits</small></div>
+          <div class="step"><strong>4 · Cofre</strong><small>nonce 12 B, tag GCM 16 B, payload JSON cifrado</small></div>
+        </div>
+
+        <div class="grid-2" style="margin-top:22px;">
+          <article class="card" style="min-height:auto;">
+            <div class="stat-label">Por que salt + KDF lentos</div>
+            <div class="stat-copy" style="margin-top:8px;">
+              O salt impede rainbow tables entre utilizadores. Argon2id acrescenta custo de memória e CPU para ataques offline
+              contra cópias do banco. A derivação corre só no cliente; quem obtém apenas o ciphertext ainda precisa da senha mestra.
+            </div>
+          </article>
+          <article class="card" style="min-height:auto;">
+            <div class="stat-label">Exportação / backup</div>
+            <div class="stat-copy" style="margin-top:8px;">
+              O formato encriptado de exportação pode usar dois salts e uma segunda derivação encadeada antes do AES-GCM,
+              com hash de integridade opcional — reforço extra quando o ficheiro sai do ecossistema Supabase.
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="two-passwords">
+        <div class="section-title">
+          <div>
+            <h3>Duas senhas, dois papéis</h3>
+            <p>
+              Separar mentalmente a <em>senha da conta</em> (Supabase Auth) da <em>senha mestra do cofre</em> evita confusão sobre o que o servidor pode ver.
+            </p>
+          </div>
+          <span class="pill blue">Identidade vs cofre</span>
+        </div>
+
+        <div class="compare-grid">
+          <article class="compare-card">
+            <h4>Senha de login <span class="tag">Supabase Auth</span></h4>
+            <ul>
+              <li>Autentica a <strong>conta</strong> e emite o JWT de sessão.</li>
+              <li>O hashing segue o modelo do Supabase (não é o mesmo pipeline Argon2 do cofre).</li>
+              <li>O backend SafeBox confia no token validado, não na senha de login em si.</li>
+            </ul>
+          </article>
+          <article class="compare-card vault-side">
+            <h4>Senha mestra <span class="tag">Zero-knowledge do cofre</span></h4>
+            <ul>
+              <li>Nunca é persistida; só entra na RAM do browser para derivar a chave.</li>
+              <li>O que fica na tabela <code>users</code> é <code>kdf_salt</code>, <code>kdf_params</code> e <code>key_hash</code> — não a senha.</li>
+              <li>A chave derivada pode ficar em memória com expiração por inatividade; não é estratégia de armazenamento em <code>localStorage</code>.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="vault-boundary">
+        <div class="section-title">
+          <div>
+            <h3>Boundary do vault</h3>
+            <p>
+              O que atravessa a rede é ciphertext + metadados criptográficos; credenciais em claro ficam atrás do boundary do processo do browser.
+            </p>
+          </div>
+          <span class="pill amber">Confidencialidade</span>
+        </div>
+
+        <div class="viz-panel">
+          <svg viewBox="0 0 880 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <marker id="arrowVault" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+                <polygon points="0 0, 10 4, 0 8" fill="#35d1b8" opacity="0.9" />
+              </marker>
+            </defs>
+            <rect x="30" y="40" width="300" height="120" rx="20" fill="rgba(89,167,255,0.08)" stroke="rgba(89,167,255,0.35)" />
+            <text x="180" y="78" text-anchor="middle" fill="#edf4ff" font-size="16" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">Zona do dispositivo</text>
+            <text x="180" y="104" text-anchor="middle" fill="#9bb0cf" font-size="12" font-family="Segoe UI, system-ui, sans-serif">Senha mestra · chave AES · JSON do cofre em claro</text>
+            <text x="180" y="132" text-anchor="middle" fill="#9bb0cf" font-size="11" font-family="Segoe UI, system-ui, sans-serif">Só existe enquanto o cofre está desbloqueado</text>
+
+            <path d="M 340 100 L 420 100" stroke="#35d1b8" stroke-width="3" marker-end="url(#arrowVault)" />
+            <text x="380" y="88" text-anchor="middle" fill="#35d1b8" font-size="11" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">HTTPS</text>
+
+            <rect x="430" y="40" width="420" height="120" rx="20" fill="rgba(255,255,255,0.04)" stroke="rgba(154,177,217,0.25)" />
+            <text x="640" y="78" text-anchor="middle" fill="#edf4ff" font-size="16" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">Armazenamento / trânsito</text>
+            <text x="640" y="104" text-anchor="middle" fill="#9bb0cf" font-size="12" font-family="Segoe UI, system-ui, sans-serif">Blob cifrado + nonce + versão de snapshot</text>
+            <text x="640" y="132" text-anchor="middle" fill="#9bb0cf" font-size="11" font-family="Segoe UI, system-ui, sans-serif">Operadores e API veem metadados, não passwords em claro</text>
+          </svg>
+          <p class="viz-caption">
+            O serviço de credenciais no cliente descriptografa o envelope (<code>encrypted</code> + <code>nonce</code>), valida o formato e só então materializa a lista na UI.
+            Conflitos de versão no servidor são tratados com controlo otimista para evitar sobrescritas silenciosas entre sessões.
+          </p>
+        </div>
+      </section>
+
+      <section class="section" id="defense-stack">
+        <div class="section-title">
+          <div>
+            <h3>Camadas de defesa (exposição relativa)</h3>
+            <p>
+              Gráfico ilustrativo: quanto mais à direita, maior a superfície de contacto com atacantes ou operadores.
+              Não é escala temporal — é prioridade de endurecimento.
+            </p>
+          </div>
+          <span class="pill violet">Defense in depth</span>
+        </div>
+
+        <div class="donut-wrap">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="60" cy="60" r="44" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="20" />
+            <circle cx="60" cy="60" r="44" fill="none" stroke="#35d1b8" stroke-width="20" stroke-dasharray="110 166" transform="rotate(-90 60 60)" />
+            <circle cx="60" cy="60" r="44" fill="none" stroke="#59a7ff" stroke-width="20" stroke-dasharray="72 204" stroke-dashoffset="-110" transform="rotate(-90 60 60)" />
+            <circle cx="60" cy="60" r="44" fill="none" stroke="#ffbc5d" stroke-width="20" stroke-dasharray="48 228" stroke-dashoffset="-182" transform="rotate(-90 60 60)" />
+            <circle cx="60" cy="60" r="44" fill="none" stroke="#a78bfa" stroke-width="20" stroke-dasharray="70 206" stroke-dashoffset="-230" transform="rotate(-90 60 60)" />
+            <text x="60" y="64" text-anchor="middle" fill="#edf4ff" font-size="11" font-weight="700" font-family="Segoe UI, system-ui, sans-serif">Risco</text>
+            <text x="60" y="78" text-anchor="middle" fill="#9bb0cf" font-size="9" font-family="Segoe UI, system-ui, sans-serif">por camada</text>
+          </svg>
+          <div class="donut-legend">
+            <div><i style="background:#35d1b8"></i><span><strong>Cofre cifrado</strong> — maior massa de segredo já neutralizada em repouso (ataque precisa da senha mestra).</span></div>
+            <div><i style="background:#59a7ff"></i><span><strong>Transporte + Auth</strong> — TLS, JWT, políticas de sessão; endurecimento contínuo.</span></div>
+            <div><i style="background:#ffbc5d"></i><span><strong>API e jobs</strong> — limites de corpo, rate limit, outbound allowlist, feature flags.</span></div>
+            <div><i style="background:#a78bfa"></i><span><strong>Superfície privilegiada</strong> — <code>service_role</code> e caminhos legados (foco do risco residual).</span></div>
+          </div>
+        </div>
+
+        <div class="stack-chart" aria-label="Barras de exposição relativa">
+          <div class="stack-row">
+            <span>Cofre AES-GCM</span>
+            <div class="bar-bg"><div class="bar-fill" style="width:22%;background:linear-gradient(90deg,#35d1b8,#59a7ff);">baixa</div></div>
+            <span>22%</span>
+          </div>
+          <div class="stack-row">
+            <span>Auth / JWT</span>
+            <div class="bar-bg"><div class="bar-fill" style="width:48%;background:linear-gradient(90deg,#59a7ff,#a78bfa);">média</div></div>
+            <span>48%</span>
+          </div>
+          <div class="stack-row">
+            <span>API pública</span>
+            <div class="bar-bg"><div class="bar-fill" style="width:65%;background:linear-gradient(90deg,#ffbc5d,#ff6b77);">média-alta</div></div>
+            <span>65%</span>
+          </div>
+          <div class="stack-row">
+            <span>Ops privilegiadas</span>
+            <div class="bar-bg"><div class="bar-fill" style="width:88%;background:linear-gradient(90deg,#ff6b77,#a78bfa);">alta</div></div>
+            <span>88%</span>
+          </div>
+        </div>
+        <p class="viz-caption">Percentagens são ordinais para discussão de prioridade de auditoria, não métricas de CVSS.</p>
+      </section>
+
+      <section class="section" id="api-hardening">
+        <div class="section-title">
+          <div>
+            <h3>API hardening e segurança de código</h3>
+            <p>
+              Resumo do que o servidor Express aplica por omissão, alinhado ao código em produção e ao quality gate.
+            </p>
+          </div>
+          <span class="pill red">Backend</span>
+        </div>
+
+        <div class="defense-cards">
+          <article>
+            <h4>Helmet + CSP</h4>
+            <p><code>default-src 'self'</code>, scripts restritos, ligações Supabase em <code>connect-src</code>, HSTS com preload, frame bloqueado.</p>
+          </article>
+          <article>
+            <h4>CORS fechado</h4>
+            <p>Origem validada contra lista configurada; pedidos fora da allowlist são recusados com registo mínimo.</p>
+          </article>
+          <article>
+            <h4>Rate limiting</h4>
+            <p>Middleware global condicionado a feature flag; reduz abuso de scraping e força bruta na superfície HTTP.</p>
+          </article>
+          <article>
+            <h4>Corpo e parsing</h4>
+            <p>JSON e urlencoded limitados a 2&nbsp;MB; sanitização de entrada após o parse para reduzir payloads anómalos.</p>
+          </article>
+          <article>
+            <h4>Erros e logs</h4>
+            <p>Respostas ao cliente normalizadas; objectos de contexto passam por redacção antes de logging.</p>
+          </article>
+          <article>
+            <h4>2FA no servidor</h4>
+            <p>Segredos TOTP tratados com AES-256-GCM e chave derivada de segredo de ambiente — fora do caminho do cofre zero-knowledge.</p>
+          </article>
+        </div>
+
+        <div class="grid-2" style="margin-top:20px;">
+          <article class="card" style="min-height:auto;">
+            <div class="stat-label">Código e CI</div>
+            <div class="stat-copy" style="margin-top:8px;">
+              Lint, type-check, testes e build obrigatórios no workflow de quality gate. A API principal permanece separada da árvore
+              auxiliar de IA no processo de verificação, reduzindo risco de dependências não auditadas no mesmo pacote.
+            </div>
+          </article>
+          <article class="card" style="min-height:auto;">
+            <div class="stat-label">Cliente complementar</div>
+            <div class="stat-copy" style="margin-top:8px;">
+              Rate limiting progressivo local após falhas de derivação, comparação de chaves em tempo constante na verificação da senha mestra,
+              e validação forte de política de senha antes de aceitar o primeiro unlock.
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section class="section" id="findings">
         <div class="section-title">
           <div>
@@ -846,11 +1482,25 @@
                 <td>Fallback do frontend suporta colunas achatadas e JSON legado, sem migração destrutiva.</td>
               </tr>
               <tr>
+                <td>Troca de senha-mestra baseada na tabela antiga</td>
+                <td>Recriptografia parcial, inconsistência do vault e risco de bloquear a leitura do cofre após alterar a senha-mestra.</td>
+                <td><span class="severity high">Alto</span></td>
+                <td>Operar sempre sobre o snapshot canônico do vault com rollback se a troca falhar no meio do processo.</td>
+                <td>Fluxo passou a recriptografar o snapshot atual com a nova chave em sessão e restaurar o estado anterior em caso de erro.</td>
+              </tr>
+              <tr>
                 <td>Logs sensíveis em callback e reset</td>
                 <td>Exposição de token de recuperação, parâmetros de auth e contexto demais no navegador.</td>
                 <td><span class="severity medium">Médio</span></td>
                 <td>Remover debug de URL/token e normalizar erros de auth.</td>
                 <td>Logs sensíveis removidos de callback/reset e mensagens endurecidas.</td>
+              </tr>
+              <tr>
+                <td>Logs operacionais com erros crus no backend</td>
+                <td>Exposição de detalhes internos de infraestrutura, falhas de banco, runtime e caminhos legados em logs de servidor.</td>
+                <td><span class="severity medium">Médio</span></td>
+                <td>Sanitizar mensagens operacionais e limitar metadados a código e causa necessária.</td>
+                <td>Conexão de banco, runtime do servidor, auditoria, scripts e serviços legados passaram a registrar apenas contexto reduzido e sanitizado.</td>
               </tr>
               <tr>
                 <td>Service role como base estrutural do backend</td>
@@ -937,19 +1587,19 @@
           <article class="card">
             <span class="pill blue">Backend</span>
             <div class="stat-copy" style="margin-top:14px;">
-              Camada compartilhada para validação, autorização, redaction, tratamento de erro e outbound HTTP. SQL bruto desabilitado. Sessões revogáveis e vault/settings endurecidos.
+              Camada compartilhada para validação, autorização, redaction, tratamento de erro, auditoria privilegiada e outbound HTTP. SQL bruto desabilitado. Sessões revogáveis, auth legado desabilitado por padrão, jobs isolados por feature flag e logs operacionais sanitizados.
             </div>
           </article>
           <article class="card">
             <span class="pill green">Frontend</span>
             <div class="stat-copy" style="margin-top:14px;">
-              Snapshot atual do cofre, compatibilidade de settings em schema legado, import/export/backup corretos, UX de modais e remoção de logs sensíveis em auth/reset.
+              Snapshot atual do cofre, compatibilidade de settings em schema legado, import/export/backup corretos, rotação segura da senha-mestra e limpeza ampla de logs sensíveis em auth, vault, preferências e UX.
             </div>
           </article>
           <article class="card">
             <span class="pill amber">Arquitetura</span>
             <div class="stat-copy" style="margin-top:14px;">
-              Separação mais clara entre frontend, Supabase Auth, backend e dados. API principal isolada da trilha de IA no build e no quality gate.
+              Separação mais clara entre frontend, Supabase Auth, backend e dados. Rotas de perfil/logout/refresco convergiram para o boundary do Supabase e o auth legado do backend ficou desabilitado por padrão, com a API principal isolada da trilha de IA no build e no quality gate.
             </div>
           </article>
         </div>
@@ -976,7 +1626,7 @@
             <tbody>
               <tr>
                 <td>Frontend tests</td>
-                <td><code>react-scripts test --watchAll=false</code> - 3 suites / 7 testes</td>
+                <td><code>react-scripts test --watchAll=false</code> - 4 suites / 9 testes</td>
                 <td><span class="severity low">OK</span></td>
               </tr>
               <tr>
@@ -996,7 +1646,7 @@
               </tr>
               <tr>
                 <td>Backend tests</td>
-                <td><code>jest --runInBand</code> - 5 suites / 17 testes</td>
+                <td><code>jest --runInBand</code> - 6 suites / 19 testes</td>
                 <td><span class="severity low">OK</span></td>
               </tr>
               <tr>

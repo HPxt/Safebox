@@ -55,8 +55,7 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
       if (!error && data) {
         setFolders(data)
       }
-    } catch (error) {
-      console.error('Erro ao buscar pastas:', error)
+    } catch {
     }
   }
 
@@ -148,13 +147,11 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
             type: 'warning',
             text: `✅ ${imported} importadas. ${duplicateCount} ignoradas (duplicadas). ⚠️ ${otherErrors.length} erros.`
           })
-          console.error('Erros durante importação:', otherErrors)
         } else {
           setMessage({
             type: 'error',
             text: `${imported} importadas com ${otherErrors.length} erros.`
           })
-          console.error('Erros durante importação:', otherErrors)
         }
       } else {
         setMessage({
@@ -202,28 +199,28 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+      <div className="bg-white dark:bg-dark-100 rounded-lg shadow-xl border border-gray-200 dark:border-dark-200 w-full max-w-2xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-900">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-200">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-900">
             Importar/Exportar Dados
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 dark:text-dark-500 hover:text-gray-600 dark:hover:text-dark-800 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b">
+        <div className="flex border-b border-gray-200 dark:border-dark-200">
           <button
             onClick={() => setActiveTab('export')}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
               activeTab === 'export'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-blue-600 dark:text-blue-300 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                : 'text-gray-600 dark:text-dark-700 hover:text-gray-900 dark:hover:text-dark-900'
             }`}
           >
             <Download className="w-4 h-4 inline-block mr-2" />
@@ -233,8 +230,8 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
             onClick={() => setActiveTab('import')}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
               activeTab === 'import'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-blue-600 dark:text-blue-300 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                : 'text-gray-600 dark:text-dark-700 hover:text-gray-900 dark:hover:text-dark-900'
             }`}
           >
             <Upload className="w-4 h-4 inline-block mr-2" />
@@ -246,14 +243,14 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {/* Aviso se o vault estiver bloqueado */}
           {isVaultLocked && (
-            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <div className="flex">
                 <Lock className="w-5 h-5 text-red-600 mt-0.5" />
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
+                  <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
                     Cofre Bloqueado
                   </h3>
-                  <p className="text-sm text-red-700 mt-1">
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">
                     O cofre precisa estar desbloqueado para importar ou exportar dados.
                     Por favor, desbloqueie o cofre com sua senha mestre primeiro.
                   </p>
@@ -265,14 +262,14 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
           {activeTab === 'export' ? (
             <div className="space-y-6">
               {/* Aviso */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <div className="flex">
                   <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-blue-800">
+                    <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
                       Exportando Cofre Pessoal
                     </h3>
-                    <p className="text-sm text-blue-700 mt-1">
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                       Apenas os itens individuais do cofre associados a {localStorage.getItem('userEmail')} serão exportados.
                       Os itens do cofre da organização não serão incluídos.
                       Apenas as informações de item do cofre serão exportadas e não incluirão anexos associados.
@@ -283,11 +280,11 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
 
               {/* Formato de Arquivo */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2">
                   Formato do Arquivo
                 </label>
                 <div className="space-y-2">
-                  <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-center p-3 border border-gray-200 dark:border-dark-300 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors">
                     <input
                       type="radio"
                       name="exportFormat"
@@ -297,12 +294,12 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                       className="mr-3"
                     />
                     <div className="flex-1">
-                      <div className="font-medium">.json</div>
-                      <div className="text-sm text-gray-600">Formato SafeBox (recomendado para backup)</div>
+                      <div className="font-medium text-gray-900 dark:text-dark-900">.json</div>
+                      <div className="text-sm text-gray-600 dark:text-dark-700">Formato SafeBox (recomendado para backup)</div>
                     </div>
                   </label>
 
-                  <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-center p-3 border border-gray-200 dark:border-dark-300 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors">
                     <input
                       type="radio"
                       name="exportFormat"
@@ -312,12 +309,12 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                       className="mr-3"
                     />
                     <div className="flex-1">
-                      <div className="font-medium">.csv</div>
-                      <div className="text-sm text-gray-600">Compatível com outros gerenciadores</div>
+                      <div className="font-medium text-gray-900 dark:text-dark-900">.csv</div>
+                      <div className="text-sm text-gray-600 dark:text-dark-700">Compatível com outros gerenciadores</div>
                     </div>
                   </label>
 
-                  <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label className="flex items-center p-3 border border-gray-200 dark:border-dark-300 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors">
                     <input
                       type="radio"
                       name="exportFormat"
@@ -327,12 +324,12 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                       className="mr-3"
                     />
                     <div className="flex-1">
-                      <div className="font-medium">.json (Criptografado)</div>
-                      <div className="text-sm text-gray-600">Protegido por senha adicional</div>
+                      <div className="font-medium text-gray-900 dark:text-dark-900">.json (Criptografado)</div>
+                      <div className="text-sm text-gray-600 dark:text-dark-700">Protegido por senha adicional</div>
                     </div>
                   </label>
 
-                  <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors opacity-50">
+                  <label className="flex items-center p-3 border border-gray-200 dark:border-dark-300 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors opacity-50">
                     <input
                       type="radio"
                       name="exportFormat"
@@ -343,8 +340,8 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                       disabled
                     />
                     <div className="flex-1">
-                      <div className="font-medium">.zip (com anexos)</div>
-                      <div className="text-sm text-gray-600">Em breve - Incluirá anexos</div>
+                      <div className="font-medium text-gray-900 dark:text-dark-900">.zip (com anexos)</div>
+                      <div className="text-sm text-gray-600 dark:text-dark-700">Em breve - Incluirá anexos</div>
                     </div>
                   </label>
                 </div>
@@ -353,14 +350,14 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
               {/* Senha para exportação criptografada */}
               {exportFormat === 'json-encrypted' && (
                 <div className="space-y-3">
-                  <label htmlFor="exportPassword" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="exportPassword" className="block text-sm font-medium text-gray-700 dark:text-dark-700">
                     Senha de Exportação - SEGURANÇA MÁXIMA
                   </label>
                   
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-3">
                     <div className="flex items-start">
                       <AlertCircle className="h-4 w-4 text-amber-600 mr-2 flex-shrink-0 mt-0.5" />
-                      <div className="text-sm text-amber-800">
+                      <div className="text-sm text-amber-800 dark:text-amber-200">
                         <p className="font-medium mb-1">⚠️ Esta senha protegerá TODOS os seus dados</p>
                         <p>Use uma senha forte - será aplicada dupla criptografia com Argon2id + AES-256-GCM</p>
                       </div>
@@ -373,7 +370,7 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                     value={exportPassword}
                     onChange={(e) => setExportPassword(e.target.value)}
                     placeholder="Digite uma senha forte (min. 12 caracteres)"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
 
                   {exportPassword && (() => {
@@ -381,7 +378,7 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                     return (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">
+                          <span className="text-sm font-medium text-gray-700 dark:text-dark-700">
                             Força da Senha de Exportação
                           </span>
                           <span className={`text-xs font-medium ${
@@ -394,7 +391,7 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                           </span>
                         </div>
                         
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-gray-200 dark:bg-dark-300 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full transition-all ${
                               validation.blocked ? 'bg-red-500' :
@@ -409,11 +406,11 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                         </div>
                         
                         {(validation.blocked || !validation.isValid) && (
-                          <div className="bg-red-50 border border-red-200 rounded p-2">
-                            <p className="text-xs text-red-800 font-medium mb-1">
+                          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-2">
+                            <p className="text-xs text-red-800 dark:text-red-200 font-medium mb-1">
                               {validation.blocked ? '🚫 Senha rejeitada:' : '⚠️ Senha fraca:'}
                             </p>
-                            <ul className="text-xs text-red-700 space-y-1">
+                            <ul className="text-xs text-red-700 dark:text-red-300 space-y-1">
                               {validation.feedback.slice(0, 3).map((item, index) => (
                                 <li key={index}>• {item}</li>
                               ))}
@@ -422,8 +419,8 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                         )}
                         
                         {validation.isValid && !validation.blocked && (
-                          <div className="bg-green-50 border border-green-200 rounded p-2">
-                            <p className="text-xs text-green-800 font-medium">
+                          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded p-2">
+                            <p className="text-xs text-green-800 dark:text-green-200 font-medium">
                               ✅ Senha aceita! Estimativa: {
                                 validation.score >= 9 ? 'Milhares de anos para quebrar' :
                                 validation.score >= 7 ? 'Décadas para quebrar' :
@@ -436,8 +433,8 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                     )
                   })()}
 
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="text-sm text-blue-800">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <div className="text-sm text-blue-800 dark:text-blue-200">
                       <p className="font-medium mb-1">🔐 Segurança da Exportação:</p>
                       <ul className="text-xs space-y-1">
                         <li>• Dupla derivação com Argon2id (256MB RAM + 8 iterações)</li>
@@ -454,10 +451,10 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
             <div className="space-y-6">
               {/* Seleção de arquivo */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2">
                   Selecione o arquivo de importação
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <div className="border-2 border-dashed border-gray-300 dark:border-dark-300 rounded-lg p-6 text-center hover:border-gray-400 dark:hover:border-dark-400 transition-colors">
                   <input
                     type="file"
                     accept=".json,.csv,.xml,.1pux"
@@ -466,8 +463,8 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                     id="fileInput"
                   />
                   <label htmlFor="fileInput" className="cursor-pointer">
-                    <FileJson className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm text-gray-600">
+                    <FileJson className="w-12 h-12 text-gray-400 dark:text-dark-500 mx-auto mb-3" />
+                    <p className="text-sm text-gray-600 dark:text-dark-700">
                       {importFile ? (
                         <span className="font-medium text-blue-600">{importFile.name}</span>
                       ) : (
@@ -483,13 +480,13 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
 
               {/* Formato do arquivo */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2">
                   Formato do Arquivo
                 </label>
                 <select
                   value={importSource}
                   onChange={(e) => setImportSource(e.target.value as ImportSource)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <optgroup label="Formatos comuns">
                     <option value="bitwarden">Bitwarden (json/csv)</option>
@@ -511,7 +508,7 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
               {/* Senha para importação criptografada */}
               {importSource === 'safebox-json' && (
                 <div>
-                  <label htmlFor="importPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="importPassword" className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2">
                     Senha do Arquivo (se criptografado)
                   </label>
                   <input
@@ -520,7 +517,7 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                     value={importPassword}
                     onChange={(e) => setImportPassword(e.target.value)}
                     placeholder="Digite a senha usada na exportação"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               )}
@@ -528,14 +525,14 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
               {/* Seleção de pasta de destino */}
               {folders.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2">
                     Importar para pasta (opcional)
                   </label>
                   <div className="relative">
                     <select
                       value={selectedFolderId || ''}
                       onChange={(e) => setSelectedFolderId(e.target.value || null)}
-                      className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                      className="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-zinc-600 rounded-lg bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
                     >
                       <option value="">Sem pasta específica</option>
                       {folders.map(folder => (
@@ -544,20 +541,20 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
                         </option>
                       ))}
                     </select>
-                    <FolderOpen className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <FolderOpen className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-dark-500 pointer-events-none" />
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-dark-700 mt-1">
                     Todas as credenciais importadas serão adicionadas a esta pasta
                   </p>
                 </div>
               )}
 
               {/* Informações sobre o formato */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">
+              <div className="bg-gray-50 dark:bg-dark-200 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-dark-900 mb-2">
                   Dicas para importação:
                 </h4>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <ul className="text-sm text-gray-600 dark:text-dark-700 space-y-1">
                   {importSource === 'bitwarden' && (
                     <>
                       <li>• Exporte do Bitwarden em formato JSON ou CSV</li>
@@ -596,10 +593,10 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
           {/* Mensagens */}
           {message && (
             <div className={`mt-6 p-4 rounded-lg flex items-start ${
-              message.type === 'success' ? 'bg-green-50 text-green-800' :
-              message.type === 'error' ? 'bg-red-50 text-red-800' :
-              message.type === 'info' ? 'bg-blue-50 text-blue-800' :
-              'bg-yellow-50 text-yellow-800'
+              message.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200' :
+              message.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200' :
+              message.type === 'info' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200' :
+              'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200'
             }`}>
               {message.type === 'success' ? (
                 <CheckCircle className="w-5 h-5 mt-0.5 mr-2 flex-shrink-0" />
@@ -612,10 +609,10 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
+        <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-dark-200 bg-gray-50 dark:bg-dark-200">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-gray-700 dark:text-dark-700 bg-white dark:bg-dark-100 border border-gray-300 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-300 transition-colors"
             disabled={loading}
           >
             Cancelar

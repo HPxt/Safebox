@@ -44,6 +44,9 @@ export interface AuditFinding {
 
 export class AuditAgent extends ContextAwareAgent {
   private reportGenerator: ReportGenerator;
+  private static getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Unknown audit agent error';
+  }
 
   constructor(config?: Partial<AgentConfig>) {
     super(AgentType.AUDIT, config);
@@ -61,8 +64,11 @@ export class AuditAgent extends ContextAwareAgent {
       logger.info('Starting audit analysis', {
         executionId,
         logCount: input.logs.length,
-        timeRange: input.timeRange,
-        focusAreas: input.focusAreas
+        rangeHours: Math.max(
+          0,
+          Math.round((input.timeRange.end.getTime() - input.timeRange.start.getTime()) / (1000 * 60 * 60))
+        ),
+        focusAreas: input.focusAreas?.length || 0
       });
 
       // 1. Validar entrada
@@ -124,8 +130,7 @@ export class AuditAgent extends ContextAwareAgent {
     } catch (error: any) {
       logger.error('Audit analysis failed', {
         executionId,
-        error: error.message,
-        stack: error.stack
+        message: AuditAgent.getErrorMessage(error)
       });
 
       return {
@@ -142,7 +147,7 @@ export class AuditAgent extends ContextAwareAgent {
           criticalFindings: 0,
           executionTime: Date.now() - startTime
         },
-        error: error.message
+        error: AuditAgent.getErrorMessage(error)
       };
     }
   }
@@ -169,7 +174,10 @@ export class AuditAgent extends ContextAwareAgent {
 
     logger.debug('Input validation passed', {
       logCount: input.logs.length,
-      timeRange: input.timeRange
+      rangeHours: Math.max(
+        0,
+        Math.round((input.timeRange.end.getTime() - input.timeRange.start.getTime()) / (1000 * 60 * 60))
+      )
     });
   }
 
@@ -572,8 +580,8 @@ IMPORTANTE: Retorne APENAS o JSON válido.
 
     } catch (error: any) {
       logger.error('Failed to parse AI findings', {
-        error: error.message,
-        response: response.substring(0, 200)
+        message: AuditAgent.getErrorMessage(error),
+        responseLength: response.length
       });
       return [];
     }
@@ -657,7 +665,12 @@ Responda SEMPRE em JSON válido conforme solicitado.
       reviewStatus: 'pending'
     };
 
-    logger.info('Audit log created', { auditLog });
+    logger.info('Audit log created', {
+      agentType: auditLog.agentType,
+      decision: auditLog.decision,
+      reviewStatus: auditLog.reviewStatus,
+      confidence: auditLog.confidence
+    });
 
     // TODO: Persistir no Supabase quando integração estiver pronta
   }

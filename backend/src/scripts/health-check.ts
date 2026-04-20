@@ -194,7 +194,9 @@ const runHealthCheck = async () => {
     const exitCode = overallStatus === 'unhealthy' ? 1 : 0
     process.exit(exitCode)
   } catch (error) {
-    logger.error('Health check failed:', error)
+    logger.error('Health check failed', {
+      message: error instanceof Error ? error.message : 'Unknown health-check error',
+    })
     process.exit(1)
   }
 }

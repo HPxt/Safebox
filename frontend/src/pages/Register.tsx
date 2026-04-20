@@ -78,17 +78,17 @@ const Register: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-100 dark:from-dark-50 dark:to-dark-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-primary-600 rounded-full flex items-center justify-center">
             <Shield className="h-8 w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-secondary-900">
+          <h2 className="mt-6 text-3xl font-bold text-secondary-900 dark:text-dark-900">
             Criar Conta
           </h2>
-          <p className="mt-2 text-sm text-secondary-600">
+          <p className="mt-2 text-sm text-secondary-600 dark:text-dark-700">
             Junte-se ao SafeBox e proteja suas credenciais
           </p>
         </div>
@@ -97,13 +97,13 @@ const Register: React.FC = () => {
         <div className="card p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-lg">
                 {success}
               </div>
             )}
@@ -187,7 +187,7 @@ const Register: React.FC = () => {
               {/* Password Requirements */}
               {formData.password && (
                 <div className="mt-2 space-y-1">
-                  <div className="text-xs text-secondary-600">Critérios de senha:</div>
+                  <div className="text-xs text-secondary-600 dark:text-dark-700">Critérios de senha:</div>
                   <div className="grid grid-cols-2 gap-1 text-xs">
                     <div className={`flex items-center ${passwordValidation.minLength ? 'text-green-600' : 'text-red-600'}`}>
                       <Check className={`h-3 w-3 mr-1 ${passwordValidation.minLength ? 'text-green-600' : 'text-red-600'}`} />
@@ -268,7 +268,7 @@ const Register: React.FC = () => {
             </div>
 
             <div className="text-center">
-              <p className="text-sm text-secondary-600">
+              <p className="text-sm text-secondary-600 dark:text-dark-700">
                 Já tem uma conta?{' '}
                 <Link
                   to="/login"
@@ -283,7 +283,7 @@ const Register: React.FC = () => {
 
         {/* Security Notice */}
         <div className="text-center">
-          <p className="text-xs text-secondary-500">
+          <p className="text-xs text-secondary-500 dark:text-dark-600">
             🔒 Criptografia zero-knowledge • Seus dados são 100% privados
           </p>
         </div>

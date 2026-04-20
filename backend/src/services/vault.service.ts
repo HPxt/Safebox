@@ -1,15 +1,23 @@
-import { supabase } from '@/config/database'
+import { getPrivilegedSupabase } from '@/config/privilegedDb'
 import { Vault, VaultInsert, VaultBackup } from '@/types/database'
 import { logger, logAuditEvent } from '@/utils/logger'
 import crypto from 'crypto'
 
+/**
+ * @deprecated Legacy implementation — bypasses RLS (service_role) and lacks optimistic locking on some paths.
+ * Runtime API uses VaultSnapshotService with a user-scoped Supabase client (see vault.routes).
+ */
 export class VaultService {
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Unknown vault service error'
+  }
+
   /**
    * Get user's vault
    */
   async getVault(userId: string): Promise<Vault | null> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getPrivilegedSupabase()
         .from('vaults')
         .select('*')
         .eq('user_id', userId)
@@ -20,7 +28,10 @@ export class VaultService {
           // No vault found - this is normal for new users
           return null
         }
-        logger.error('Failed to fetch vault:', error)
+        logger.error('Failed to fetch vault', {
+          code: error.code,
+          message: error.message,
+        })
         throw new Error('Failed to fetch vault')
       }
 
@@ -32,7 +43,9 @@ export class VaultService {
 
       return data
     } catch (error) {
-      logger.error('Get vault error:', error)
+      logger.error('Get vault error', {
+        message: this.getErrorMessage(error),
+      })
       throw error
     }
   }
@@ -49,14 +62,17 @@ export class VaultService {
         version: 1,
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await getPrivilegedSupabase()
         .from('vaults')
         .insert(vaultData)
         .select()
         .single()
 
       if (error) {
-        logger.error('Failed to create vault:', error)
+        logger.error('Failed to create vault', {
+          code: error.code,
+          message: error.message,
+        })
         throw new Error('Failed to create vault')
       }
 
@@ -66,10 +82,12 @@ export class VaultService {
         vaultId: data.id,
       })
 
-      logger.info('Vault created successfully', { userId, vaultId: data.id })
+      logger.info('Vault created successfully', { vaultId: data.id })
       return data
     } catch (error) {
-      logger.error('Create vault error:', error)
+      logger.error('Create vault error', {
+        message: this.getErrorMessage(error),
+      })
       throw error
     }
   }
@@ -91,7 +109,7 @@ export class VaultService {
       }
 
       // Update vault
-      const { data, error } = await supabase
+      const { data, error } = await getPrivilegedSupabase()
         .from('vaults')
         .update({
           encrypted_data: encryptedData,
@@ -103,7 +121,10 @@ export class VaultService {
         .single()
 
       if (error) {
-        logger.error('Failed to update vault:', error)
+        logger.error('Failed to update vault', {
+          code: error.code,
+          message: error.message,
+        })
         throw new Error('Failed to update vault')
       }
 
@@ -115,15 +136,16 @@ export class VaultService {
         newVersion: data.version,
       })
 
-      logger.info('Vault updated successfully', { 
-        userId, 
-        vaultId: data.id, 
+      logger.info('Vault updated successfully', {
+        vaultId: data.id,
         version: data.version 
       })
 
       return data
     } catch (error) {
-      logger.error('Update vault error:', error)
+      logger.error('Update vault error', {
+        message: this.getErrorMessage(error),
+      })
       throw error
     }
   }
@@ -133,13 +155,16 @@ export class VaultService {
    */
   async deleteVault(userId: string): Promise<void> {
     try {
-      const { error } = await supabase
+      const { error } = await getPrivilegedSupabase()
         .from('vaults')
         .delete()
         .eq('user_id', userId)
 
       if (error) {
-        logger.error('Failed to delete vault:', error)
+        logger.error('Failed to delete vault', {
+          code: error.code,
+          message: error.message,
+        })
         throw new Error('Failed to delete vault')
       }
 
@@ -148,9 +173,11 @@ export class VaultService {
         event: 'vault_deleted',
       })
 
-      logger.info('Vault deleted successfully', { userId })
+      logger.info('Vault deleted successfully')
     } catch (error) {
-      logger.error('Delete vault error:', error)
+      logger.error('Delete vault error', {
+        message: this.getErrorMessage(error),
+      })
       throw error
     }
   }
@@ -165,7 +192,7 @@ export class VaultService {
         throw new Error('No vault found to backup')
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await getPrivilegedSupabase()
         .from('vault_backups')
         .insert({
           user_id: userId,
@@ -177,19 +204,23 @@ export class VaultService {
         .single()
 
       if (error) {
-        logger.error('Failed to create backup:', error)
+        logger.error('Failed to create backup', {
+          code: error.code,
+          message: error.message,
+        })
         throw new Error('Failed to create backup')
       }
 
-      logger.info('Backup created successfully', { 
-        userId, 
+      logger.info('Backup created successfully', {
         backupId: data.id, 
         backupType 
       })
 
       return data
     } catch (error) {
-      logger.error('Create backup error:', error)
+      logger.error('Create backup error', {
+        message: this.getErrorMessage(error),
+      })
       throw error
     }
   }
@@ -199,7 +230,7 @@ export class VaultService {
    */
   async getBackups(userId: string, limit: number = 10): Promise<VaultBackup[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getPrivilegedSupabase()
         .from('vault_backups')
         .select('*')
         .eq('user_id', userId)
@@ -207,13 +238,18 @@ export class VaultService {
         .limit(limit)
 
       if (error) {
-        logger.error('Failed to fetch backups:', error)
+        logger.error('Failed to fetch backups', {
+          code: error.code,
+          message: error.message,
+        })
         throw new Error('Failed to fetch backups')
       }
 
       return data || []
     } catch (error) {
-      logger.error('Get backups error:', error)
+      logger.error('Get backups error', {
+        message: this.getErrorMessage(error),
+      })
       throw error
     }
   }
@@ -224,7 +260,7 @@ export class VaultService {
   async restoreFromBackup(userId: string, backupId: string): Promise<Vault> {
     try {
       // Get backup data
-      const { data: backup, error: backupError } = await supabase
+      const { data: backup, error: backupError } = await getPrivilegedSupabase()
         .from('vault_backups')
         .select('*')
         .eq('id', backupId)
@@ -232,7 +268,10 @@ export class VaultService {
         .single()
 
       if (backupError) {
-        logger.error('Failed to fetch backup:', backupError)
+        logger.error('Failed to fetch backup', {
+          code: backupError.code,
+          message: backupError.message,
+        })
         throw new Error('Backup not found')
       }
 
@@ -249,15 +288,16 @@ export class VaultService {
         vaultId: restoredVault.id,
       })
 
-      logger.info('Vault restored from backup', { 
-        userId, 
+      logger.info('Vault restored from backup', {
         backupId, 
         vaultId: restoredVault.id 
       })
 
       return restoredVault
     } catch (error) {
-      logger.error('Restore from backup error:', error)
+      logger.error('Restore from backup error', {
+        message: this.getErrorMessage(error),
+      })
       throw error
     }
   }
@@ -284,7 +324,9 @@ export class VaultService {
         dataSize: vault ? JSON.stringify(vault.encrypted_data).length : 0,
       }
     } catch (error) {
-      logger.error('Get vault stats error:', error)
+      logger.error('Get vault stats error', {
+        message: this.getErrorMessage(error),
+      })
       throw error
     }
   }
@@ -311,14 +353,17 @@ export class VaultService {
   async cleanupOldBackups(userId: string, keepCount: number = 10): Promise<void> {
     try {
       // Get all backups for user
-      const { data: allBackups, error } = await supabase
+      const { data: allBackups, error } = await getPrivilegedSupabase()
         .from('vault_backups')
         .select('id, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
 
       if (error) {
-        logger.error('Failed to fetch backups for cleanup:', error)
+        logger.error('Failed to fetch backups for cleanup', {
+          code: error.code,
+          message: error.message,
+        })
         return
       }
 
@@ -326,22 +371,26 @@ export class VaultService {
         const backupsToDelete = allBackups.slice(keepCount)
         const idsToDelete = backupsToDelete.map(b => b.id)
 
-        const { error: deleteError } = await supabase
+        const { error: deleteError } = await getPrivilegedSupabase()
           .from('vault_backups')
           .delete()
           .in('id', idsToDelete)
 
         if (deleteError) {
-          logger.error('Failed to delete old backups:', deleteError)
+          logger.error('Failed to delete old backups', {
+            code: deleteError.code,
+            message: deleteError.message,
+          })
         } else {
-          logger.info('Old backups cleaned up', { 
-            userId, 
+          logger.info('Old backups cleaned up', {
             deletedCount: idsToDelete.length 
           })
         }
       }
     } catch (error) {
-      logger.error('Cleanup old backups error:', error)
+      logger.error('Cleanup old backups error', {
+        message: this.getErrorMessage(error),
+      })
     }
   }
 
@@ -373,10 +422,11 @@ export class VaultService {
         exportedAt: new Date().toISOString(),
       }
     } catch (error) {
-      logger.error('Export vault error:', error)
+      logger.error('Export vault error', {
+        message: this.getErrorMessage(error),
+      })
       throw error
     }
   }
 }
 
-export const vaultService = new VaultService() 

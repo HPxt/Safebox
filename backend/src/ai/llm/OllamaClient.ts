@@ -23,6 +23,9 @@ export interface LLMConfig {
 export class LLMClient {
   private client: AxiosInstance;
   private config: LLMConfig;
+  private static getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Unknown LLM client error';
+  }
 
   constructor(config?: Partial<LLMConfig>) {
     this.config = {
@@ -43,7 +46,6 @@ export class LLMClient {
     });
 
     logger.info('LLMClient initialized (LM Studio)', {
-      host: this.config.host,
       model: this.config.model
     });
   }
@@ -104,12 +106,11 @@ export class LLMClient {
 
     } catch (error: any) {
       logger.error('LLM generate error', {
-        error: error.message,
-        host: this.config.host,
+        message: LLMClient.getErrorMessage(error),
         model: this.config.model
       });
 
-      throw new Error(`LLM generation failed: ${error.message}`);
+      throw new Error(`LLM generation failed: ${LLMClient.getErrorMessage(error)}`);
     }
   }
 
@@ -157,11 +158,11 @@ export class LLMClient {
 
     } catch (error: any) {
       logger.error('LLM chat error', {
-        error: error.message,
-        host: this.config.host
+        message: LLMClient.getErrorMessage(error),
+        model: this.config.model
       });
 
-      throw new Error(`LLM chat failed: ${error.message}`);
+      throw new Error(`LLM chat failed: ${LLMClient.getErrorMessage(error)}`);
     }
   }
 
@@ -177,8 +178,7 @@ export class LLMClient {
       return true;
     } catch (error: any) {
       logger.error('LM Studio health check failed', {
-        error: error.message,
-        host: this.config.host
+        message: LLMClient.getErrorMessage(error)
       });
       return false;
     }
@@ -197,7 +197,7 @@ export class LLMClient {
       return models;
     } catch (error: any) {
       logger.error('Failed to list LM Studio models', {
-        error: error.message
+        message: LLMClient.getErrorMessage(error)
       });
       return [];
     }
@@ -226,7 +226,7 @@ export class LLMClient {
       logger.warn('LLM request failed, retrying', {
         attempt,
         maxRetries: this.config.maxRetries,
-        error: error.message
+        message: LLMClient.getErrorMessage(error)
       });
 
       // Exponential backoff
@@ -257,7 +257,11 @@ export class LLMClient {
   updateConfig(newConfig: Partial<LLMConfig>): void {
     this.config = { ...this.config, ...newConfig };
     
-    logger.info('LLMClient config updated', newConfig);
+    logger.info('LLMClient config updated', {
+      model: this.config.model,
+      timeout: this.config.timeout,
+      maxRetries: this.config.maxRetries
+    });
   }
 }
 

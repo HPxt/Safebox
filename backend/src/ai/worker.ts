@@ -17,6 +17,8 @@ const startAiWorker = async () => {
 }
 
 void startAiWorker().catch((error) => {
-  logger.error('AI worker failed to start', { error })
+  logger.error('AI worker failed to start', {
+    message: error instanceof Error ? error.message : 'Unknown AI worker startup error',
+  })
   process.exit(1)
 })

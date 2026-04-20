@@ -19,6 +19,7 @@ const applyTestDefaults = () => {
     ENABLE_AUDIT_LOGS: 'false',
     ENABLE_EMAIL_NOTIFICATIONS: 'false',
     ENABLE_BACKUP_CLEANUP: 'false',
+    ENABLE_MAINTENANCE_JOBS: 'false',
   }
 
   for (const [key, value] of Object.entries(testDefaults)) {
@@ -73,6 +74,8 @@ const envSchema = z.object({
   ENABLE_RATE_LIMITING: z.string().transform(val => val === 'true').default('true'),
   ENABLE_EMAIL_NOTIFICATIONS: z.string().transform(val => val === 'true').default('false'),
   ENABLE_BACKUP_CLEANUP: z.string().transform(val => val === 'true').default('true'),
+  ENABLE_LEGACY_BACKEND_AUTH: z.string().transform(val => val === 'true').default('false'),
+  ENABLE_MAINTENANCE_JOBS: z.string().transform(val => val === 'true').default('false'),
   
   // Backup and session configuration
   BACKUP_RETENTION_DAYS: z.string().transform(Number).default('30'),
@@ -170,6 +173,8 @@ export const config = {
     rateLimiting: env.ENABLE_RATE_LIMITING,
     emailNotifications: env.ENABLE_EMAIL_NOTIFICATIONS,
     backupCleanup: env.ENABLE_BACKUP_CLEANUP,
+    legacyBackendAuth: env.ENABLE_LEGACY_BACKEND_AUTH,
+    maintenanceJobs: env.ENABLE_MAINTENANCE_JOBS,
   },
   
   backup: {

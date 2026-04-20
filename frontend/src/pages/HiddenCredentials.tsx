@@ -61,8 +61,7 @@ const HiddenCredentials: React.FC = () => {
       // Filtrar apenas as credenciais ocultas
       const hiddenCredentials = allCredentials.filter(c => c.isHidden === true)
       setCredentials(hiddenCredentials)
-    } catch (error) {
-      console.error('Erro ao buscar credenciais ocultas:', error)
+    } catch {
       setCredentials([])
     } finally {
       setLoading(false)
@@ -80,8 +79,7 @@ const HiddenCredentials: React.FC = () => {
     try {
       await navigator.clipboard.writeText(text)
       // Feedback visual poderia ser adicionado aqui
-    } catch (error) {
-      console.error('Erro ao copiar:', error)
+    } catch {
     }
   }
 
@@ -147,7 +145,6 @@ const HiddenCredentials: React.FC = () => {
       await fetchHiddenCredentials()
       handleCloseModal()
     } catch (error: any) {
-      console.error('Erro ao salvar credencial:', error)
       alert('Erro ao salvar credencial: ' + (error?.message || 'Erro desconhecido'))
     }
   }
@@ -167,7 +164,6 @@ const HiddenCredentials: React.FC = () => {
       await credentialsService.deleteCredential(id)
       await fetchHiddenCredentials()
     } catch (error: any) {
-      console.error('Erro ao deletar credencial:', error)
       alert('Erro ao excluir credencial')
     }
   }
@@ -194,7 +190,6 @@ const HiddenCredentials: React.FC = () => {
       await credentialsService.updateCredential(credential.id, updateData)
       await fetchHiddenCredentials()
     } catch (error: any) {
-      console.error('Erro ao desocultar credencial:', error)
       alert('Erro ao desocultar credencial')
     }
   }

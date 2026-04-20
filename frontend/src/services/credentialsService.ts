@@ -234,7 +234,6 @@ class CredentialsService {
         version: vault.version,
       }))
     } catch (error) {
-      console.error('Error in getCredentials:', error)
       throw error
     }
   }
@@ -286,7 +285,6 @@ class CredentialsService {
       await this.replaceCredentialsSnapshot([...existingCredentials, newCredential])
       return newCredential
     } catch (error) {
-      console.error('Error in createCredential:', error)
       throw error
     }
   }
@@ -397,7 +395,6 @@ class CredentialsService {
         throw new Error('Conflito de versao do cofre. Recarregue os dados antes de salvar novamente.')
       }
 
-      console.error('Error saving credentials:', error)
       throw error
     }
   }
@@ -450,7 +447,6 @@ class CredentialsService {
       await this.replaceCredentialsSnapshot(allCredentials)
       return updatedCredential
     } catch (error) {
-      console.error('Error updating credential:', error)
       throw error
     }
   }
@@ -461,7 +457,6 @@ class CredentialsService {
       const filteredCredentials = credentials.filter((credential) => credential.id !== id)
       await this.replaceCredentialsSnapshot(filteredCredentials)
     } catch (error) {
-      console.error('Error deleting credential:', error)
       throw error
     }
   }
@@ -470,8 +465,7 @@ class CredentialsService {
     try {
       const allCredentials = await this.getCredentials()
       return allCredentials.filter((credential) => credential.folderId === folderId)
-    } catch (error) {
-      console.error('Error in getCredentialsByFolder:', error)
+    } catch {
       return []
     }
   }
@@ -485,7 +479,6 @@ class CredentialsService {
       })
 
       if (error) {
-        console.error('Invalid master password:', error.message)
         this.masterKey = null
         return false
       }
@@ -493,8 +486,7 @@ class CredentialsService {
       this.setMasterKey(masterPassword)
       this.vaultUnlocked = true
       return true
-    } catch (error) {
-      console.error('Failed to unlock vault:', error)
+    } catch {
       this.masterKey = null
       return false
     }

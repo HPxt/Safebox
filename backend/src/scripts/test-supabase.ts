@@ -1,5 +1,9 @@
 import { supabase } from '../config/database'
 
+const getErrorMessage = (error: unknown): string => (
+  error instanceof Error ? error.message : 'Unknown script error'
+)
+
 async function testSupabaseConnection() {
   console.log('🔍 Testing Supabase connection...')
   
@@ -18,7 +22,7 @@ async function testSupabaseConnection() {
     console.log('✅ Supabase connection successful!')
     return true
   } catch (error) {
-    console.error('❌ Connection error:', error)
+    console.error('❌ Connection error:', getErrorMessage(error))
     return false
   }
 }
@@ -49,7 +53,7 @@ async function testDatabaseSchema() {
 
       console.log(`✅ Table '${table}' accessible`)
     } catch (error) {
-      console.error(`❌ Error testing table '${table}':`, error)
+      console.error(`❌ Error testing table '${table}':`, getErrorMessage(error))
       return false
     }
   }
@@ -84,7 +88,7 @@ async function testRPCFunctions() {
         console.log(`✅ Function '${func}' accessible`)
       }
     } catch (error) {
-      console.error(`❌ Error testing function '${func}':`, error)
+      console.error(`❌ Error testing function '${func}':`, getErrorMessage(error))
       return false
     }
   }
@@ -109,7 +113,7 @@ async function testRowLevelSecurity() {
 
     return true
   } catch (error) {
-    console.error('❌ Error testing RLS:', error)
+    console.error('❌ Error testing RLS:', getErrorMessage(error))
     return false
   }
 }
@@ -152,7 +156,7 @@ if (require.main === module) {
       process.exit(success ? 0 : 1)
     })
     .catch((error) => {
-      console.error('Fatal error:', error)
+      console.error('Fatal error:', getErrorMessage(error))
       process.exit(1)
     })
 }

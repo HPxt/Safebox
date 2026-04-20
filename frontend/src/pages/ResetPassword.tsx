@@ -110,16 +110,16 @@ const ResetPassword: React.FC = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-100 flex items-center justify-center py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-100 dark:from-dark-50 dark:to-dark-100 flex items-center justify-center py-12 px-4">
         <div className="max-w-md w-full">
           <div className="card p-8 text-center">
             <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
               <Check className="h-8 w-8 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-secondary-900 mb-2">
+            <h2 className="text-2xl font-bold text-secondary-900 dark:text-dark-900 mb-2">
               Senha redefinida com sucesso!
             </h2>
-            <p className="text-secondary-600 mb-4">
+            <p className="text-secondary-600 dark:text-dark-700 mb-4">
               Você será redirecionado para a tela de login...
             </p>
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
@@ -130,17 +130,17 @@ const ResetPassword: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-100 dark:from-dark-50 dark:to-dark-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-primary-600 rounded-full flex items-center justify-center">
             <Shield className="h-8 w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-secondary-900">
+          <h2 className="mt-6 text-3xl font-bold text-secondary-900 dark:text-dark-900">
             Redefinir Senha
           </h2>
-          <p className="mt-2 text-sm text-secondary-600">
+          <p className="mt-2 text-sm text-secondary-600 dark:text-dark-700">
             Crie uma nova senha segura para sua conta
           </p>
         </div>
@@ -149,7 +149,7 @@ const ResetPassword: React.FC = () => {
         <div className="card p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
                 {error}
               </div>
             )}
@@ -188,7 +188,7 @@ const ResetPassword: React.FC = () => {
               {/* Password Requirements */}
               {password && (
                 <div className="mt-2 space-y-1">
-                  <div className="text-xs text-secondary-600">Critérios de senha:</div>
+                  <div className="text-xs text-secondary-600 dark:text-dark-700">Critérios de senha:</div>
                   <div className="grid grid-cols-2 gap-1 text-xs">
                     <div className={`flex items-center ${passwordValidation.minLength ? 'text-green-600' : 'text-red-600'}`}>
                       <Check className={`h-3 w-3 mr-1 ${passwordValidation.minLength ? 'text-green-600' : 'text-red-600'}`} />

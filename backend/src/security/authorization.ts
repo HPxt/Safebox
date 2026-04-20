@@ -1,6 +1,7 @@
 import { Request } from 'express'
-import { supabase } from '@/config/database'
+import { getPrivilegedSupabase } from '@/config/privilegedDb'
 import { AppError, NotFoundError, UnauthorizedError } from '@/security/errors'
+import type { Database } from '@/types/database'
 
 export interface AuthenticatedRequestUser {
   userId: string
@@ -53,8 +54,8 @@ export const requireOwnedResource = async <T>({
   idColumn = 'id',
   userColumn = 'user_id',
 }: OwnedResourceArgs): Promise<T> => {
-  const { data, error } = await supabase
-    .from(table)
+  const { data, error } = await getPrivilegedSupabase()
+    .from(table as keyof Database['public']['Tables'])
     .select(select)
     .eq(idColumn, id)
     .eq(userColumn, userId)

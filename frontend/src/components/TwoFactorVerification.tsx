@@ -78,15 +78,15 @@ const TwoFactorVerification: React.FC<TwoFactorVerificationProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-6">
+      <div className="w-full max-w-md rounded-lg bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-200 p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="flex items-center text-xl font-bold text-gray-900">
+          <h2 className="flex items-center text-xl font-bold text-gray-900 dark:text-dark-900">
             <Shield className="mr-2 h-6 w-6 text-primary-600" />
             Verificacao em 2 Fatores
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 dark:text-dark-500 hover:text-gray-600 dark:hover:text-dark-800 transition-colors"
             disabled={loading}
             type="button"
           >
@@ -96,7 +96,7 @@ const TwoFactorVerification: React.FC<TwoFactorVerificationProps> = ({
 
         <div className="mb-6 text-center">
           <Smartphone className="mx-auto mb-3 h-12 w-12 text-primary-600" />
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-dark-700">
             {useBackupCode
               ? 'Digite um dos seus codigos de backup para concluir o acesso.'
               : 'Digite o codigo de 6 digitos do seu aplicativo autenticador.'}
@@ -104,7 +104,7 @@ const TwoFactorVerification: React.FC<TwoFactorVerificationProps> = ({
         </div>
 
         {error && (
-          <div className="mb-4 flex items-start rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
+          <div className="mb-4 flex items-start rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3 text-red-700 dark:text-red-300">
             <AlertCircle className="mr-2 h-5 w-5 flex-shrink-0" />
             <span className="text-sm">{error}</span>
           </div>
@@ -116,7 +116,7 @@ const TwoFactorVerification: React.FC<TwoFactorVerificationProps> = ({
             value={code}
             onChange={event => handleCodeChange(event.target.value)}
             onKeyPress={handleKeyPress}
-            className={`w-full rounded-lg border border-gray-300 px-4 py-3 font-mono focus:border-transparent focus:ring-2 focus:ring-primary-500 ${useBackupCode ? 'text-center text-lg' : 'text-center text-2xl'}`}
+            className={`w-full rounded-lg border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-4 py-3 font-mono text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-primary-500 ${useBackupCode ? 'text-center text-lg' : 'text-center text-2xl'}`}
             placeholder={useBackupCode ? 'CODIGO-BACKUP' : '000000'}
             maxLength={useBackupCode ? 32 : 6}
             disabled={loading}
@@ -142,7 +142,7 @@ const TwoFactorVerification: React.FC<TwoFactorVerificationProps> = ({
 
         <button
           onClick={handleToggleCodeMode}
-          className="w-full text-sm text-primary-600 hover:text-primary-700"
+          className="w-full text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
           disabled={loading}
           type="button"
         >
@@ -150,8 +150,8 @@ const TwoFactorVerification: React.FC<TwoFactorVerificationProps> = ({
         </button>
 
         {attempts >= 3 && (
-          <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
-            <p className="text-xs text-yellow-800">
+          <div className="mt-4 rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-3">
+            <p className="text-xs text-yellow-800 dark:text-yellow-200">
               <strong>Muitas tentativas falhadas.</strong> Se voce perdeu acesso ao seu app autenticador,
               use um codigo de backup ou entre em contato com o suporte.
             </p>

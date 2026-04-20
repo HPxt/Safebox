@@ -48,8 +48,8 @@ export const authenticateToken = async (
     req.authToken = token
 
     next()
-  } catch (error) {
-    logger.error('Authentication failed:', error)
+  } catch {
+    logger.warn('Authentication failed')
     res.status(403).json({
       success: false,
       error: 'Invalid or expired token',
@@ -75,15 +75,15 @@ export const optionalAuth = async (
         const decoded = await authService.verifyToken(token)
         req.user = decoded
         req.authToken = token
-      } catch (error) {
+      } catch {
         // Token is invalid, but we don't fail the request
-        logger.warn('Invalid token in optional auth:', error)
+        logger.warn('Invalid token in optional auth')
       }
     }
 
     next()
-  } catch (error) {
-    logger.error('Optional auth error:', error)
+  } catch {
+    logger.error('Optional auth error')
     next()
   }
 }
@@ -122,8 +122,8 @@ export const authenticateSupabaseAccessToken = async (
     }
     req.authToken = token
     next()
-  } catch (error) {
-    logger.error('Supabase authentication failed:', error)
+  } catch {
+    logger.warn('Supabase authentication failed')
     res.status(403).json({
       success: false,
       error: 'Invalid or expired Supabase session',
@@ -152,8 +152,8 @@ export const requireAdmin = async (
       success: false,
       error: 'Admin authorization is not configured',
     })
-  } catch (error) {
-    logger.error('Admin auth error:', error)
+  } catch {
+    logger.error('Admin auth error')
     res.status(500).json({
       success: false,
       error: 'Internal server error',
