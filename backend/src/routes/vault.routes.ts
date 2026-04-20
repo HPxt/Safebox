@@ -11,7 +11,7 @@ import { requireSupabaseAuthenticatedUser } from '@/security/authorization'
 import { asyncHandler, sendSuccess } from '@/security/http'
 import { parseIntegerQuery, validateWithSchema } from '@/security/validation'
 
-const router = Router()
+const router: Router = Router()
 
 const createVaultService = (authToken: string) => {
   const scopedClient = createSupabaseUserClient(authToken)

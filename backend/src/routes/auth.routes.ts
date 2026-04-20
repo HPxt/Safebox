@@ -22,7 +22,7 @@ import {
   verifyTwoFactorToken,
 } from '@/security/twoFactor'
 
-const router = Router()
+const router: Router = Router()
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email format'),

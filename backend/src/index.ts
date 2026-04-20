@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { type Express } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import { config } from '@/config/environment'
@@ -14,7 +14,7 @@ import vaultRoutes from '@/routes/vault.routes'
 import settingsRoutes from '@/routes/settings.routes'
 
 // Create Express app
-const app = express()
+const app: Express = express()
 
 // Global server variable
 let serverInstance: any = null

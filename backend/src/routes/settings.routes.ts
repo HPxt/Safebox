@@ -8,7 +8,7 @@ import { ConflictError, NotFoundError } from '@/security/errors'
 import { asyncHandler, sendSuccess } from '@/security/http'
 import { parseIntegerQuery, validateWithSchema } from '@/security/validation'
 
-const router = Router()
+const router: Router = Router()
 
 const settingsSchema = z.object({
   security: z.object({
