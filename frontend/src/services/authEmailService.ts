@@ -3,16 +3,34 @@ import { supabase } from '../config/supabase'
 const LOCALHOST_HOSTS = new Set(['localhost', '127.0.0.1'])
 
 const normalizeUrl = (value: string): string => value.trim().replace(/\/+$/, '')
+const isLocalhostUrl = (value: string): boolean => {
+  try {
+    const parsed = new URL(value)
+    return LOCALHOST_HOSTS.has(parsed.hostname)
+  } catch {
+    return false
+  }
+}
 
 export const getPublicAppUrl = (): string => {
   const configuredUrl = process.env.REACT_APP_PUBLIC_APP_URL?.trim()
+  const runtimeOrigin = typeof window !== 'undefined' ? normalizeUrl(window.location.origin) : ''
+  const runtimeIsLocalhost = typeof window !== 'undefined' && LOCALHOST_HOSTS.has(window.location.hostname)
 
   if (configuredUrl) {
-    return normalizeUrl(configuredUrl)
+    const normalizedConfiguredUrl = normalizeUrl(configuredUrl)
+
+    if (!runtimeIsLocalhost && isLocalhostUrl(normalizedConfiguredUrl)) {
+      if (runtimeOrigin) {
+        return runtimeOrigin
+      }
+    } else {
+      return normalizedConfiguredUrl
+    }
   }
 
-  if (typeof window !== 'undefined' && LOCALHOST_HOSTS.has(window.location.hostname)) {
-    return normalizeUrl(window.location.origin)
+  if (runtimeOrigin) {
+    return runtimeOrigin
   }
 
   throw new Error('A URL publica do app nao esta configurada. Defina REACT_APP_PUBLIC_APP_URL.')
