@@ -82,6 +82,97 @@ Tambem foi executado:
   - `user A cannot list credentials owned by user B`
   - `user A cannot read audit logs owned by user B`
 
+## 6.1 Efeito pratico de cada migration
+
+### `001_grants_minimal.sql`
+
+Efeito concreto:
+
+- tirou privilegios perigosos globais como `TRUNCATE`, `REFERENCES` e `TRIGGER`
+- deixou de abrir CRUD em todas as tabelas de uma vez
+- passou a dar permissoes de forma explicita por tabela sensivel
+- manteve `audit_logs` como leitura apenas para `authenticated`
+
+Em linguagem simples:
+
+- o utilizador autenticado ficou com acesso mais controlado e previsivel
+- tabelas sensiveis deixaram de depender de grants amplos herdados
+
+### `002_rls_core_users.sql`
+
+Efeito concreto:
+
+- endureceu as policies das tabelas core do utilizador
+- corrigiu a parte de `users_update_own`, que no ambiente real estava incompleta
+
+Em linguagem simples:
+
+- o proprio utilizador pode continuar a atualizar o proprio perfil
+- mas a policy ficou mais correta e menos sujeita a bypass por update mal validado
+
+### `003_rls_audit_backups_sessions.sql`
+
+Efeito concreto:
+
+- ativou `RLS` e `FORCE RLS` em tabelas auxiliares como auditoria, backups e sessoes
+- removeu insert direto em `audit_logs` para o utilizador autenticado
+- deixou a escrita de auditoria dependente do backend privilegiado / RPC
+
+Em linguagem simples:
+
+- logs, backups e sessoes ficaram com isolamento mais forte entre utilizadores
+- auditoria deixou de ser uma tabela em que o cliente podia escrever diretamente
+
+### `004_two_factor_attempts.sql`
+
+Efeito concreto:
+
+- criou a tabela `two_factor_attempts`
+- aplicou `RLS` e `FORCE RLS`
+- deixou os grants dela no formato minimo esperado
+
+Em linguagem simples:
+
+- as tentativas de 2FA passaram a ter uma estrutura propria e protegida
+- isso reduz improviso no armazenamento e melhora rastreabilidade do fluxo
+
+### `005_functions_hardening.sql`
+
+Efeito concreto:
+
+- endureceu funcoes encontradas no schema real sem depender de assinatura fixa
+- definiu `search_path=public, pg_temp` nas funcoes sensiveis encontradas
+- removeu `EXECUTE` indevido para `authenticated` nas funcoes sensiveis
+
+Em linguagem simples:
+
+- funcoes privilegiadas ficaram menos expostas a abuso
+- caiu o risco de herdar contexto perigoso de `search_path`
+
+### `006_views_security_invoker.sql`
+
+Efeito concreto:
+
+- ajustou views para `security_invoker`, quando suportado
+
+Em linguagem simples:
+
+- as views passam a respeitar melhor o contexto de quem chama, em vez de ampliar acesso por acidente
+
+### `007_grants_followup_hardening.sql`
+
+Efeito concreto:
+
+- removeu grants residuais que sobreviveram ao lote `001-006`
+- corrigiu `audit_logs`, `vault_backups`, `credential_backups`, `user_sessions`, `users` e `two_factor_attempts`
+- tentou endurecer tambem os `default privileges` para objetos futuros
+
+Em linguagem simples:
+
+- foi a limpeza fina do que ainda estava amplo demais depois da primeira rodada
+- resolveu a maior parte dos grants residuais atuais
+- mas nao conseguiu fechar totalmente o caso de `supabase_admin`, por limite de permissao do proprio ambiente
+
 ### Evidencias principais observadas
 
 - grants pos-follow-up:
