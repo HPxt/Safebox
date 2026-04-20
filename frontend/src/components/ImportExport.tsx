@@ -41,6 +41,18 @@ const ImportExport: React.FC<ImportExportProps> = ({ isOpen, onClose, onImportCo
     }
   }, [isOpen])
 
+  React.useEffect(() => {
+    if (isOpen) {
+      // Reset transient feedback every time the modal opens
+      setMessage(null)
+    }
+  }, [isOpen])
+
+  React.useEffect(() => {
+    // Avoid showing stale success/error from the other tab
+    setMessage(null)
+  }, [activeTab])
+
   const fetchFolders = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
