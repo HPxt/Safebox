@@ -6,9 +6,25 @@ const AuthCallback: React.FC = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
     const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    const errorCode = searchParams.get('error_code') || hashParams.get('error_code')
+    const errorDescription = searchParams.get('error_description') || hashParams.get('error_description')
     const type = hashParams.get('type')
     const accessToken = hashParams.get('access_token')
+
+    if (errorCode) {
+      const normalizedCode = errorCode.toLowerCase()
+      const normalizedDescription = (errorDescription || '').toLowerCase()
+
+      if (normalizedCode.includes('otp_expired') || normalizedDescription.includes('expired')) {
+        navigate('/login?confirmation=expired')
+        return
+      }
+
+      navigate('/login?confirmation=invalid')
+      return
+    }
 
     if (type === 'recovery' && accessToken) {
       navigate(`/reset-password#access_token=${accessToken}&type=${type}`)

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Lock, Mail, Eye, EyeOff, Shield, CheckCircle } from 'lucide-react'
+import { Lock, Mail, Eye, EyeOff, Shield, CheckCircle, RefreshCw } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import TwoFactorService from '../services/twoFactorService'
 import TwoFactorVerification from '../components/TwoFactorVerification'
@@ -13,11 +13,14 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [show2FAVerification, setShow2FAVerification] = useState(false)
+  const [showResendConfirmation, setShowResendConfirmation] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
 
-  const { signIn } = useAuth()
+  const { signIn, resendConfirmationEmail } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
@@ -25,7 +28,28 @@ const Login: React.FC = () => {
     if (searchParams.get('confirmed') === 'true') {
       setSuccess('Email confirmado com sucesso! Agora voce pode fazer login.')
     }
+
+    const confirmationStatus = searchParams.get('confirmation')
+    if (confirmationStatus === 'expired') {
+      setError('Este link de confirmacao expirou ou ja nao e mais valido. Informe seu email para reenviar.')
+      setShowResendConfirmation(true)
+    } else if (confirmationStatus === 'invalid') {
+      setError('Nao foi possivel validar este link de confirmacao. Tente reenviar um novo email.')
+      setShowResendConfirmation(true)
+    }
   }, [searchParams])
+
+  useEffect(() => {
+    if (resendCooldown <= 0) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => {
+      setResendCooldown((current) => current - 1)
+    }, 1000)
+
+    return () => window.clearTimeout(timer)
+  }, [resendCooldown])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -47,9 +71,44 @@ const Login: React.FC = () => {
         }
       }
     } catch (caughtError: any) {
-      setError(caughtError.message || 'Erro ao fazer login')
+      const message = caughtError.message || 'Erro ao fazer login'
+      const normalizedMessage = String(message).toLowerCase()
+
+      if (
+        normalizedMessage.includes('email not confirmed') ||
+        normalizedMessage.includes('email_not_confirmed') ||
+        normalizedMessage.includes('confirm your email')
+      ) {
+        setError('Sua conta ainda nao foi confirmada. Reenvie o email de confirmacao para continuar.')
+        setShowResendConfirmation(true)
+      } else {
+        setError(message)
+        setShowResendConfirmation(false)
+      }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleResendConfirmation = async () => {
+    if (!email.trim() || resendLoading || resendCooldown > 0) {
+      return
+    }
+
+    setResendLoading(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      await resendConfirmationEmail(email)
+      setSuccess('Se este email estiver cadastrado e ainda nao confirmado, enviamos um novo link de confirmacao.')
+      setShowResendConfirmation(true)
+      setResendCooldown(60)
+    } catch (caughtError: any) {
+      setError(caughtError.message || 'Nao foi possivel reenviar o email de confirmacao.')
+      setShowResendConfirmation(true)
+    } finally {
+      setResendLoading(false)
     }
   }
 
@@ -87,6 +146,31 @@ const Login: React.FC = () => {
               <div className="flex items-center rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 text-green-700 dark:text-green-300">
                 <CheckCircle className="mr-2 h-5 w-5" />
                 {success}
+              </div>
+            )}
+
+            {showResendConfirmation && (
+              <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 px-4 py-3">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  Nao recebeu o email ou o link expirou? Reenvie a confirmacao com o email informado abaixo.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResendConfirmation}
+                  disabled={!email.trim() || resendLoading || resendCooldown > 0}
+                  className="mt-3 inline-flex items-center text-sm font-medium text-safebox-600 hover:text-safebox-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {resendLoading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Reenviando...
+                    </>
+                  ) : resendCooldown > 0 ? (
+                    `Reenviar confirmacao em ${resendCooldown}s`
+                  ) : (
+                    'Reenviar email de confirmacao'
+                  )}
+                </button>
               </div>
             )}
 

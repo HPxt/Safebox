@@ -3,6 +3,7 @@ import { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { supabase } from '../config/supabase'
 import { User, AuthContextType } from '../types'
 import CryptoService from '../services/cryptoService'
+import { getAuthCallbackUrl, sendSignupConfirmation } from '../services/authEmailService'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -87,7 +88,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const siteUrl = window.location.origin
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -95,10 +95,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         data: {
           full_name: fullName,
         },
-        emailRedirectTo: `${siteUrl}/auth/callback`,
+        emailRedirectTo: getAuthCallbackUrl(),
       },
     })
     if (error) throw error
+  }
+
+  const resendConfirmationEmail = async (email: string) => {
+    await sendSignupConfirmation(email)
   }
 
   const signOut = async () => {
@@ -122,6 +126,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     signIn,
     signUp,
+    resendConfirmationEmail,
     signOut,
     updateProfile,
   }

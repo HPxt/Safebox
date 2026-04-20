@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Mail, Shield, ArrowLeft } from 'lucide-react'
-import { supabase } from '../config/supabase'
+import { sendResetPassword } from '../services/authEmailService'
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState('')
@@ -16,22 +16,7 @@ const ForgotPassword: React.FC = () => {
     setSuccess(false)
 
     try {
-      const resetUrl = `${window.location.origin}/auth/callback`
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: resetUrl,
-      })
-
-      if (resetError) {
-        if (resetError.message.includes('rate limit')) {
-          throw new Error('Limite de emails atingido. Tente novamente em alguns minutos.')
-        }
-
-        if (resetError.message.includes('not found')) {
-          throw new Error('Email nao cadastrado no sistema.')
-        }
-
-        throw resetError
-      }
+      await sendResetPassword(email)
 
       setSuccess(true)
       setEmail('')
