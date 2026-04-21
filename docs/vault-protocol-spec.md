@@ -194,7 +194,7 @@ The plaintext is a **JSON array** of credential objects. There is no outer wrapp
 | `cardCvv` | string \| null | yes (`null` preserved) | `null` is preserved |
 | `version` | number | stripped | ALWAYS omit (set to `undefined` before serialization) |
 
-> **Critical**: the `version` field is present on `Credential` objects in memory (set to the vault version by the service layer) but MUST be stripped (`set to undefined`) before serializing into the vault payload. Failing to strip it does not break decryption, but it pollutes the payload and changes the `dataHash` compared to what the server expects.
+> **Critical**: the `version` field is present on `Credential` objects in memory (set to the vault version by the service layer) but MUST be stripped (`set to undefined`) before serializing into the vault payload. Failing to strip it does not break decryption, but it pollutes the plaintext payload, breaks parity with the canonical vectors, and can create cross-client divergence. The backend validates `dataHash` against the submitted `encryptedData` string; it does not know the plaintext fields inside the encrypted vault.
 
 > **Critical**: fields typed as `string | null` have semantic meaning for `null`. `null` means "user explicitly set this to empty/removed". Do NOT convert `null` to `""` or omit the key.
 
