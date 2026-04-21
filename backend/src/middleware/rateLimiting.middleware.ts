@@ -6,6 +6,13 @@ import { config } from '@/config/environment'
 import { redactObject } from '@/security/redaction'
 import { logger } from '@/utils/logger'
 
+export const rateLimitErrorBody = (error: string, retryAfter: number) => ({
+  success: false,
+  error,
+  code: 'TOO_MANY_REQUESTS',
+  retryAfter,
+})
+
 // Configuração do Redis para rate limiting distribuído
 let redisClient: Redis | null = null
 
@@ -69,6 +76,7 @@ export const loginRateLimit = rateLimit({
   message: {
     success: false,
     error: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
+    code: 'TOO_MANY_REQUESTS',
     retryAfter: 15 * 60
   },
   standardHeaders: true,
@@ -91,6 +99,7 @@ export const loginRateLimit = rateLimit({
     res.status(429).json({
       success: false,
       error: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
+      code: 'TOO_MANY_REQUESTS',
       retryAfter: 15 * 60
     })
   }
@@ -103,6 +112,7 @@ export const registerRateLimit = rateLimit({
   message: {
     success: false,
     error: 'Muitas tentativas de registro. Tente novamente em 1 hora.',
+    code: 'TOO_MANY_REQUESTS',
     retryAfter: 60 * 60
   },
   standardHeaders: true,
@@ -118,6 +128,7 @@ export const registerRateLimit = rateLimit({
     res.status(429).json({
       success: false,
       error: 'Muitas tentativas de registro. Tente novamente em 1 hora.',
+      code: 'TOO_MANY_REQUESTS',
       retryAfter: 60 * 60
     })
   }
@@ -130,6 +141,7 @@ export const passwordChangeRateLimit = rateLimit({
   message: {
     success: false,
     error: 'Muitas tentativas de mudança de senha. Tente novamente em 1 hora.',
+    code: 'TOO_MANY_REQUESTS',
     retryAfter: 60 * 60
   },
   standardHeaders: true,
@@ -137,18 +149,19 @@ export const passwordChangeRateLimit = rateLimit({
   ...(redisClient ? { store: new RedisStore(redisClient, 'password:') as any } : {}),
   keyGenerator: (req: Request) => {
     // Usar userId se autenticado, senão IP
-    const userId = req.user?.userId
+    const userId = req.supabaseUser?.userId || req.user?.userId
     return userId ? `user:${userId}` : `ip:${req.ip}`
   },
   handler: (req: Request, res: Response) => {
     logger.warn('Rate limit exceeded for password change', redactObject({
-      userId: req.user?.userId,
+      userId: req.supabaseUser?.userId || req.user?.userId,
       ip: req.ip
     }))
     
     res.status(429).json({
       success: false,
       error: 'Muitas tentativas de mudança de senha. Tente novamente em 1 hora.',
+      code: 'TOO_MANY_REQUESTS',
       retryAfter: 60 * 60
     })
   }
@@ -161,6 +174,7 @@ export const generalRateLimit = rateLimit({
   message: {
     success: false,
     error: 'Muitas requisições. Tente novamente em alguns minutos.',
+    code: 'TOO_MANY_REQUESTS',
     retryAfter: 15 * 60
   },
   standardHeaders: true,
@@ -177,6 +191,7 @@ export const generalRateLimit = rateLimit({
     res.status(429).json({
       success: false,
       error: 'Muitas requisições. Tente novamente em alguns minutos.',
+      code: 'TOO_MANY_REQUESTS',
       retryAfter: 15 * 60
     })
   }
@@ -227,6 +242,7 @@ export const suspiciousActivityDetector = (req: Request, res: Response, next: Ne
       message: {
         success: false,
         error: 'Atividade suspeita detectada. Acesso temporariamente restrito.',
+        code: 'TOO_MANY_REQUESTS',
         retryAfter: 60
       }
     })(req, res, next)
@@ -242,18 +258,19 @@ export const vaultRateLimit = rateLimit({
   message: {
     success: false,
     error: 'Muitas operações no cofre. Aguarde um momento.',
+    code: 'TOO_MANY_REQUESTS',
     retryAfter: 60
   },
   standardHeaders: true,
   legacyHeaders: false,
   ...(redisClient ? { store: new RedisStore(redisClient, 'vault:') as any } : {}),
   keyGenerator: (req: Request) => {
-    const userId = req.user?.userId
+    const userId = req.supabaseUser?.userId || req.user?.userId
     return userId ? `user:${userId}` : `ip:${req.ip}`
   },
   handler: (req: Request, res: Response) => {
     logger.warn('Vault rate limit exceeded', redactObject({
-      userId: req.user?.userId,
+      userId: req.supabaseUser?.userId || req.user?.userId,
       ip: req.ip,
       operation: req.method + ' ' + req.path
     }))
@@ -261,6 +278,7 @@ export const vaultRateLimit = rateLimit({
     res.status(429).json({
       success: false,
       error: 'Muitas operações no cofre. Aguarde um momento.',
+      code: 'TOO_MANY_REQUESTS',
       retryAfter: 60
     })
   }

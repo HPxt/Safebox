@@ -10,6 +10,7 @@ import {
   fromUnknownError,
   toClientErrorResponse,
 } from '@/security/errors'
+import { rateLimitErrorBody } from '@/middleware/rateLimiting.middleware'
 
 describe('security/errors contract', () => {
   test('ValidationError serializes to stable client shape', () => {
@@ -56,6 +57,15 @@ describe('security/errors contract', () => {
     const payload = toClientErrorResponse(new TooManyRequestsError(), false)
     expect(payload.success).toBe(false)
     expect(payload.code).toBe('TOO_MANY_REQUESTS')
+  })
+
+  test('rate limit response includes stable TOO_MANY_REQUESTS code and retryAfter', () => {
+    expect(rateLimitErrorBody('Slow down', 60)).toEqual({
+      success: false,
+      error: 'Slow down',
+      code: 'TOO_MANY_REQUESTS',
+      retryAfter: 60,
+    })
   })
 
   test('ExternalServiceError is hidden from clients in production', () => {

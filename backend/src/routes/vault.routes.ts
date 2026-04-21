@@ -42,9 +42,9 @@ const restoreSchema = z.object({
   expectedVersion: z.number().int().min(1).optional(),
 }).strict()
 
-router.use(vaultRateLimit)
+router.use(authenticateSupabaseAccessToken, vaultRateLimit)
 
-router.get('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+router.get('/', asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const vaultService = createVaultService(req.authToken!)
   const vault = await vaultService.getCurrentVault(user.userId)
@@ -52,7 +52,7 @@ router.get('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) =
   sendSuccess(res, { data: vault })
 }))
 
-router.post('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+router.post('/', asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const payload = validateWithSchema(vaultCreateSchema, req.body)
   const vaultService = createVaultService(req.authToken!)
@@ -77,7 +77,7 @@ router.post('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) 
   })
 }))
 
-router.put('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+router.put('/', asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const payload = validateWithSchema(vaultUpdateSchema, req.body)
   const vaultService = createVaultService(req.authToken!)
@@ -101,7 +101,7 @@ router.put('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) =
   })
 }))
 
-router.delete('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+router.delete('/', asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const { expectedVersion } = validateWithSchema(vaultDeleteSchema, req.body)
   const vaultService = createVaultService(req.authToken!)
@@ -124,7 +124,7 @@ router.delete('/', authenticateSupabaseAccessToken, asyncHandler(async (req, res
   })
 }))
 
-router.get('/stats', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+router.get('/stats', asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const vaultService = createVaultService(req.authToken!)
   const stats = await vaultService.getStats(user.userId)
@@ -132,7 +132,7 @@ router.get('/stats', authenticateSupabaseAccessToken, asyncHandler(async (req, r
   sendSuccess(res, { data: stats })
 }))
 
-router.post('/backup', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+router.post('/backup', asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const vaultService = createVaultService(req.authToken!)
   const { vault, backup } = await vaultService.createBackup(user.userId)
@@ -157,7 +157,7 @@ router.post('/backup', authenticateSupabaseAccessToken, asyncHandler(async (req,
   })
 }))
 
-router.get('/backups', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+router.get('/backups', asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const limit = parseIntegerQuery(req.query['limit'], {
     defaultValue: 10,
@@ -171,7 +171,7 @@ router.get('/backups', authenticateSupabaseAccessToken, asyncHandler(async (req,
   sendSuccess(res, { data: backups })
 }))
 
-router.post('/restore/:backupId', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+router.post('/restore/:backupId', asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const { backupId } = validateWithSchema(backupIdSchema, req.params)
   const { expectedVersion } = validateWithSchema(restoreSchema, req.body ?? {})
@@ -197,7 +197,7 @@ router.post('/restore/:backupId', authenticateSupabaseAccessToken, asyncHandler(
   })
 }))
 
-router.get('/export', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+router.get('/export', asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const vaultService = createVaultService(req.authToken!)
   const exportedVault = await vaultService.exportVault(user.userId)

@@ -105,6 +105,69 @@ Non-existent routes return:
   - `NOT_FOUND`
   - `CONFLICT`
 
+### 3.1.1 Direct Supabase reads required for unlock and fallback
+
+The iOS client cannot unlock the vault using backend endpoints alone. It MUST also use the Supabase session token for direct RLS-protected reads.
+
+#### Master-password unlock metadata
+
+Source of truth:
+
+```sql
+select kdf_salt, kdf_params, key_hash
+from users
+where id = auth.uid()
+limit 1;
+```
+
+Required fields:
+
+- `kdf_salt`: base64 string, 32 bytes after decoding
+- `kdf_params`: JSON object with `memorySize`, `iterations`, `parallelism`, `hashLength`, and optionally `algorithm` / `level`
+- `key_hash`: base64 SHA-256 hash of the derived raw key
+
+iOS handling:
+
+- Read these values before asking the user to unlock.
+- Derive the key using exactly the returned `kdf_params`; never hardcode LOW.
+- Compare `SHA-256(rawDerivedKey)` in base64 with `key_hash`.
+- If `kdf_salt` / `kdf_params` are missing in `users`, fallback to Supabase `auth.user.user_metadata` keys used by the web recovery path.
+- If `key_hash` changes while the app has a cached key, invalidate the key and ask for master-password unlock again.
+
+#### Direct vault fallback
+
+Primary path remains `GET /api/vault`. If the backend is unavailable but Supabase is reachable, iOS may mirror the web fallback:
+
+1. Query `credentials` where `user_id = auth.uid()` and `enc_blob is not null`, selecting:
+   - `id`, `enc_blob`, `data_hash`, `version`, `created_at`, `updated_at`
+   - Normalize to `encryptedData = enc_blob`, `storageMode = "credentials"`.
+2. If no credential vault row exists, query legacy `vaults` where `user_id = auth.uid()`, selecting:
+   - `id`, `encrypted_data`, `data_hash`, `version`, `created_at`, `updated_at`
+   - Normalize to `encryptedData = JSON.stringify(encrypted_data)`, `storageMode = "vaults"`.
+
+Write guidance:
+
+- Prefer backend `POST /api/vault` and `PUT /api/vault` for writes because they enforce optimistic locking and audit behavior.
+- If a future iOS version supports direct Supabase writes, it must reproduce the same `expectedVersion` semantics and `dataHash` validation before being enabled.
+
+#### Folders for UI display
+
+Credential payloads may contain `folderId`, but folder names live outside the encrypted vault.
+
+Read:
+
+```sql
+select id, name, color, icon, created_at, updated_at
+from folders
+where user_id = auth.uid()
+order by name;
+```
+
+iOS v1 expectation:
+
+- Read folders to show human-friendly folder names in the vault UI.
+- CRUD for folders can be deferred, but unknown `folderId` values must be preserved when saving credentials.
+
 ### 3.2 2FA (`/api/auth/2fa/*`)
 
 #### `GET /api/auth/2fa/status`

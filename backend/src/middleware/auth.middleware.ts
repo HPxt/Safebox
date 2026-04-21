@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { authService } from '@/services/auth.service'
 import { createSupabaseAuthClient } from '@/config/database'
+import { ForbiddenError, UnauthorizedError } from '@/security/errors'
 import { logger } from '@/utils/logger'
 
 // Extend Request interface to include user
@@ -27,7 +28,7 @@ declare global {
  */
 export const authenticateToken = async (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
@@ -35,10 +36,7 @@ export const authenticateToken = async (
     const token = authHeader && authHeader.split(' ')[1] // Bearer TOKEN
 
     if (!token) {
-      res.status(401).json({
-        success: false,
-        error: 'Access token required',
-      })
+      next(new UnauthorizedError('Access token required'))
       return
     }
 
@@ -50,10 +48,7 @@ export const authenticateToken = async (
     next()
   } catch {
     logger.warn('Authentication failed')
-    res.status(403).json({
-      success: false,
-      error: 'Invalid or expired token',
-    })
+    next(new ForbiddenError('Invalid or expired token'))
   }
 }
 
@@ -90,7 +85,7 @@ export const optionalAuth = async (
 
 export const authenticateSupabaseAccessToken = async (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
@@ -98,10 +93,7 @@ export const authenticateSupabaseAccessToken = async (
     const token = authHeader && authHeader.split(' ')[1]
 
     if (!token) {
-      res.status(401).json({
-        success: false,
-        error: 'Supabase access token required',
-      })
+      next(new UnauthorizedError('Supabase access token required'))
       return
     }
 
@@ -109,10 +101,7 @@ export const authenticateSupabaseAccessToken = async (
     const { data, error } = await authClient.auth.getUser(token)
 
     if (error || !data.user?.id || !data.user.email) {
-      res.status(403).json({
-        success: false,
-        error: 'Invalid Supabase session',
-      })
+      next(new ForbiddenError('Invalid Supabase session'))
       return
     }
 
@@ -124,10 +113,7 @@ export const authenticateSupabaseAccessToken = async (
     next()
   } catch {
     logger.warn('Supabase authentication failed')
-    res.status(403).json({
-      success: false,
-      error: 'Invalid or expired Supabase session',
-    })
+    next(new ForbiddenError('Invalid or expired Supabase session'))
   }
 }
 
