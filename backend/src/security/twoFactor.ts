@@ -97,8 +97,13 @@ export const encryptTwoFactorSecret = (secret: string): string => {
 }
 
 export const decryptTwoFactorSecret = (value: string): string => {
+  // Legacy format: secret stored before encryption was introduced.
+  // Return the raw secret so existing users can still verify TOTP.
+  // Callers should re-save the secret via encryptTwoFactorSecret() after
+  // a successful verification to migrate opportunistically.
+  // This branch can be removed once a DB migration confirms zero PLAIN: rows.
   if (value.startsWith('PLAIN:')) {
-    return value.slice(6)
+    return value.slice('PLAIN:'.length)
   }
 
   if (!value.startsWith(`${TWO_FACTOR_PREFIX}:`)) {

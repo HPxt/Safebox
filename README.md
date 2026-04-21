@@ -82,18 +82,32 @@ cd frontend
 ```env
 REACT_APP_SUPABASE_URL=https://yourprojectid.supabase.co
 REACT_APP_SUPABASE_ANON_KEY=your_anon_key_here
+REACT_APP_PUBLIC_APP_URL=https://yourapp.vercel.app
 ```
 
 📋 **Veja o arquivo `frontend/ENVIRONMENT_SETUP.md` para instruções detalhadas**
 
-4. Execute as migrações do banco de dados
+4. Execute as migrações de segurança do banco de dados
 ```sql
--- Execute os scripts SQL na ordem:
-1. database-optimized.sql
-2. database-argon2-migration.sql
+-- Execute os scripts em docs/sql/migrations na ordem numérica:
+1. 001_grants_minimal.sql
+2. 002_rls_core_users.sql
+3. 003_rls_audit_backups_sessions.sql
+4. 004_two_factor_attempts.sql
+5. 005_functions_hardening.sql
+6. 006_views_security_invoker.sql
+7. 007_grants_followup_hardening.sql
 ```
 
-5. Inicie o servidor de desenvolvimento
+5. Execute os pós-checks de segurança
+```sql
+-- Rodar docs/sql/post-checks.sql e validar:
+-- - RLS/FORCE habilitado nas tabelas sensíveis
+-- - audit_logs sem INSERT para authenticated
+-- - funções sensíveis sem EXECUTE para authenticated
+```
+
+6. Inicie o servidor de desenvolvimento
 ```bash
 npm start
 ```

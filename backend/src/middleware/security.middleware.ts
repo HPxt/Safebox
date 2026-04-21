@@ -262,7 +262,7 @@ export const advancedSecurityHeaders = (_req: Request, res: Response, next: Next
   // Content Security Policy rigorosa
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
+    "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co",

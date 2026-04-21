@@ -19,7 +19,7 @@
  */
 
 import { webcrypto } from 'node:crypto'
-import { writeFileSync } from 'node:fs'
+import { writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
@@ -258,9 +258,27 @@ async function main() {
     dataHashHexLower: envelopeHash,
   }
 
+  // Preserve generatedAt when the cryptographic values are unchanged to avoid
+  // timestamp-only commits that add noise to parity reviews.
+  let generatedAt = new Date().toISOString()
+  if (existsSync(VECTORS_PATH)) {
+    try {
+      const existing = JSON.parse(readFileSync(VECTORS_PATH, 'utf-8'))
+      const sameKdf = JSON.stringify(existing.kdfVectors?.map(v => v.derivedKeyHex)) ===
+                      JSON.stringify(kdfVectors.map(v => v.derivedKeyHex))
+      const sameAead = JSON.stringify(existing.aeadVectors?.map(v => v.dataHashHexLower)) ===
+                       JSON.stringify([aeadVector].map(v => v.dataHashHexLower))
+      if (sameKdf && sameAead && existing.generatedAt) {
+        generatedAt = existing.generatedAt
+      }
+    } catch {
+      // If existing file is unreadable, use current timestamp.
+    }
+  }
+
   const output = {
     $schema: 'https://safebox.app/schemas/swift-crypto-parity.test-vectors.v1.json',
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     sourceOfTruth: 'frontend/src/services/cryptoService.ts',
     notes: [
       'Vetores gerados executando exatamente o mesmo pipeline do frontend.',
