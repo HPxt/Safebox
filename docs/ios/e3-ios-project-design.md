@@ -123,7 +123,7 @@ SafeBoxAutoFillExtension
 | `supabase-swift` | auth/session + queries supabase | oficial, manutencao ativa |
 | `swift-crypto` (se necessario) | hashing utilitario | opcional; preferir CryptoKit nativo |
 | `Argon2Swift` (candidato primario) | Argon2id | binding C comum, controle de memory/iterations/parallelism/hashLength |
-| `libsodium` via wrapper iOS (fallback) | Argon2id | fallback se candidato primario falhar em paridade/manutencao/licenca |
+| `libargon2` referencia via SPM/C target (fallback) | Argon2id | fallback com controle explicito de memory/iterations/parallelism/hashLength |
 
 ## 6.2 Dependencias explicitamente evitadas em v1
 
@@ -151,7 +151,7 @@ SafeBoxAutoFillExtension
 
 ### Candidato fallback
 
-- wrapper iOS de `libsodium` com suporte explicito a `argon2id`
+- `libargon2` C de referencia empacotado como Swift Package/C target, evitando wrappers que convertam parametros para presets de alto nivel.
 
 ### Criterios de rejeicao (fail-fast)
 
@@ -170,6 +170,13 @@ SafeBoxAutoFillExtension
   - `derivedKeyHex`
   - `keyHashBase64`
 - se qualquer campo divergir, pacote reprovado para Etapa 4
+
+## 6.5 Decisao privacy/zero-knowledge para App Store metadata
+
+- Privacy Manifest host declara apenas `EmailAddress` e `UserID`.
+- O vault criptografado (`vault-snapshot-v2`/`enc_blob`) e tratado como blob opaco zero-knowledge; nao declarar `OtherUserContent`/passwords como dado coletado no template v1.
+- A extensao AutoFill nao declara coleta propria de dados; ela acessa dados locais compartilhados pelo host para preencher credenciais mediante acao do usuario.
+- Privacy Policy e App Store Privacy devem manter a mesma narrativa: SafeBox armazena dados do cofre criptografados client-side e nao consegue ler o conteudo.
 
 ## 7) Baseline de entitlements (host + extension)
 
