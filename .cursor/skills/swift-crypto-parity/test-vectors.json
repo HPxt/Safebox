@@ -1,6 +1,6 @@
 {
   "$schema": "https://safebox.app/schemas/swift-crypto-parity.test-vectors.v1.json",
-  "generatedAt": "2026-04-21T05:12:34.869Z",
+  "generatedAt": "2026-04-21T05:50:54.203Z",
   "sourceOfTruth": "frontend/src/services/cryptoService.ts",
   "notes": [
     "Vetores gerados executando exatamente o mesmo pipeline do frontend.",
@@ -18,6 +18,7 @@
       "name": "low-ascii-short",
       "password": "SafeBox#Vector1!",
       "saltBase64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "optionalSlow": false,
       "kdfParams": {
         "algorithm": "argon2id",
         "level": "LOW",
@@ -32,12 +33,17 @@
         "saltPrefixBytes": 16,
         "outputBytes": 32
       },
-      "derivedKeyHex": "50b766ea0fe31de39c269db46295e7e395e0b4493aa462f4b22ce5de9e5bd948"
+      "pbkdf2Hex": "ed8aeb66bf88c6efe622063ec1ded79081132df3763de7e51efa9376d2b45d12",
+      "pbkdf2Base64": "7YrrZr+Ixu/mIgY+wd7XkIETLfN2PeflHvqTdtK0XRI=",
+      "combinedPassword": "7YrrZr+Ixu/mIgY+wd7XkIETLfN2PeflHvqTdtK0XRI=SafeBox#Vector1!",
+      "derivedKeyHex": "50b766ea0fe31de39c269db46295e7e395e0b4493aa462f4b22ce5de9e5bd948",
+      "keyHashBase64": "XwJnWehitIm0qF+Erob9BceWcvNvgQSFvYE2O+IHXxY="
     },
     {
       "name": "low-unicode-accents",
       "password": "Mañana-Ação-漢字-Тест",
       "saltBase64": "AwoRGB8mLTQ7QklQV15lbHN6gYiPlp2kq7K5wMfO1dw=",
+      "optionalSlow": false,
       "kdfParams": {
         "algorithm": "argon2id",
         "level": "LOW",
@@ -52,12 +58,17 @@
         "saltPrefixBytes": 16,
         "outputBytes": 32
       },
-      "derivedKeyHex": "6a62db5f2e8ec07a6088ca98fd7dcdff39d17fdebc082462dda46c5b0b18c2ed"
+      "pbkdf2Hex": "d53573b6880dba1c48f28c429b0b81faa933024e3d98b491bca6a5095c4646bf",
+      "pbkdf2Base64": "1TVztogNuhxI8oxCmwuB+qkzAk49mLSRvKalCVxGRr8=",
+      "combinedPassword": "1TVztogNuhxI8oxCmwuB+qkzAk49mLSRvKalCVxGRr8=Mañana-Ação-漢字-Тест",
+      "derivedKeyHex": "6a62db5f2e8ec07a6088ca98fd7dcdff39d17fdebc082462dda46c5b0b18c2ed",
+      "keyHashBase64": "vIUPIr4z0d5CRVXpp6Jq7XBxyyMogRLngr0RUk3ZF00="
     },
     {
       "name": "low-long-password",
       "password": "correct horse battery staple 12345 !@# end-of-test",
       "saltBase64": "c2FmZWJveC1pb3MtdGVzdC12ZWN0b3Itc2FsdC0wMDA=",
+      "optionalSlow": false,
       "kdfParams": {
         "algorithm": "argon2id",
         "level": "LOW",
@@ -72,12 +83,17 @@
         "saltPrefixBytes": 16,
         "outputBytes": 32
       },
-      "derivedKeyHex": "0c3e72d043a8a06d1a5a764231645685c5ba298558592b7d2d36bb9b8b60f9bb"
+      "pbkdf2Hex": "67b3820ab8dbe22031b7665d25410a22c1c242e08a92eb944a294b649d7bd25e",
+      "pbkdf2Base64": "Z7OCCrjb4iAxt2ZdJUEKIsHCQuCKkuuUSilLZJ170l4=",
+      "combinedPassword": "Z7OCCrjb4iAxt2ZdJUEKIsHCQuCKkuuUSilLZJ170l4=correct horse battery staple 12345 !@# end-of-test",
+      "derivedKeyHex": "0c3e72d043a8a06d1a5a764231645685c5ba298558592b7d2d36bb9b8b60f9bb",
+      "keyHashBase64": "H+3GvDeJXSBehafLHsQEfpDhzfijxsjjBGn/1GCSGYM="
     },
     {
       "name": "medium-standard",
       "password": "SafeBox#Vector4!",
       "saltBase64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "optionalSlow": false,
       "kdfParams": {
         "algorithm": "argon2id",
         "level": "MEDIUM",
@@ -92,12 +108,17 @@
         "saltPrefixBytes": 16,
         "outputBytes": 32
       },
-      "derivedKeyHex": "2a30a2c968485089e14296ecf5c3c1c9a663d23c559cb2e9a1e562a5cd61cdaf"
+      "pbkdf2Hex": "fc425eaf007718f8269f9fcae4320473e34fae96b7980fec3112bb86718dcc74",
+      "pbkdf2Base64": "/EJerwB3GPgmn5/K5DIEc+NPrpa3mA/sMRK7hnGNzHQ=",
+      "combinedPassword": "/EJerwB3GPgmn5/K5DIEc+NPrpa3mA/sMRK7hnGNzHQ=SafeBox#Vector4!",
+      "derivedKeyHex": "2a30a2c968485089e14296ecf5c3c1c9a663d23c559cb2e9a1e562a5cd61cdaf",
+      "keyHashBase64": "lMs0SejBWh+ldiMlcl+pL0bH/INunzZYnI75/W/CWHE="
     },
     {
       "name": "high-standard",
       "password": "SafeBox#Vector5!",
       "saltBase64": "AwoRGB8mLTQ7QklQV15lbHN6gYiPlp2kq7K5wMfO1dw=",
+      "optionalSlow": false,
       "kdfParams": {
         "algorithm": "argon2id",
         "level": "HIGH",
@@ -112,7 +133,36 @@
         "saltPrefixBytes": 16,
         "outputBytes": 32
       },
-      "derivedKeyHex": "42757d7aa110313403ca9eb76e97657ab8e3c73ffcf8c05030965618defe695c"
+      "pbkdf2Hex": "7c1bd934450f88de54c72eee9e78a91a3daa538cdad58193560b9efcbbe3202d",
+      "pbkdf2Base64": "fBvZNEUPiN5Uxy7unnipGj2qU4za1YGTVgue/LvjIC0=",
+      "combinedPassword": "fBvZNEUPiN5Uxy7unnipGj2qU4za1YGTVgue/LvjIC0=SafeBox#Vector5!",
+      "derivedKeyHex": "42757d7aa110313403ca9eb76e97657ab8e3c73ffcf8c05030965618defe695c",
+      "keyHashBase64": "hx3y0uWGgbVny1MofXesR7EZgmh1teOdxYHNP+YENjU="
+    },
+    {
+      "name": "ultra-standard",
+      "password": "SafeBox#Vector6!",
+      "saltBase64": "c2FmZWJveC1pb3MtdGVzdC12ZWN0b3Itc2FsdC0wMDA=",
+      "optionalSlow": true,
+      "kdfParams": {
+        "algorithm": "argon2id",
+        "level": "ULTRA",
+        "memorySize": 262144,
+        "iterations": 6,
+        "parallelism": 4,
+        "hashLength": 32
+      },
+      "pbkdf2": {
+        "algorithm": "PBKDF2-HMAC-SHA256",
+        "iterations": 100000,
+        "saltPrefixBytes": 16,
+        "outputBytes": 32
+      },
+      "pbkdf2Hex": "a19d2d1c415b0ef4c359bad698010921a154bb0b530ecb43c823569635cf1fae",
+      "pbkdf2Base64": "oZ0tHEFbDvTDWbrWmAEJIaFUuwtTDstDyCNWljXPH64=",
+      "combinedPassword": "oZ0tHEFbDvTDWbrWmAEJIaFUuwtTDstDyCNWljXPH64=SafeBox#Vector6!",
+      "derivedKeyHex": "0ddb6bbbb80103a0a46424c491f0619ad66aba3de1877bd3abd8984050b66c6f",
+      "keyHashBase64": "xy38qe71eneoAlyFZl/OiURVuZqeFwCsz8yDozscYVk="
     }
   ],
   "aeadVectors": [

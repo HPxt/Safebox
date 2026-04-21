@@ -27,7 +27,12 @@ import CryptoService from '../cryptoService'
 
 interface KdfVector {
   name: string
+  optionalSlow?: boolean
+  pbkdf2Hex: string
+  pbkdf2Base64: string
+  combinedPassword: string
   derivedKeyHex: string
+  keyHashBase64: string
 }
 
 interface AeadVector {
@@ -69,6 +74,19 @@ async function sha256HexLower(utf8str: string): Promise<string> {
     .join('')
 }
 
+function sha256Base64FromHex(hex: string): string {
+  const digest = Buffer.from(
+    Array.from(
+      new Uint8Array(
+        // Using Node's sync hash here keeps this helper simple and deterministic.
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        require('node:crypto').createHash('sha256').update(Buffer.from(hex, 'hex')).digest()
+      )
+    )
+  )
+  return digest.toString('base64')
+}
+
 function canonicalEnvelopeJson(version: string, nonce: string, encrypted: string): string {
   return (
     '{' +
@@ -88,6 +106,28 @@ function resolveKey(aeadVec: AeadVector): KdfVector {
   if (!kdf) throw new Error(`KDF vector '${aeadVec.kdfVectorRef}' not found`)
   return kdf
 }
+
+// ===========================================================================
+// Suite 0: KDF vector completeness (for iOS diagnostics)
+// ===========================================================================
+
+describe('KDF vectors completeness', () => {
+  test('includes LOW, MEDIUM, HIGH, and ULTRA levels', () => {
+    const levels = new Set(vectors.kdfVectors.map((v: any) => v.kdfParams?.level))
+    expect(levels.has('LOW')).toBe(true)
+    expect(levels.has('MEDIUM')).toBe(true)
+    expect(levels.has('HIGH')).toBe(true)
+    expect(levels.has('ULTRA')).toBe(true)
+  })
+
+  test.each(vectors.kdfVectors)('vector "$name" has full intermediate pipeline fields', (v) => {
+    expect(v.pbkdf2Hex).toMatch(/^[0-9a-f]{64}$/)
+    expect(v.pbkdf2Base64.length).toBeGreaterThan(0)
+    expect(v.combinedPassword).toBe(`${v.pbkdf2Base64}${v.password}`)
+    expect(v.derivedKeyHex).toMatch(/^[0-9a-f]{64}$/)
+    expect(v.keyHashBase64).toBe(sha256Base64FromHex(v.derivedKeyHex))
+  })
+})
 
 // ===========================================================================
 // Suite 1: AES-256-GCM format

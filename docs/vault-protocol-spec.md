@@ -139,7 +139,7 @@ let sealed = try AES.GCM.SealedBox(nonce: nonce, ciphertext: ciphertext, tag: ta
 3. **UTF-8 encoding**, no BOM
 4. **No pretty-printing**
 
-These rules make the JSON output deterministic. Any deviation changes the `dataHash` and causes the backend to reject the PUT.
+These rules make the JSON output deterministic across clients. Any deviation changes the `dataHash`, which breaks parity and test vectors. The backend rejects a write when the submitted `dataHash` does not match the submitted `encryptedData` string.
 
 ### 4.3 dataHash computation
 
@@ -176,7 +176,9 @@ The plaintext is a **JSON array** of credential objects. There is no outer wrapp
 | `encryptedPassword` | string | no | always present (password field) |
 | `website` | string | yes (omit) | omit if not set |
 | `notes` | string | yes (`null`) | `null` is preserved; omit only if `undefined` |
+| `categoryId` | string | yes (omit) | omit if undefined |
 | `folderId` | string | yes (omit) | omit if undefined |
+| `tags` | string[] | yes (omit) | omit if undefined |
 | `isFavorite` | boolean | no | always present |
 | `isHidden` | boolean | no | always present |
 | `createdAt` | ISO 8601 string | no | always present |
@@ -195,6 +197,8 @@ The plaintext is a **JSON array** of credential objects. There is no outer wrapp
 > **Critical**: the `version` field is present on `Credential` objects in memory (set to the vault version by the service layer) but MUST be stripped (`set to undefined`) before serializing into the vault payload. Failing to strip it does not break decryption, but it pollutes the payload and changes the `dataHash` compared to what the server expects.
 
 > **Critical**: fields typed as `string | null` have semantic meaning for `null`. `null` means "user explicitly set this to empty/removed". Do NOT convert `null` to `""` or omit the key.
+
+> **Forward compatibility**: if a client finds fields not listed in this table, it MUST preserve them on round-trip (passthrough strategy) unless the user explicitly edits/removes those fields.
 
 ### 5.3 Key ordering in the payload
 
@@ -251,7 +255,12 @@ Same body as PUT but without `expectedVersion`.
 
 The `vaults` table (legacy) stores `encrypted_data` as a JSONB column, not a string. The service layer handles this by `JSON.stringify`-ing the JSONB value before passing it to the decrypt pipeline.
 
-iOS clients MUST support reading the legacy format for users migrating from the web. Detection: if `decryptVaultPayload` receives an `encryptedData` that, when parsed, is an **array** (not an object with `version: "vault-snapshot-v2"`), it is a legacy snapshot where each item had `encryptedPassword` and `passwordNonce` fields and must be decrypted per-item.
+iOS clients MUST support reading the legacy format for users migrating from the web. Detection: if `decryptVaultPayload` receives an `encryptedData` that, when parsed, is an **array** (not an object with `version: "vault-snapshot-v2"`), it is a legacy snapshot.
+
+Per-item behavior MUST match the current web implementation:
+
+- If an item has both `encryptedPassword` **and** `passwordNonce`, decrypt that item password.
+- Otherwise, preserve the item as-is (do not fail, do not drop fields).
 
 For v1, iOS **read** support for legacy format is required. **Write** (creating/editing) must always produce `vault-snapshot-v2`.
 

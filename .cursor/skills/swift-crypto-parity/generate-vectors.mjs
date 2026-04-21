@@ -54,14 +54,28 @@ function bytesToHex(bytes) {
   return Buffer.from(bytes).toString('hex')
 }
 
+async function keyHashBase64FromRaw(rawKey) {
+  const digest = await subtle.digest('SHA-256', rawKey)
+  return bytesToBase64(new Uint8Array(digest))
+}
+
 /**
  * Reproduz exatamente frontend/src/services/cryptoService.ts::deriveKey
+ * e retorna artefatos intermediarios para facilitar debugging de divergencia
+ * entre web e iOS.
+ *
  * @param {string} password
  * @param {string} saltBase64   salt completo em base64 (32 bytes)
  * @param {{memorySize:number, iterations:number, parallelism:number, hashLength:number}} params
- * @returns {Promise<Uint8Array>} os 32 bytes raw da chave derivada
+ * @returns {Promise<{
+ *   pbkdf2Hex:string,
+ *   pbkdf2Base64:string,
+ *   combinedPassword:string,
+ *   derivedKeyHex:string,
+ *   keyHashBase64:string
+ * }>}
  */
-async function deriveKeyRaw(password, saltBase64, params) {
+async function derivePipelineDetails(password, saltBase64, params) {
   const saltBytes = base64ToBytes(saltBase64)
   const passwordBytes = new TextEncoder().encode(password)
 
@@ -85,7 +99,8 @@ async function deriveKeyRaw(password, saltBase64, params) {
   )
 
   const pbkdf2Result = new Uint8Array(pbkdf2Bits)
-  const combinedPassword = bytesToBase64(pbkdf2Result) + password
+  const pbkdf2Base64 = bytesToBase64(pbkdf2Result)
+  const combinedPassword = pbkdf2Base64 + password
 
   const hashResult = await argon2id({
     password: combinedPassword,
@@ -103,7 +118,16 @@ async function deriveKeyRaw(password, saltBase64, params) {
     )
   }
 
-  return hashResult
+  const derivedKeyHex = bytesToHex(hashResult)
+  const keyHashBase64 = await keyHashBase64FromRaw(hashResult)
+
+  return {
+    pbkdf2Hex: bytesToHex(pbkdf2Result),
+    pbkdf2Base64,
+    combinedPassword,
+    derivedKeyHex,
+    keyHashBase64,
+  }
 }
 
 /**
@@ -209,17 +233,25 @@ async function main() {
       saltBase64: FIXED_SALTS.b,
       level: 'HIGH',
     },
+    {
+      name: 'ultra-standard',
+      password: 'SafeBox#Vector6!',
+      saltBase64: FIXED_SALTS.c,
+      level: 'ULTRA',
+      optionalSlow: true,
+    },
   ]
 
   const kdfVectors = []
   for (const c of kdfCases) {
     console.log(`  kdf: ${c.name} (${c.level})`)
     const params = KDF_LEVELS[c.level]
-    const derivedKey = await deriveKeyRaw(c.password, c.saltBase64, params)
+    const details = await derivePipelineDetails(c.password, c.saltBase64, params)
     kdfVectors.push({
       name: c.name,
       password: c.password,
       saltBase64: c.saltBase64,
+      optionalSlow: Boolean(c.optionalSlow),
       kdfParams: {
         algorithm: 'argon2id',
         level: c.level,
@@ -234,7 +266,11 @@ async function main() {
         saltPrefixBytes: 16,
         outputBytes: 32,
       },
-      derivedKeyHex: bytesToHex(derivedKey),
+      pbkdf2Hex: details.pbkdf2Hex,
+      pbkdf2Base64: details.pbkdf2Base64,
+      combinedPassword: details.combinedPassword,
+      derivedKeyHex: details.derivedKeyHex,
+      keyHashBase64: details.keyHashBase64,
     })
   }
 
