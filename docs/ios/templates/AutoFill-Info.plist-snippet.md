@@ -22,5 +22,6 @@ Checklist rapido:
 
 - bundle id da extensao diferente do host
 - entitlements da extensao com App Group + Keychain Access Group iguais ao host
+- entitlement `com.apple.developer.authentication-services.autofill-credential-provider = true` presente na extensao
 - sem associated domains na extensao (fica no host)
 

@@ -122,7 +122,8 @@ SafeBoxAutoFillExtension
 |---|---|---|
 | `supabase-swift` | auth/session + queries supabase | oficial, manutencao ativa |
 | `swift-crypto` (se necessario) | hashing utilitario | opcional; preferir CryptoKit nativo |
-| wrapper Argon2id auditado | Argon2id | CryptoKit nao possui Argon2id |
+| `Argon2Swift` (candidato primario) | Argon2id | binding C comum, controle de memory/iterations/parallelism/hashLength |
+| `libsodium` via wrapper iOS (fallback) | Argon2id | fallback se candidato primario falhar em paridade/manutencao/licenca |
 
 ## 6.2 Dependencias explicitamente evitadas em v1
 
@@ -142,7 +143,48 @@ SafeBoxAutoFillExtension
 5. compatibilidade com `PrivacyInfo.xcprivacy` (proprio ou documentado)
 6. benchmark de memoria para fluxo ULTRA (Argon2id)
 
+## 6.4 Decisao executavel Argon2id (obrigatoria antes da Etapa 4)
+
+### Candidato primario
+
+- `Argon2Swift`
+
+### Candidato fallback
+
+- wrapper iOS de `libsodium` com suporte explicito a `argon2id`
+
+### Criterios de rejeicao (fail-fast)
+
+1. nao compila em iOS 16+ em target real
+2. licenca incompatível com distribuicao comercial
+3. sem manutencao recente (ultimo release > 12 meses)
+4. nao permite configurar exatamente `memorySize`, `iterations`, `parallelism`, `hashLength`
+5. falha em qualquer vetor do `.cursor/skills/swift-crypto-parity/test-vectors.json`
+
+### Gate de teste obrigatorio para escolha final
+
+- reproduzir todos os vetores KDF (LOW/MEDIUM/HIGH/ULTRA) e bater:
+  - `pbkdf2Hex`
+  - `pbkdf2Base64`
+  - `combinedPassword`
+  - `derivedKeyHex`
+  - `keyHashBase64`
+- se qualquer campo divergir, pacote reprovado para Etapa 4
+
 ## 7) Baseline de entitlements (host + extension)
+
+## 7.0 Tabela canonica de identificadores (fixar antes do Xcode bootstrap)
+
+| Item | Valor canonico |
+|---|---|
+| Team ID | `TEAMID` (placeholder ate binding no Apple Developer) |
+| Host bundle id | `app.safebox.ios` |
+| Extension bundle id | `app.safebox.ios.autofill` |
+| App Group | `group.app.safebox.ios.shared` |
+| Keychain Access Group | `$(AppIdentifierPrefix)app.safebox.ios.shared` |
+| AASA appIDs | `TEAMID.app.safebox.ios`, `TEAMID.app.safebox.ios.autofill` |
+
+Regra: qualquer divergencia desta tabela quebra provisioning/Keychain/AutoFill/AASA.
 
 ## 7.1 Host app
 
@@ -152,8 +194,8 @@ SafeBoxAutoFillExtension
   - `$(AppIdentifierPrefix)app.safebox.ios.shared`
 - `com.apple.developer.associated-domains`
   - `webcredentials:safebox.app`
-- `com.apple.developer.authentication-services.autofill-credential-provider`
-  - `true`
+
+Observacao importante: a capability de Credential Provider extension e assinada no target da extensao. No host, manter apenas os entitlements realmente necessarios (Associated Domains/App Groups/Keychain).
 
 ## 7.2 AutoFill extension
 
@@ -161,6 +203,20 @@ SafeBoxAutoFillExtension
   - `group.app.safebox.ios.shared`
 - `keychain-access-groups`
   - `$(AppIdentifierPrefix)app.safebox.ios.shared`
+- `com.apple.developer.authentication-services.autofill-credential-provider`
+  - `true`
+
+## 7.3 Baseline de compliance para iniciar Etapa 4
+
+Arquivos obrigatorios ja prontos nesta etapa:
+
+- `docs/ios/templates/PrivacyInfo.host.template.xcprivacy`
+- `docs/ios/templates/PrivacyInfo.autofill.template.xcprivacy`
+- `docs/ios/templates/SafeBox-Info.plist.template.md`
+- `docs/ios/templates/aasa.baseline.v1.json`
+- `docs/ios/templates/app-review-demo-account-checklist.md`
+
+Sem esses baselines, a Etapa 4 tende a nascer com configuracao incompleta e gera retrabalho na Etapa 8/10.
 
 ## 8) Riscos que o Codex tende a apontar (e como ja neutralizar)
 

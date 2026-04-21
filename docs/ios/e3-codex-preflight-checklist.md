@@ -22,8 +22,9 @@ Marcar tudo como `OK` antes de iniciar Etapa 4.
 - [ ] host e extension compartilham o mesmo App Group
 - [ ] host e extension compartilham o mesmo Keychain Access Group
 - [ ] `webcredentials:safebox.app` definido no host
-- [ ] capability de AutoFill Credential Provider presente no host
+- [ ] capability/entitlement de AutoFill Credential Provider presente na extensao
 - [ ] extension configurada com `NSExtensionPointIdentifier` correto
+- [ ] tabela canonica de IDs (TeamID, bundle IDs, App Group, Keychain Access Group, AASA appIDs) congelada
 
 ## D) Contratos backend/supabase
 
@@ -36,10 +37,17 @@ Marcar tudo como `OK` antes de iniciar Etapa 4.
 
 - [ ] matriz Keychain (`ThisDeviceOnly`, `biometryCurrentSet`) referenciada
 - [ ] regra de donation/remove para `ASCredentialIdentityStore` definida
-- [ ] baseline de `PrivacyInfo.xcprivacy` conhecida para app + extension
+- [ ] templates reais de `PrivacyInfo.xcprivacy` existem para app + extension
 - [ ] sem uso planejado de APIs privadas / bypass ATS
+- [ ] template de `Info.plist` do host com chaves obrigatorias para review existe
 
-## F) Saida da etapa
+## F) Apple preflight adicional (antes da Etapa 4)
+
+- [ ] arquivo AASA baseline definido (webcredentials e opcional applinks v1.x)
+- [ ] checklist de demo account para App Review definido
+- [ ] regra explicita: AutoFill validado em device real antes de TestFlight externo
+
+## G) Saida da etapa
 
 - [ ] documento de design E3 revisado
 - [ ] templates de entitlements prontos para copiar no Xcode
