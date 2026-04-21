@@ -13,7 +13,7 @@ import {
 } from '@/middleware/rateLimiting.middleware'
 import { bruteForcePrevention } from '@/middleware/security.middleware'
 import { requireSupabaseAuthenticatedUser } from '@/security/authorization'
-import { AppError } from '@/security/errors'
+import { AppError, ValidationError } from '@/security/errors'
 import { asyncHandler, sendSuccess } from '@/security/http'
 import { validateWithSchema } from '@/security/validation'
 import {
@@ -198,7 +198,7 @@ router.post('/2fa/enable', authenticateSupabaseAccessToken, asyncHandler(async (
 
   if (!verifyTwoFactorToken(secret, verificationCode)) {
     await logTwoFactorAttempt(req.authToken!, user.userId, false, 'Invalid activation code', req.ip, req.get('User-Agent'))
-    throw new Error('Invalid 2FA verification code')
+    throw new ValidationError('Invalid 2FA verification code')
   }
 
   const encryptedSecret = encryptTwoFactorSecret(secret)
