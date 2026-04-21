@@ -1,0 +1,129 @@
+{
+  "$schema": "https://safebox.app/schemas/swift-crypto-parity.test-vectors.v1.json",
+  "generatedAt": "2026-04-21T04:44:02.889Z",
+  "sourceOfTruth": "frontend/src/services/cryptoService.ts",
+  "notes": [
+    "Vetores gerados executando exatamente o mesmo pipeline do frontend.",
+    "Qualquer mudanca proposital no pipeline exige regenerar este arquivo e validar Swift contra os novos valores."
+  ],
+  "pipeline": {
+    "step1": "PBKDF2-HMAC-SHA256, salt=saltBytes[0..16], iterations=100000, output=32 bytes",
+    "step2": "combinedPassword = base64(pbkdf2_32bytes) + password_utf8",
+    "step3": "Argon2id(password=combinedPassword_utf8, salt=saltBytes_32bytes, params=users.kdf_params)",
+    "step4": "AES-256-GCM key = argon2_output_32bytes diretamente (sem KDF adicional)",
+    "step5": "Envelope vault-snapshot-v2: {\"version\",\"nonce\",\"encrypted\"} ordem fixa; dataHash = SHA-256 hex lower do JSON UTF-8"
+  },
+  "kdfVectors": [
+    {
+      "name": "low-ascii-short",
+      "password": "SafeBox#Vector1!",
+      "saltBase64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "kdfParams": {
+        "algorithm": "argon2id",
+        "level": "LOW",
+        "memorySize": 65536,
+        "iterations": 3,
+        "parallelism": 4,
+        "hashLength": 32
+      },
+      "pbkdf2": {
+        "algorithm": "PBKDF2-HMAC-SHA256",
+        "iterations": 100000,
+        "saltPrefixBytes": 16,
+        "outputBytes": 32
+      },
+      "derivedKeyHex": "50b766ea0fe31de39c269db46295e7e395e0b4493aa462f4b22ce5de9e5bd948"
+    },
+    {
+      "name": "low-unicode-accents",
+      "password": "Mañana-Ação-漢字-Тест",
+      "saltBase64": "AwoRGB8mLTQ7QklQV15lbHN6gYiPlp2kq7K5wMfO1dw=",
+      "kdfParams": {
+        "algorithm": "argon2id",
+        "level": "LOW",
+        "memorySize": 65536,
+        "iterations": 3,
+        "parallelism": 4,
+        "hashLength": 32
+      },
+      "pbkdf2": {
+        "algorithm": "PBKDF2-HMAC-SHA256",
+        "iterations": 100000,
+        "saltPrefixBytes": 16,
+        "outputBytes": 32
+      },
+      "derivedKeyHex": "6a62db5f2e8ec07a6088ca98fd7dcdff39d17fdebc082462dda46c5b0b18c2ed"
+    },
+    {
+      "name": "low-long-password",
+      "password": "correct horse battery staple 12345 !@# end-of-test",
+      "saltBase64": "c2FmZWJveC1pb3MtdGVzdC12ZWN0b3Itc2FsdC0wMDA=",
+      "kdfParams": {
+        "algorithm": "argon2id",
+        "level": "LOW",
+        "memorySize": 65536,
+        "iterations": 3,
+        "parallelism": 4,
+        "hashLength": 32
+      },
+      "pbkdf2": {
+        "algorithm": "PBKDF2-HMAC-SHA256",
+        "iterations": 100000,
+        "saltPrefixBytes": 16,
+        "outputBytes": 32
+      },
+      "derivedKeyHex": "0c3e72d043a8a06d1a5a764231645685c5ba298558592b7d2d36bb9b8b60f9bb"
+    },
+    {
+      "name": "medium-standard",
+      "password": "SafeBox#Vector4!",
+      "saltBase64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "kdfParams": {
+        "algorithm": "argon2id",
+        "level": "MEDIUM",
+        "memorySize": 98304,
+        "iterations": 4,
+        "parallelism": 4,
+        "hashLength": 32
+      },
+      "pbkdf2": {
+        "algorithm": "PBKDF2-HMAC-SHA256",
+        "iterations": 100000,
+        "saltPrefixBytes": 16,
+        "outputBytes": 32
+      },
+      "derivedKeyHex": "2a30a2c968485089e14296ecf5c3c1c9a663d23c559cb2e9a1e562a5cd61cdaf"
+    },
+    {
+      "name": "high-standard",
+      "password": "SafeBox#Vector5!",
+      "saltBase64": "AwoRGB8mLTQ7QklQV15lbHN6gYiPlp2kq7K5wMfO1dw=",
+      "kdfParams": {
+        "algorithm": "argon2id",
+        "level": "HIGH",
+        "memorySize": 131072,
+        "iterations": 5,
+        "parallelism": 4,
+        "hashLength": 32
+      },
+      "pbkdf2": {
+        "algorithm": "PBKDF2-HMAC-SHA256",
+        "iterations": 100000,
+        "saltPrefixBytes": 16,
+        "outputBytes": 32
+      },
+      "derivedKeyHex": "42757d7aa110313403ca9eb76e97657ab8e3c73ffcf8c05030965618defe695c"
+    }
+  ],
+  "aeadVectors": [
+    {
+      "name": "aead-envelope-v2",
+      "kdfVectorRef": "low-ascii-short",
+      "nonceBase64": "oLHC0+T1BhcoOUpb",
+      "plaintextJsonUtf8": "[{\"id\":\"fixed-id-0001\",\"itemType\":\"credential\",\"title\":\"Example\",\"username\":\"user@example.com\",\"password\":\"p@ssw0rd!\",\"website\":\"https://example.com\",\"notes\":null,\"totpSecret\":null}]",
+      "encryptedBase64": "x4n2WVbbuPqFOSTUvh8ahaYTbm7/Z5lM9uw4ItJ4IJucxL1gOsFLTbtY5QD1m8MrhxfxUmPx+6rnIhArZvz3YBARK+9l8ENpcuoDZD/TX6sIv7N6DLAdWGnRf5yMOHHJeyLW7IpIn3LU0KXIwTzYUxPhMdGWTyZeTnkpFMBcaVY/KiH+jwFJn1MoGIc7Fi22xTHz4cjMqiUBZopFzO/9bi0L/zq5Nyubr1XoQWJk4X+PVaveMPwouM1JNS6k011jOUZe9HLk",
+      "canonicalEnvelopeJsonUtf8": "{\"version\":\"vault-snapshot-v2\",\"nonce\":\"oLHC0+T1BhcoOUpb\",\"encrypted\":\"x4n2WVbbuPqFOSTUvh8ahaYTbm7/Z5lM9uw4ItJ4IJucxL1gOsFLTbtY5QD1m8MrhxfxUmPx+6rnIhArZvz3YBARK+9l8ENpcuoDZD/TX6sIv7N6DLAdWGnRf5yMOHHJeyLW7IpIn3LU0KXIwTzYUxPhMdGWTyZeTnkpFMBcaVY/KiH+jwFJn1MoGIc7Fi22xTHz4cjMqiUBZopFzO/9bi0L/zq5Nyubr1XoQWJk4X+PVaveMPwouM1JNS6k011jOUZe9HLk\"}",
+      "dataHashHexLower": "9a5fcdd85e01f3c382d81f7373b99102a4d9e9b0dcaa917f9eb6ada7c1229095"
+    }
+  ]
+}
