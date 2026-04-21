@@ -45,4 +45,9 @@ public enum VaultCryptoError: Error, Equatable {
     case invalidEnvelopeVersion
     case unsupportedKDFAlgorithm
     case argon2Failure(String)
+    case kdfPolicyFailure(MobileKDFPolicyState)
+    case masterPasswordPolicyFailure(MasterPasswordPolicyViolation)
+    case invalidMasterPassword
+    case keyRotationDetected
+    case randomGenerationFailed
 }

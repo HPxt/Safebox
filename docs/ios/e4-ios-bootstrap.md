@@ -38,6 +38,7 @@ SAFEBOX_RUN_SLOW_ARGON2_TESTS=1 swift test --filter KDFPipelineTests/testLibArgo
 
 ## Observacoes de seguranca
 
+- A policy de produto para KDF mobile e sync foi movida para `docs/ios/e5-vault-sync-and-mobile-kdf-policy.md`.
 - O provider de Argon2 real usa `libargon2` de referencia com `ARGON2_NO_THREADS`; o parametro `parallelism` continua participando do algoritmo/lane layout, mas o calculo roda sem criar threads nativas.
 - O modulo separa claramente:
   - derivacao de chave (KDF),

@@ -52,6 +52,10 @@ public struct VaultEnvelopeCodec: Sendable {
         return Data(SHA256.hash(data: canonical)).map { String(format: "%02x", $0) }.joined()
     }
 
+    public func dataHashHexLower(envelopeJSON: String) -> String {
+        Data(SHA256.hash(data: Data(envelopeJSON.utf8))).map { String(format: "%02x", $0) }.joined()
+    }
+
     private func escapeJSON(_ value: String) -> String {
         var escaped = ""
         escaped.reserveCapacity(value.count)
