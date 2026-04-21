@@ -247,6 +247,31 @@ Cobertura minima obrigatoria:
 - unit/integration: preservacao de `null` em round-trip;
 - integration: conflito `409` em escrita dispara refresh/retry.
 
+## Gate final para encerrar E5 oficialmente
+
+Este gate depende de macOS/Xcode e fica agendado para quando alugarmos um Mac na nuvem:
+
+1. rodar `swift test` em `ios/SafeBoxCore` no macOS;
+2. rodar `xcodegen generate` em `ios/SafeBoxApp`;
+3. abrir `SafeBox.xcodeproj` no Xcode;
+4. configurar signing com Team ID real;
+5. configurar ambiente real/staging em `SafeBoxAppEnvironment.production(...)`;
+6. executar build do app shell no simulator;
+7. executar smoke test manual: login -> unlock -> load vault -> lock -> sign out;
+8. usar uma conta real ja confirmada, com vault pequeno e KDF `LOW`, para validar primeiro o caminho feliz sem ruido de performance;
+9. repetir smoke test com vault `HIGH` antes de TestFlight;
+10. testar `ULTRA` apenas como compatibilidade legado, com aviso e CTA `Gerenciar no Web`.
+
+Resultado esperado:
+
+- app compila no Xcode;
+- telas SwiftUI carregam sem crash;
+- login chama adapter configurado;
+- unlock usa `VaultUnlockService`;
+- load vault usa `VaultSyncService`;
+- lock e sign out limpam estado sensivel;
+- nenhum erro de entitlement/Privacy Manifest bloqueia build local.
+
 QA manual em device real (baseline a medir nesta fase):
 
 - Record measured unlock derivation time and peak memory for LOW/MEDIUM/HIGH on at least one Face ID device and one lower-memory/Touch ID device.
