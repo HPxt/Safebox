@@ -1,12 +1,12 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 /**
  * Gera vetores de teste criptografico REAIS reproduzindo o pipeline exato do
  * frontend/src/services/cryptoService.ts.
  *
  * Fonte de verdade: cryptoService.deriveKey:
  *   1. PBKDF2-HMAC-SHA256, 100k iter, salt = primeiros 16 bytes do saltBytes, saida 32 bytes
- *   2. combinedPassword = btoa(pbkdf2Bytes) + password_original
- *   3. Argon2id com (combinedPassword, saltBytes 32, params)
+ *   2. combinedInput = btoa(pbkdf2Bytes) + passphrase_original
+ *   3. Argon2id com (combinedInput, saltBytes 32, params)
  *   4. Output: 32 bytes raw que viram SymmetricKey do AES-GCM
  *
  * Tambem gera um vetor de envelope vault-snapshot-v2 com dataHash (SHA-256 hex
@@ -64,20 +64,18 @@ async function keyHashBase64FromRaw(rawKey) {
  * e retorna artefatos intermediarios para facilitar debugging de divergencia
  * entre web e iOS.
  *
- * @param {string} password
+ * @param {string} testPassphrase
  * @param {string} saltBase64   salt completo em base64 (32 bytes)
  * @param {{memorySize:number, iterations:number, parallelism:number, hashLength:number}} params
  * @returns {Promise<{
  *   pbkdf2Hex:string,
- *   pbkdf2Base64:string,
- *   combinedPassword:string,
  *   derivedKeyHex:string,
  *   keyHashBase64:string
  * }>}
  */
-async function derivePipelineDetails(password, saltBase64, params) {
+async function derivePipelineDetails(testPassphrase, saltBase64, params) {
   const saltBytes = base64ToBytes(saltBase64)
-  const passwordBytes = new TextEncoder().encode(password)
+  const passwordBytes = new TextEncoder().encode(testPassphrase)
 
   const passwordKey = await subtle.importKey(
     'raw',
@@ -99,11 +97,11 @@ async function derivePipelineDetails(password, saltBase64, params) {
   )
 
   const pbkdf2Result = new Uint8Array(pbkdf2Bits)
-  const pbkdf2Base64 = bytesToBase64(pbkdf2Result)
-  const combinedPassword = pbkdf2Base64 + password
+  const pbkdf2B64 = bytesToBase64(pbkdf2Result)
+  const combinedInput = pbkdf2B64 + testPassphrase
 
   const hashResult = await argon2id({
-    password: combinedPassword,
+    password: combinedInput,
     salt: saltBytes,
     parallelism: params.parallelism,
     iterations: params.iterations,
@@ -123,8 +121,6 @@ async function derivePipelineDetails(password, saltBase64, params) {
 
   return {
     pbkdf2Hex: bytesToHex(pbkdf2Result),
-    pbkdf2Base64,
-    combinedPassword,
     derivedKeyHex,
     keyHashBase64,
   }
@@ -205,37 +201,37 @@ async function main() {
   const kdfCases = [
     {
       name: 'low-ascii-short',
-      password: 'SafeBox#Vector1!',
+      testPassphrase: 'SafeBox#Vector1!',
       saltBase64: FIXED_SALTS.a,
       level: 'LOW',
     },
     {
       name: 'low-unicode-accents',
-      password: 'Mañana-Ação-漢字-Тест',
+      testPassphrase: 'Ma\u00f1ana-A\u00e7\u00e3o-\u6f22\u5b57-\u0422\u0435\u0441\u0442',
       saltBase64: FIXED_SALTS.b,
       level: 'LOW',
     },
     {
       name: 'low-long-password',
-      password: 'correct horse battery staple 12345 !@# end-of-test',
+      testPassphrase: 'correct horse battery staple 12345 !@# end-of-test',
       saltBase64: FIXED_SALTS.c,
       level: 'LOW',
     },
     {
       name: 'medium-standard',
-      password: 'SafeBox#Vector4!',
+      testPassphrase: 'SafeBox#Vector4!',
       saltBase64: FIXED_SALTS.a,
       level: 'MEDIUM',
     },
     {
       name: 'high-standard',
-      password: 'SafeBox#Vector5!',
+      testPassphrase: 'SafeBox#Vector5!',
       saltBase64: FIXED_SALTS.b,
       level: 'HIGH',
     },
     {
       name: 'ultra-standard',
-      password: 'SafeBox#Vector6!',
+      testPassphrase: 'SafeBox#Vector6!',
       saltBase64: FIXED_SALTS.c,
       level: 'ULTRA',
       optionalSlow: true,
@@ -246,10 +242,10 @@ async function main() {
   for (const c of kdfCases) {
     console.log(`  kdf: ${c.name} (${c.level})`)
     const params = KDF_LEVELS[c.level]
-    const details = await derivePipelineDetails(c.password, c.saltBase64, params)
+    const details = await derivePipelineDetails(c.testPassphrase, c.saltBase64, params)
     kdfVectors.push({
       name: c.name,
-      password: c.password,
+      testPassphrase: c.testPassphrase,
       saltBase64: c.saltBase64,
       optionalSlow: Boolean(c.optionalSlow),
       kdfParams: {
@@ -267,8 +263,6 @@ async function main() {
         outputBytes: 32,
       },
       pbkdf2Hex: details.pbkdf2Hex,
-      pbkdf2Base64: details.pbkdf2Base64,
-      combinedPassword: details.combinedPassword,
       derivedKeyHex: details.derivedKeyHex,
       keyHashBase64: details.keyHashBase64,
     })
@@ -311,7 +305,7 @@ async function main() {
         userId: 'user-uuid-0001',
         title: 'Example',
         username: 'user@example.com',
-        encryptedPassword: 'p@ssw0rd!',
+        encryptedPassword: 'test-login-secret',
         website: 'https://example.com',
         notes: null,          // explicit null: user cleared the notes field
         isFavorite: false,
@@ -336,7 +330,7 @@ async function main() {
         id: 'fixed-id-0002',
         userId: 'user-uuid-0001',
         title: 'My Visa Card',
-        encryptedPassword: '1234',
+        encryptedPassword: 'test-card-pin',
         isFavorite: false,
         isHidden: false,
         createdAt: '2026-01-01T00:00:00.000Z',
@@ -361,14 +355,14 @@ async function main() {
     userId: 'user-uuid-0001',
     title: 'Login After Sync',
     username: 'bob@example.com',
-    encryptedPassword: 'SecurePass!99',
+    encryptedPassword: 'test-login-secret-2',
     isFavorite: true,
     isHidden: false,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-02T00:00:00.000Z',
     itemType: 'credential',
     totpSecret: null,
-    // NOTE: no 'version' field – it must be stripped before serialization
+    // NOTE: no 'version' field â€“ it must be stripped before serialization
   }
   const v3 = await buildAeadVector(
     'aead-version-stripped',
@@ -389,7 +383,7 @@ async function main() {
         id: 'fixed-id-0004',
         userId: 'user-uuid-0001',
         title: 'SSH Key for server',
-        encryptedPassword: '-----BEGIN RSA PRIVATE KEY-----',
+        encryptedPassword: 'test-ssh-key-placeholder',
         isFavorite: false,
         isHidden: false,
         createdAt: '2026-01-01T00:00:00.000Z',
@@ -434,8 +428,8 @@ async function main() {
     ],
     pipeline: {
       step1: 'PBKDF2-HMAC-SHA256, salt=saltBytes[0..16], iterations=100000, output=32 bytes',
-      step2: 'combinedPassword = base64(pbkdf2_32bytes) + password_utf8',
-      step3: 'Argon2id(password=combinedPassword_utf8, salt=saltBytes_32bytes, params=users.kdf_params)',
+      step2: 'combinedInput = base64(pbkdf2_32bytes) + passphrase_utf8',
+      step3: 'Argon2id(password=combinedInput_utf8, salt=saltBytes_32bytes, params=users.kdf_params)',
       step4: 'AES-256-GCM key = argon2_output_32bytes diretamente (sem KDF adicional)',
       step5: 'Envelope vault-snapshot-v2: {"version","nonce","encrypted"} ordem fixa; dataHash = SHA-256 hex lower do JSON UTF-8',
     },

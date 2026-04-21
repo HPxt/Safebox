@@ -74,18 +74,18 @@ O web faz:
 
 ```ts
 const pbkdf2Result = new Uint8Array(pbkdf2Bits)
-const combinedPassword = btoa(String.fromCharCode(...Array.from(pbkdf2Result))) + password
+const combinedInput = btoa(String.fromCharCode(...Array.from(pbkdf2Result))) + password
 ```
 
 Traducao Swift:
 
 - `btoa` do resultado do PBKDF2 = `base64(pbkdf2Key)` com alfabeto padrao e padding
 - Concatenacao: `base64(pbkdf2Key) + password_original_em_string`
-- `combinedPassword` e **string**, nao bytes (entra no Argon2id como string UTF-8)
+- `combinedInput` e **string**, nao bytes (entra no Argon2id como string UTF-8)
 
 ```swift
 let b64Pbkdf2 = pbkdf2Key.base64EncodedString()  // padding padrao, sem line breaks
-let combinedPassword = b64Pbkdf2 + password       // string + string
+let combinedInput = b64Pbkdf2 + password          // string + string
 ```
 
 **Erro comum**: concatenar bytes em vez de strings. O Argon2id de `hash-wasm` interpreta a entrada como bytes UTF-8 da string final, entao precisa ser `base64(bytes).utf8 + password.utf8`, nao `bytes + password_bytes`.
@@ -93,7 +93,7 @@ let combinedPassword = b64Pbkdf2 + password       // string + string
 ### 4) Argon2id
 
 - Algoritmo: Argon2id (nao Argon2i, nao Argon2d)
-- Password: `combinedPassword` em bytes UTF-8
+- Password: `combinedInput` em bytes UTF-8
 - Salt: **32 bytes completos** (nao os 16 usados no PBKDF2)
 - Parametros: lidos de `users.kdf_params` no Supabase (NUNCA hardcoded)
   - `memorySize` (em KiB no formato `hash-wasm`, converter para bytes na lib Swift se necessario)

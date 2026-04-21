@@ -1,6 +1,6 @@
 {
   "$schema": "https://safebox.app/schemas/swift-crypto-parity.test-vectors.v1.json",
-  "generatedAt": "2026-04-21T05:50:54.203Z",
+  "generatedAt": "2026-04-21T17:20:10.554Z",
   "sourceOfTruth": "frontend/src/services/cryptoService.ts",
   "notes": [
     "Vetores gerados executando exatamente o mesmo pipeline do frontend.",
@@ -8,15 +8,15 @@
   ],
   "pipeline": {
     "step1": "PBKDF2-HMAC-SHA256, salt=saltBytes[0..16], iterations=100000, output=32 bytes",
-    "step2": "combinedPassword = base64(pbkdf2_32bytes) + password_utf8",
-    "step3": "Argon2id(password=combinedPassword_utf8, salt=saltBytes_32bytes, params=users.kdf_params)",
+    "step2": "combinedInput = base64(pbkdf2_32bytes) + passphrase_utf8",
+    "step3": "Argon2id(password=combinedInput_utf8, salt=saltBytes_32bytes, params=users.kdf_params)",
     "step4": "AES-256-GCM key = argon2_output_32bytes diretamente (sem KDF adicional)",
     "step5": "Envelope vault-snapshot-v2: {\"version\",\"nonce\",\"encrypted\"} ordem fixa; dataHash = SHA-256 hex lower do JSON UTF-8"
   },
   "kdfVectors": [
     {
       "name": "low-ascii-short",
-      "password": "SafeBox#Vector1!",
+      "testPassphrase": "SafeBox#Vector1!",
       "saltBase64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
       "optionalSlow": false,
       "kdfParams": {
@@ -34,14 +34,12 @@
         "outputBytes": 32
       },
       "pbkdf2Hex": "ed8aeb66bf88c6efe622063ec1ded79081132df3763de7e51efa9376d2b45d12",
-      "pbkdf2Base64": "7YrrZr+Ixu/mIgY+wd7XkIETLfN2PeflHvqTdtK0XRI=",
-      "combinedPassword": "7YrrZr+Ixu/mIgY+wd7XkIETLfN2PeflHvqTdtK0XRI=SafeBox#Vector1!",
       "derivedKeyHex": "50b766ea0fe31de39c269db46295e7e395e0b4493aa462f4b22ce5de9e5bd948",
       "keyHashBase64": "XwJnWehitIm0qF+Erob9BceWcvNvgQSFvYE2O+IHXxY="
     },
     {
       "name": "low-unicode-accents",
-      "password": "Mañana-Ação-漢字-Тест",
+      "testPassphrase": "Mañana-Ação-漢字-Тест",
       "saltBase64": "AwoRGB8mLTQ7QklQV15lbHN6gYiPlp2kq7K5wMfO1dw=",
       "optionalSlow": false,
       "kdfParams": {
@@ -59,14 +57,12 @@
         "outputBytes": 32
       },
       "pbkdf2Hex": "d53573b6880dba1c48f28c429b0b81faa933024e3d98b491bca6a5095c4646bf",
-      "pbkdf2Base64": "1TVztogNuhxI8oxCmwuB+qkzAk49mLSRvKalCVxGRr8=",
-      "combinedPassword": "1TVztogNuhxI8oxCmwuB+qkzAk49mLSRvKalCVxGRr8=Mañana-Ação-漢字-Тест",
       "derivedKeyHex": "6a62db5f2e8ec07a6088ca98fd7dcdff39d17fdebc082462dda46c5b0b18c2ed",
       "keyHashBase64": "vIUPIr4z0d5CRVXpp6Jq7XBxyyMogRLngr0RUk3ZF00="
     },
     {
       "name": "low-long-password",
-      "password": "correct horse battery staple 12345 !@# end-of-test",
+      "testPassphrase": "correct horse battery staple 12345 !@# end-of-test",
       "saltBase64": "c2FmZWJveC1pb3MtdGVzdC12ZWN0b3Itc2FsdC0wMDA=",
       "optionalSlow": false,
       "kdfParams": {
@@ -84,14 +80,12 @@
         "outputBytes": 32
       },
       "pbkdf2Hex": "67b3820ab8dbe22031b7665d25410a22c1c242e08a92eb944a294b649d7bd25e",
-      "pbkdf2Base64": "Z7OCCrjb4iAxt2ZdJUEKIsHCQuCKkuuUSilLZJ170l4=",
-      "combinedPassword": "Z7OCCrjb4iAxt2ZdJUEKIsHCQuCKkuuUSilLZJ170l4=correct horse battery staple 12345 !@# end-of-test",
       "derivedKeyHex": "0c3e72d043a8a06d1a5a764231645685c5ba298558592b7d2d36bb9b8b60f9bb",
       "keyHashBase64": "H+3GvDeJXSBehafLHsQEfpDhzfijxsjjBGn/1GCSGYM="
     },
     {
       "name": "medium-standard",
-      "password": "SafeBox#Vector4!",
+      "testPassphrase": "SafeBox#Vector4!",
       "saltBase64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
       "optionalSlow": false,
       "kdfParams": {
@@ -109,14 +103,12 @@
         "outputBytes": 32
       },
       "pbkdf2Hex": "fc425eaf007718f8269f9fcae4320473e34fae96b7980fec3112bb86718dcc74",
-      "pbkdf2Base64": "/EJerwB3GPgmn5/K5DIEc+NPrpa3mA/sMRK7hnGNzHQ=",
-      "combinedPassword": "/EJerwB3GPgmn5/K5DIEc+NPrpa3mA/sMRK7hnGNzHQ=SafeBox#Vector4!",
       "derivedKeyHex": "2a30a2c968485089e14296ecf5c3c1c9a663d23c559cb2e9a1e562a5cd61cdaf",
       "keyHashBase64": "lMs0SejBWh+ldiMlcl+pL0bH/INunzZYnI75/W/CWHE="
     },
     {
       "name": "high-standard",
-      "password": "SafeBox#Vector5!",
+      "testPassphrase": "SafeBox#Vector5!",
       "saltBase64": "AwoRGB8mLTQ7QklQV15lbHN6gYiPlp2kq7K5wMfO1dw=",
       "optionalSlow": false,
       "kdfParams": {
@@ -134,14 +126,12 @@
         "outputBytes": 32
       },
       "pbkdf2Hex": "7c1bd934450f88de54c72eee9e78a91a3daa538cdad58193560b9efcbbe3202d",
-      "pbkdf2Base64": "fBvZNEUPiN5Uxy7unnipGj2qU4za1YGTVgue/LvjIC0=",
-      "combinedPassword": "fBvZNEUPiN5Uxy7unnipGj2qU4za1YGTVgue/LvjIC0=SafeBox#Vector5!",
       "derivedKeyHex": "42757d7aa110313403ca9eb76e97657ab8e3c73ffcf8c05030965618defe695c",
       "keyHashBase64": "hx3y0uWGgbVny1MofXesR7EZgmh1teOdxYHNP+YENjU="
     },
     {
       "name": "ultra-standard",
-      "password": "SafeBox#Vector6!",
+      "testPassphrase": "SafeBox#Vector6!",
       "saltBase64": "c2FmZWJveC1pb3MtdGVzdC12ZWN0b3Itc2FsdC0wMDA=",
       "optionalSlow": true,
       "kdfParams": {
@@ -159,8 +149,6 @@
         "outputBytes": 32
       },
       "pbkdf2Hex": "a19d2d1c415b0ef4c359bad698010921a154bb0b530ecb43c823569635cf1fae",
-      "pbkdf2Base64": "oZ0tHEFbDvTDWbrWmAEJIaFUuwtTDstDyCNWljXPH64=",
-      "combinedPassword": "oZ0tHEFbDvTDWbrWmAEJIaFUuwtTDstDyCNWljXPH64=SafeBox#Vector6!",
       "derivedKeyHex": "0ddb6bbbb80103a0a46424c491f0619ad66aba3de1877bd3abd8984050b66c6f",
       "keyHashBase64": "xy38qe71eneoAlyFZl/OiURVuZqeFwCsz8yDozscYVk="
     }
@@ -171,40 +159,40 @@
       "description": "Single credential with notes=null and totpSecret=null (semantic nulls must be preserved)",
       "kdfVectorRef": "low-ascii-short",
       "nonceBase64": "oLHC0+T1BhcoOUpb",
-      "plaintextJsonUtf8": "[{\"id\":\"fixed-id-0001\",\"userId\":\"user-uuid-0001\",\"title\":\"Example\",\"username\":\"user@example.com\",\"encryptedPassword\":\"p@ssw0rd!\",\"website\":\"https://example.com\",\"notes\":null,\"isFavorite\":false,\"isHidden\":false,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-01-01T00:00:00.000Z\",\"itemType\":\"credential\",\"totpSecret\":null}]",
-      "encryptedBase64": "x4n2WVbbuPqFOSTUvh8ahaYTbm7/Z5lM6us4Pc9lcsSci+xmOolaXbxIoVGpid4r31zxV3K/pKqYeDQ+d/3iLlkRcr518Uh6ce5MOz+cDrsJmqRCCKUMWXyTed2CdTDJJ2HA8Z5VlGaCj+Po4DzYU0zhMdKOQXRpWGgtTcZdak4xYCLvnQEaxBlvWsQ+EjWjmGizo4+Y6SYefooYjbr+OW1FvXe5PSzJxl7+X2s84SySZqbEItMVPZn4/QKPsvm58FXukuB6o6L9u4waoRj6Kx79+9PR60hVmjfRmsISOe1u9TZ9mHrfRDZ8PbhlI5JFevau3geoNV6C1gLh80Y+xP+fcT9b2fsWRpB/8/WYZQxLJJ4ZhYD3+vSDfuHGIBKyXj1t8cxg/i2t3xzd5WffKmzczknkvQfQdQEolQg/O00IIxqMSEGHZvD/71YFRKybyobxHNf11zghX74=",
-      "canonicalEnvelopeJsonUtf8": "{\"version\":\"vault-snapshot-v2\",\"nonce\":\"oLHC0+T1BhcoOUpb\",\"encrypted\":\"x4n2WVbbuPqFOSTUvh8ahaYTbm7/Z5lM6us4Pc9lcsSci+xmOolaXbxIoVGpid4r31zxV3K/pKqYeDQ+d/3iLlkRcr518Uh6ce5MOz+cDrsJmqRCCKUMWXyTed2CdTDJJ2HA8Z5VlGaCj+Po4DzYU0zhMdKOQXRpWGgtTcZdak4xYCLvnQEaxBlvWsQ+EjWjmGizo4+Y6SYefooYjbr+OW1FvXe5PSzJxl7+X2s84SySZqbEItMVPZn4/QKPsvm58FXukuB6o6L9u4waoRj6Kx79+9PR60hVmjfRmsISOe1u9TZ9mHrfRDZ8PbhlI5JFevau3geoNV6C1gLh80Y+xP+fcT9b2fsWRpB/8/WYZQxLJJ4ZhYD3+vSDfuHGIBKyXj1t8cxg/i2t3xzd5WffKmzczknkvQfQdQEolQg/O00IIxqMSEGHZvD/71YFRKybyobxHNf11zghX74=\"}",
-      "dataHashHexLower": "f83af521f7cc43de1298b12dc82af7ab838a1aa4dc1f735005bce60304ac035b"
+      "plaintextJsonUtf8": "[{\"id\":\"fixed-id-0001\",\"userId\":\"user-uuid-0001\",\"title\":\"Example\",\"username\":\"user@example.com\",\"encryptedPassword\":\"test-login-secret\",\"website\":\"https://example.com\",\"notes\":null,\"isFavorite\":false,\"isHidden\":false,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-01-01T00:00:00.000Z\",\"itemType\":\"credential\",\"totpSecret\":null}]",
+      "encryptedBase64": "x4n2WVbbuPqFOSTUvh8ahaYTbm7/Z5lM6us4Pc9lcsSci+xmOolaXbxIoVGpid4r31zxV3K/pKqYeDQ+d/3iLlkRcr518Uh6ce5MOz+cDrsJmqRCCKUMWXyTed2CdTDJJ2HA8Z5VlGaCj+Po4DzYU0zhMdKOQXBMWG93EdteIgIwMTDpjRcHklBvF4M0FSinjnCmroKU/DsdKMAZi63ydjELtjauNzLJ0BLlXHN1sGfbTrLeIY1eII+cphKBrOOouVW9h8l/tKO098dTjxDyPB6/+4rF70VSmn+yjZJNeqs7o0EkinHQRjcaO6VvIo9Pe5Kw3g2oX0aexFmhpxcQg7f8cG0Fmr1DEOcm4f6XZw0tIoMThJ39+5CdfuvGSgquTHoppJFupXHqlFKa60HDPmyQgALmo0CYMhsziBkAfAJYMgHaAnyXae7nxiPpgyfxky6L1m0PcaUVWL6fRpFZDhWNAQ==",
+      "canonicalEnvelopeJsonUtf8": "{\"version\":\"vault-snapshot-v2\",\"nonce\":\"oLHC0+T1BhcoOUpb\",\"encrypted\":\"x4n2WVbbuPqFOSTUvh8ahaYTbm7/Z5lM6us4Pc9lcsSci+xmOolaXbxIoVGpid4r31zxV3K/pKqYeDQ+d/3iLlkRcr518Uh6ce5MOz+cDrsJmqRCCKUMWXyTed2CdTDJJ2HA8Z5VlGaCj+Po4DzYU0zhMdKOQXBMWG93EdteIgIwMTDpjRcHklBvF4M0FSinjnCmroKU/DsdKMAZi63ydjELtjauNzLJ0BLlXHN1sGfbTrLeIY1eII+cphKBrOOouVW9h8l/tKO098dTjxDyPB6/+4rF70VSmn+yjZJNeqs7o0EkinHQRjcaO6VvIo9Pe5Kw3g2oX0aexFmhpxcQg7f8cG0Fmr1DEOcm4f6XZw0tIoMThJ39+5CdfuvGSgquTHoppJFupXHqlFKa60HDPmyQgALmo0CYMhsziBkAfAJYMgHaAnyXae7nxiPpgyfxky6L1m0PcaUVWL6fRpFZDhWNAQ==\"}",
+      "dataHashHexLower": "00c46aff8618f9b0cdcb1e45c74102cdcc8e54f9d10344da20b24dfb33bbfd89"
     },
     {
       "name": "aead-card-item",
       "description": "Card item: some card fields set, cardCvv=null (not provided)",
       "kdfVectorRef": "low-ascii-short",
       "nonceBase64": "ESIzRFVmd4iZqrvM",
-      "plaintextJsonUtf8": "[{\"id\":\"fixed-id-0002\",\"userId\":\"user-uuid-0001\",\"title\":\"My Visa Card\",\"encryptedPassword\":\"1234\",\"isFavorite\":false,\"isHidden\":false,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-01-01T00:00:00.000Z\",\"itemType\":\"card\",\"totpSecret\":null,\"cardHolderName\":\"JOAO SILVA\",\"cardNumber\":\"4111111111111111\",\"cardBrand\":\"visa\",\"cardExpMonth\":\"12\",\"cardExpYear\":\"2029\",\"cardCvv\":null}]",
-      "encryptedBase64": "4l2+EPjaEtduku2GZWNQihW8vnJhSmvWstdZ89UV6UFfjaaOW3W6dlomJaSkCUY2u48IqXD3HMXCexNIM2F49euNSBRog2BkdrpmaFP7ORjBaZEIavA1nCSqM9whwmMcAEYmCvBI1HOruIXH/c6zr6ElSINop2e8uN8nZhoJIDpaHKELjohunJwErP3YUgXvFmxCbg093EhMLJSSNo9lr02sqwCN/u91VKUIDTOnb5/NDszol0cyj+u1eyWH9q0Ty00IvavB1vooOUhJ9kPP3Ky3GBefAnNovxR56gewpmBaZIreoASA2YP3G/tqMGH9A0adwyB2BMr1kCHVTU8lC+ICYbwQd2plOjVX0TXCKP1HNq4pu53C1tKGOeolNVFbTgvVDrfCPPV25Bnx8Lj1pKf8/sIe/ZdOXM8PISJMBFQizkD0sjVHEyK39F/P+2J6sPKfjz603W6QWqxaLum9cxiB6whYrQoxxaXxWpNwrJNScrpafhrX/pRaFMD8NooZXmEX8SkTtO6X81JwkiXzhTPnoQ==",
-      "canonicalEnvelopeJsonUtf8": "{\"version\":\"vault-snapshot-v2\",\"nonce\":\"ESIzRFVmd4iZqrvM\",\"encrypted\":\"4l2+EPjaEtduku2GZWNQihW8vnJhSmvWstdZ89UV6UFfjaaOW3W6dlomJaSkCUY2u48IqXD3HMXCexNIM2F49euNSBRog2BkdrpmaFP7ORjBaZEIavA1nCSqM9whwmMcAEYmCvBI1HOruIXH/c6zr6ElSINop2e8uN8nZhoJIDpaHKELjohunJwErP3YUgXvFmxCbg093EhMLJSSNo9lr02sqwCN/u91VKUIDTOnb5/NDszol0cyj+u1eyWH9q0Ty00IvavB1vooOUhJ9kPP3Ky3GBefAnNovxR56gewpmBaZIreoASA2YP3G/tqMGH9A0adwyB2BMr1kCHVTU8lC+ICYbwQd2plOjVX0TXCKP1HNq4pu53C1tKGOeolNVFbTgvVDrfCPPV25Bnx8Lj1pKf8/sIe/ZdOXM8PISJMBFQizkD0sjVHEyK39F/P+2J6sPKfjz603W6QWqxaLum9cxiB6whYrQoxxaXxWpNwrJNScrpafhrX/pRaFMD8NooZXmEX8SkTtO6X81JwkiXzhTPnoQ==\"}",
-      "dataHashHexLower": "fc5e0b0e6b2ca3480bcdd8a6bd34f7802bae90f810c953545b618c7de8d684e9"
+      "plaintextJsonUtf8": "[{\"id\":\"fixed-id-0002\",\"userId\":\"user-uuid-0001\",\"title\":\"My Visa Card\",\"encryptedPassword\":\"test-card-pin\",\"isFavorite\":false,\"isHidden\":false,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-01-01T00:00:00.000Z\",\"itemType\":\"card\",\"totpSecret\":null,\"cardHolderName\":\"JOAO SILVA\",\"cardNumber\":\"4111111111111111\",\"cardBrand\":\"visa\",\"cardExpMonth\":\"12\",\"cardExpYear\":\"2029\",\"cardCvv\":null}]",
+      "encryptedBase64": "4l2+EPjaEtduku2GZWNQihW8vnJhSmvWstdZ89UV6UFfjaaOW3W6dlomJaSkCUY2u48IqXD3HMXCexNIM2F49euNSBRog2BkdrpmaFP7ORjBaZEIavA1nCSqM9whhzRcQElpSetfv2K0udWCq8Li06YyS4Jk/yD38fEvbg0JYjoJCYgOmYkn0N1Mr/3ARASCQC0KKV55ixogaIeFJIwBrUu7qwGa/u4PVKUCZyGxfdqTWp2sqAFf2bz/PXbDof9/j14fr6il1Pw/OUle9kK13Ky9cgWJECoy6kkdyVX5pjMMYob4vVbJ2c26DOpLMSCjREbQjT5QDcWr1zaWBUUYCOJKJq0/ZGNId2MR/gjNBrBxXdhdsPCvu5G0AsI9AR4VCRqWRvG4eKklsFri+6vwpKf8/sIe7opdDp9MdFEPRxZkjxukoB5GE27/9AaM/29MqaD+wjOhxyjvAO0lY6vreFvJrXwS/392x7ahBPQ67PgOMeRaJ1mXquUVQM7kO54HVl88AMv5Of5kGOhwn3g5KYwTmzBSbUpXaEMonQ==",
+      "canonicalEnvelopeJsonUtf8": "{\"version\":\"vault-snapshot-v2\",\"nonce\":\"ESIzRFVmd4iZqrvM\",\"encrypted\":\"4l2+EPjaEtduku2GZWNQihW8vnJhSmvWstdZ89UV6UFfjaaOW3W6dlomJaSkCUY2u48IqXD3HMXCexNIM2F49euNSBRog2BkdrpmaFP7ORjBaZEIavA1nCSqM9whhzRcQElpSetfv2K0udWCq8Li06YyS4Jk/yD38fEvbg0JYjoJCYgOmYkn0N1Mr/3ARASCQC0KKV55ixogaIeFJIwBrUu7qwGa/u4PVKUCZyGxfdqTWp2sqAFf2bz/PXbDof9/j14fr6il1Pw/OUle9kK13Ky9cgWJECoy6kkdyVX5pjMMYob4vVbJ2c26DOpLMSCjREbQjT5QDcWr1zaWBUUYCOJKJq0/ZGNId2MR/gjNBrBxXdhdsPCvu5G0AsI9AR4VCRqWRvG4eKklsFri+6vwpKf8/sIe7opdDp9MdFEPRxZkjxukoB5GE27/9AaM/29MqaD+wjOhxyjvAO0lY6vreFvJrXwS/392x7ahBPQ67PgOMeRaJ1mXquUVQM7kO54HVl88AMv5Of5kGOhwn3g5KYwTmzBSbUpXaEMonQ==\"}",
+      "dataHashHexLower": "46217413e2483bbbb19c0346257e1c45c5cb0013c5b65fd9266647f351425317"
     },
     {
       "name": "aead-version-stripped",
       "description": "Credential after sync: version field MUST be absent. JSON.stringify with version:undefined omits it.",
       "kdfVectorRef": "low-ascii-short",
       "nonceBase64": "3q2+78r+ur4AAQID",
-      "plaintextJsonUtf8": "[{\"id\":\"fixed-id-0003\",\"userId\":\"user-uuid-0001\",\"title\":\"Login After Sync\",\"username\":\"bob@example.com\",\"encryptedPassword\":\"SecurePass!99\",\"isFavorite\":true,\"isHidden\":false,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-01-02T00:00:00.000Z\",\"itemType\":\"credential\",\"totpSecret\":null}]",
-      "encryptedBase64": "77jc6mwl+4OcO43se3BQoiHnzajXLzuIg03z5WwkYHFiKa9M/O5PtEcjclnB9A+zR4IiosD4NGzs06blREaY+MHM9t2wYS52zHNhARMUNOqIjZ8rauuIGyrfMvp0zuanq1Dhb2JpeH9T6ZwDGBpqRQAvvOydsGneILsIqk2jbbNIsRFKeVY3QzwwxQ1rhs2gWWBjeNFqd2JCPP9bigMYE3xc9OnGm+AjPwGyQchdqtU673/cj1PN1oODDQXb4pCtd7wNXgMccz/6kis1qCy4xEKicQAPXBDbRtEyMD4Cpn76jDMkWiUp6IEoB0hdnxgQ3KHfISr07GHfUPncJCqinrvDRS4IZsCpZORe01P2QTTV3WwnbZaNjIs/2L7kQCPJ6emmkTQr28HRvF8akubaZQGu+MvezjHRMg==",
-      "canonicalEnvelopeJsonUtf8": "{\"version\":\"vault-snapshot-v2\",\"nonce\":\"3q2+78r+ur4AAQID\",\"encrypted\":\"77jc6mwl+4OcO43se3BQoiHnzajXLzuIg03z5WwkYHFiKa9M/O5PtEcjclnB9A+zR4IiosD4NGzs06blREaY+MHM9t2wYS52zHNhARMUNOqIjZ8rauuIGyrfMvp0zuanq1Dhb2JpeH9T6ZwDGBpqRQAvvOydsGneILsIqk2jbbNIsRFKeVY3QzwwxQ1rhs2gWWBjeNFqd2JCPP9bigMYE3xc9OnGm+AjPwGyQchdqtU673/cj1PN1oODDQXb4pCtd7wNXgMccz/6kis1qCy4xEKicQAPXBDbRtEyMD4Cpn76jDMkWiUp6IEoB0hdnxgQ3KHfISr07GHfUPncJCqinrvDRS4IZsCpZORe01P2QTTV3WwnbZaNjIs/2L7kQCPJ6emmkTQr28HRvF8akubaZQGu+MvezjHRMg==\"}",
-      "dataHashHexLower": "9fa4ef3e86248cc99f42191fbc9c42936be46f24b0fadbf8d21e4e469a1324b2"
+      "plaintextJsonUtf8": "[{\"id\":\"fixed-id-0003\",\"userId\":\"user-uuid-0001\",\"title\":\"Login After Sync\",\"username\":\"bob@example.com\",\"encryptedPassword\":\"test-login-secret-2\",\"isFavorite\":true,\"isHidden\":false,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-01-02T00:00:00.000Z\",\"itemType\":\"credential\",\"totpSecret\":null}]",
+      "encryptedBase64": "77jc6mwl+4OcO43se3BQoiHnzajXLzuIg03z5WwkYHFiKa9M/O5PtEcjclnB9A+zR4IiosD4NGzs06blREaY+MHM9t2wYS52zHNhARMUNOqIjZ8rauuIGyrfMvp0zuanq1Dhb2JpeH9T6ZwDGBpqRQAvvOydsGneILsIqk2jSrNYsE5DRlAtXjB6mUw1wdD+LSM5NcpwRWYWaflAiwMWC2FdyeWO3ew+VVKwRMFA7cN+7WHKiwuK0bCSTkuctOHrY6sfXR4edEb6kzw1qUK4xFaicQplThLJA5EMc2ZFt0/qz31jDFRv/JY6BFVfm2EQ3bbfI0T07HXfUPO2Niiwx//8ClZTf9HuM5JE0VOwHnjCxmgvKtTbkYUnisGjVz7Y7Zj5nDMiw562jgg8ql+lOgoFYFwtAWzK0qJbHG6jTQ==",
+      "canonicalEnvelopeJsonUtf8": "{\"version\":\"vault-snapshot-v2\",\"nonce\":\"3q2+78r+ur4AAQID\",\"encrypted\":\"77jc6mwl+4OcO43se3BQoiHnzajXLzuIg03z5WwkYHFiKa9M/O5PtEcjclnB9A+zR4IiosD4NGzs06blREaY+MHM9t2wYS52zHNhARMUNOqIjZ8rauuIGyrfMvp0zuanq1Dhb2JpeH9T6ZwDGBpqRQAvvOydsGneILsIqk2jSrNYsE5DRlAtXjB6mUw1wdD+LSM5NcpwRWYWaflAiwMWC2FdyeWO3ew+VVKwRMFA7cN+7WHKiwuK0bCSTkuctOHrY6sfXR4edEb6kzw1qUK4xFaicQplThLJA5EMc2ZFt0/qz31jDFRv/JY6BFVfm2EQ3bbfI0T07HXfUPO2Niiwx//8ClZTf9HuM5JE0VOwHnjCxmgvKtTbkYUnisGjVz7Y7Zj5nDMiw562jgg8ql+lOgoFYFwtAWzK0qJbHG6jTQ==\"}",
+      "dataHashHexLower": "f84fbbfcbeac5ac0dc4c576930d1eb1646e6a9b55c796b087255b528a5b516c9"
     },
     {
       "name": "aead-unknown-type-passthrough",
       "description": "Unknown itemType with extra fields: iOS must preserve unknown fields on round-trip (passthrough)",
       "kdfVectorRef": "low-ascii-short",
       "nonceBase64": "ASNFZ4mrze/+3LqY",
-      "plaintextJsonUtf8": "[{\"id\":\"fixed-id-0004\",\"userId\":\"user-uuid-0001\",\"title\":\"SSH Key for server\",\"encryptedPassword\":\"-----BEGIN RSA PRIVATE KEY-----\",\"isFavorite\":false,\"isHidden\":false,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-01-01T00:00:00.000Z\",\"itemType\":\"ssh_key\",\"totpSecret\":null,\"privateKeyFingerprint\":\"SHA256:abc123xyz\",\"serverHostname\":\"prod.example.com\"}]",
-      "encryptedBase64": "MeT6RGX0PrFr+6c5LaYR9krK0HFyGt7sn4Vn2SbEKgCX3nngT2Z9MYKpcXpWmrMINsvz21jbG12WegaQUAjb/fBJvptWf0CLKznilbiZw8tOy7CH2unm5t/ogSaGbZbljTBVX+/68Y8QErrATII4vjFydUOSf0pbsP7kWJAX+IyU9XnH61InaTNpXlYc5ekZR/vEgjU4SWw/YeFuS4PTrgy6W/271z1a7gbqk1r886cXkVJNDwKZZ3RHSXkW95nQ9jx7BpezwCuuCTUcEo37z95YkcWxPxZ3Kr3tK5BS1U2S8UhNQHZDTydWRGfxNDBH9ODAi+XQFK7HRx9RJKS7+Yco1GTbyAWkwb571Q6EOKQoCxfjuoAlfeiPPmGax0S5vwg8MUQCouKyPbUisR0rzZDlwtLJ6bR6lUtq1/t8iQfbr6NZBFcdthpRlPdlS8h3UrCGEKx2RenhuZEKbY0MP8nc7Bz7DjadhPeCCVSbhpwnLjLtUkL3WnOUbBMd",
-      "canonicalEnvelopeJsonUtf8": "{\"version\":\"vault-snapshot-v2\",\"nonce\":\"ASNFZ4mrze/+3LqY\",\"encrypted\":\"MeT6RGX0PrFr+6c5LaYR9krK0HFyGt7sn4Vn2SbEKgCX3nngT2Z9MYKpcXpWmrMINsvz21jbG12WegaQUAjb/fBJvptWf0CLKznilbiZw8tOy7CH2unm5t/ogSaGbZbljTBVX+/68Y8QErrATII4vjFydUOSf0pbsP7kWJAX+IyU9XnH61InaTNpXlYc5ekZR/vEgjU4SWw/YeFuS4PTrgy6W/271z1a7gbqk1r886cXkVJNDwKZZ3RHSXkW95nQ9jx7BpezwCuuCTUcEo37z95YkcWxPxZ3Kr3tK5BS1U2S8UhNQHZDTydWRGfxNDBH9ODAi+XQFK7HRx9RJKS7+Yco1GTbyAWkwb571Q6EOKQoCxfjuoAlfeiPPmGax0S5vwg8MUQCouKyPbUisR0rzZDlwtLJ6bR6lUtq1/t8iQfbr6NZBFcdthpRlPdlS8h3UrCGEKx2RenhuZEKbY0MP8nc7Bz7DjadhPeCCVSbhpwnLjLtUkL3WnOUbBMd\"}",
-      "dataHashHexLower": "b363a9248ff568cb74139f2c54b0996a39b89831d188b839cd79d2e39378d26d"
+      "plaintextJsonUtf8": "[{\"id\":\"fixed-id-0004\",\"userId\":\"user-uuid-0001\",\"title\":\"SSH Key for server\",\"encryptedPassword\":\"test-ssh-key-placeholder\",\"isFavorite\":false,\"isHidden\":false,\"createdAt\":\"2026-01-01T00:00:00.000Z\",\"updatedAt\":\"2026-01-01T00:00:00.000Z\",\"itemType\":\"ssh_key\",\"totpSecret\":null,\"privateKeyFingerprint\":\"SHA256:abc123xyz\",\"serverHostname\":\"prod.example.com\"}]",
+      "encryptedBase64": "MeT6RGX0PrFr+6c5LaYR9krK0HFyGt7sn4Vn2SbEKgCX3nngT2Z9MYKpcXpWmrMINsvz21jbG12WegaQUAjb/fBJvptWf0CLKznilbiZw8tOy7CH2unm5t/ogSaGbZbljTBVBqekqI8hJJWkaccTwAA+RHK+QWRjkbvdP+UYvNL/uS2Eu1IgSnAlV0UZ4ukXX/TWpi85ASs4MJNhTovFpQKiXu6yxSwTqCTs1AGqpPNk011HHB2ZZBZaSXIL95K09iJxBpfT0jeiTHVIKduyiepc157naEIEaLLnOI9S1i+P8UNQQH0nTzlcRGeRJixLraSVvJOFRqKRGFB2LryBsNhzhTuR4wG1yM8ylAiOOPZBAAH9s9glN/STJGzCgH+urzg0K0YsteuGPbUx9lV57LHKhMXF8YZQt0ht0rlkkUbGv+NED1ta6HBNgvF9T9daH/nQDr90ROW+44AVcoVHdNLS7E7qNjN99f66LiD3cq3BdvSegoA=",
+      "canonicalEnvelopeJsonUtf8": "{\"version\":\"vault-snapshot-v2\",\"nonce\":\"ASNFZ4mrze/+3LqY\",\"encrypted\":\"MeT6RGX0PrFr+6c5LaYR9krK0HFyGt7sn4Vn2SbEKgCX3nngT2Z9MYKpcXpWmrMINsvz21jbG12WegaQUAjb/fBJvptWf0CLKznilbiZw8tOy7CH2unm5t/ogSaGbZbljTBVBqekqI8hJJWkaccTwAA+RHK+QWRjkbvdP+UYvNL/uS2Eu1IgSnAlV0UZ4ukXX/TWpi85ASs4MJNhTovFpQKiXu6yxSwTqCTs1AGqpPNk011HHB2ZZBZaSXIL95K09iJxBpfT0jeiTHVIKduyiepc157naEIEaLLnOI9S1i+P8UNQQH0nTzlcRGeRJixLraSVvJOFRqKRGFB2LryBsNhzhTuR4wG1yM8ylAiOOPZBAAH9s9glN/STJGzCgH+urzg0K0YsteuGPbUx9lV57LHKhMXF8YZQt0ht0rlkkUbGv+NED1ta6HBNgvF9T9daH/nQDr90ROW+44AVcoVHdNLS7E7qNjN99f66LiD3cq3BdvSegoA=\"}",
+      "dataHashHexLower": "730c8e262778a0befead5dc0961fff837ff286de4615cef2933404c8a28db600"
     }
   ]
 }

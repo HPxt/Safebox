@@ -165,8 +165,7 @@ SafeBoxAutoFillExtension
 
 - reproduzir todos os vetores KDF (LOW/MEDIUM/HIGH/ULTRA) e bater:
   - `pbkdf2Hex`
-  - `pbkdf2Base64`
-  - `combinedPassword`
+  - `combinedInput` calculado em runtime a partir de `pbkdf2Hex` + `testPassphrase`
   - `derivedKeyHex`
   - `keyHashBase64`
 - se qualquer campo divergir, pacote reprovado para Etapa 4

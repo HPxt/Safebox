@@ -3,18 +3,13 @@ import XCTest
 @testable import SafeBoxCrypto
 
 final class KDFPipelineTests: XCTestCase {
-    func testPBKDF2AndCombinedPasswordMatchAllVectorsBeforeArgon2() throws {
+    func testPBKDF2AndCombinedInputMatchAllVectorsBeforeArgon2() throws {
         let vectors = try TestVectorsLoader2.load()
 
         for vector in vectors.kdfVectors {
             let expectedPBKDF2 = try XCTUnwrap(Data(hex: vector.pbkdf2Hex))
-            XCTAssertEqual(
-                expectedPBKDF2.base64EncodedString(),
-                vector.pbkdf2Base64,
-                "PBKDF2 base64 mismatch for vector \(vector.name)"
-            )
-
-            let expectedCombinedData = Data(vector.combinedPassword.utf8)
+            let expectedPBKDF2Base64 = expectedPBKDF2.base64EncodedString()
+            let expectedCombinedData = Data((expectedPBKDF2Base64 + vector.testPassphrase).utf8)
             let expectedSalt = try XCTUnwrap(Data(base64Encoded: vector.saltBase64))
             let expectedOutput = try XCTUnwrap(Data(hex: vector.derivedKeyHex))
 
@@ -22,13 +17,13 @@ final class KDFPipelineTests: XCTestCase {
             let pipeline = KDFPipeline(argon2Provider: spy)
 
             let output = try pipeline.deriveVaultKey(
-                password: vector.password,
+                password: vector.testPassphrase,
                 saltBase64: vector.saltBase64,
                 params: vector.kdfParams
             )
 
             XCTAssertEqual(output, expectedOutput, "Derived key mismatch for vector \(vector.name)")
-            XCTAssertEqual(spy.lastPassword, expectedCombinedData, "Combined password mismatch for vector \(vector.name)")
+            XCTAssertEqual(spy.lastPassword, expectedCombinedData, "Combined input mismatch for vector \(vector.name)")
             XCTAssertEqual(spy.lastSalt, expectedSalt, "Argon2 salt mismatch for vector \(vector.name)")
             XCTAssertEqual(spy.lastParams, vector.kdfParams, "KDF params mismatch for vector \(vector.name)")
             XCTAssertEqual(
@@ -58,7 +53,7 @@ final class KDFPipelineTests: XCTestCase {
 
         for vector in vectors {
             let output = try pipeline.deriveVaultKey(
-                password: vector.password,
+                password: vector.testPassphrase,
                 saltBase64: vector.saltBase64,
                 params: vector.kdfParams
             )
@@ -93,13 +88,11 @@ private struct TestVectorsFile2: Decodable {
 
 private struct KDFVector2: Decodable {
     let name: String
-    let password: String
+    let testPassphrase: String
     let saltBase64: String
     let optionalSlow: Bool
     let kdfParams: KDFParams
     let pbkdf2Hex: String
-    let pbkdf2Base64: String
-    let combinedPassword: String
     let derivedKeyHex: String
     let keyHashBase64: String
 }

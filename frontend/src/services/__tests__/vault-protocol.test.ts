@@ -28,9 +28,8 @@ import CryptoService from '../cryptoService'
 interface KdfVector {
   name: string
   optionalSlow?: boolean
+  testPassphrase: string
   pbkdf2Hex: string
-  pbkdf2Base64: string
-  combinedPassword: string
   derivedKeyHex: string
   keyHashBase64: string
 }
@@ -120,10 +119,9 @@ describe('KDF vectors completeness', () => {
     expect(levels.has('ULTRA')).toBe(true)
   })
 
-  test.each(vectors.kdfVectors)('vector "$name" has full intermediate pipeline fields', (v) => {
+  test.each(vectors.kdfVectors)('vector "$name" has safe intermediate pipeline fields', (v) => {
     expect(v.pbkdf2Hex).toMatch(/^[0-9a-f]{64}$/)
-    expect(v.pbkdf2Base64.length).toBeGreaterThan(0)
-    expect(v.combinedPassword).toBe(`${v.pbkdf2Base64}${v.password}`)
+    expect(v.testPassphrase.length).toBeGreaterThan(0)
     expect(v.derivedKeyHex).toMatch(/^[0-9a-f]{64}$/)
     expect(v.keyHashBase64).toBe(sha256Base64FromHex(v.derivedKeyHex))
   })

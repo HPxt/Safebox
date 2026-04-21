@@ -71,7 +71,7 @@ O frontend usa `totpSecret: null` com significado **"o usuario removeu o TOTP"**
 Web produz:
 
 ```json
-[{"id":"fixed-id-0001","itemType":"credential","title":"Example","username":"user@example.com","password":"p@ssw0rd!","website":"https://example.com","notes":null,"totpSecret":null}]
+[{"id":"fixed-id-0001","itemType":"credential","title":"Example","username":"user@example.com","encryptedPassword":"test-login-secret","website":"https://example.com","notes":null,"totpSecret":null}]
 ```
 
 ### iOS correto

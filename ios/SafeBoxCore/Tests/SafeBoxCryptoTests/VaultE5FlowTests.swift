@@ -16,7 +16,7 @@ final class VaultE5FlowTests: XCTestCase {
             guardService: UnlockSessionGuard(kdfPipeline: KDFPipeline(argon2Provider: FixedArgon2Provider2(output: Data(hex: vector.derivedKeyHex)!)))
         )
 
-        let session = try await service.unlock(masterPassword: vector.password)
+        let session = try await service.unlock(masterPassword: vector.testPassphrase)
 
         XCTAssertEqual(session.kdfLevel, .ultra)
         XCTAssertEqual(session.warning, .highResourceKdfWarning)
@@ -292,7 +292,7 @@ private struct TestVectorsFile3: Decodable {
 
 private struct KDFVector3: Decodable {
     let name: String
-    let password: String
+    let testPassphrase: String
     let saltBase64: String
     let kdfParams: KDFParams
     let derivedKeyHex: String
