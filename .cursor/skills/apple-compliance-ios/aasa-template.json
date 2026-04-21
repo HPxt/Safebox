@@ -1,0 +1,6 @@
+{
+  "_comment": "SafeBox iOS - apple-app-site-association template (v1, somente webcredentials para AutoFill). Hospedar em https://safebox.app/.well-known/apple-app-site-association com Content-Type application/json, HTTP 200 (sem redirect), sem BOM, e substituir TEAM_ID pelo Team ID real (10 chars alfanumericos). Para v1.x, quando signup in-app voltar, adicionar bloco applinks conforme aasa-template-v1x.json.",
+  "webcredentials": {
+    "apps": ["TEAM_ID.app.safebox.ios"]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "_comment": "SafeBox iOS - apple-app-site-association template para v1.x (quando signup in-app voltar). Inclui webcredentials (AutoFill) + applinks (deep links para callback do signup e rotas internas). Validar com skill swift-autofill-extension antes de publicar.",
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAM_ID.app.safebox.ios"],
+        "components": [
+          { "/": "/auth/callback*", "comment": "callback do signup Supabase" },
+          { "/": "/open/*", "comment": "deep links internos" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAM_ID.app.safebox.ios"]
+  }
+}
