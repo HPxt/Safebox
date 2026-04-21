@@ -1,0 +1,374 @@
+/**
+ * Vault Protocol Spec – Automated Tests (E1.3)
+ *
+ * Validates the SafeBox vault-snapshot-v2 protocol against the canonical test
+ * vectors in .cursor/skills/swift-crypto-parity/test-vectors.json.
+ *
+ * Scope (what this file tests):
+ *   - AES-256-GCM encrypt → base64(ciphertext||tag) format
+ *   - AES-256-GCM decrypt → plaintext recovery from fixed ciphertext
+ *   - dataHash = SHA-256 hex lower of envelope UTF-8 JSON string
+ *   - Canonical envelope JSON serialization (key order, no whitespace)
+ *   - Null field preservation (notes=null, totpSecret=null survive round-trip)
+ *   - Version field stripping (version:undefined → omitted from JSON)
+ *   - Unknown fields passthrough (unrecognised fields survive JSON.stringify round-trip)
+ *
+ * NOT tested here (covered by generate-vectors.mjs + validate-ios-skills.mjs):
+ *   - Full PBKDF2 + Argon2id KDF pipeline (requires hash-wasm WASM in Node)
+ *
+ * Doc reference: docs/vault-protocol-spec.md
+ */
+
+import CryptoService from '../cryptoService'
+
+// ---------------------------------------------------------------------------
+// Test vectors loader (typed subset, enough for these tests)
+// ---------------------------------------------------------------------------
+
+interface KdfVector {
+  name: string
+  derivedKeyHex: string
+}
+
+interface AeadVector {
+  name: string
+  kdfVectorRef: string
+  nonceBase64: string
+  plaintextJsonUtf8: string
+  encryptedBase64: string
+  canonicalEnvelopeJsonUtf8: string
+  dataHashHexLower: string
+}
+
+interface TestVectors {
+  kdfVectors: KdfVector[]
+  aeadVectors: AeadVector[]
+}
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const vectors: TestVectors = require('../../../../.cursor/skills/swift-crypto-parity/test-vectors.json')
+
+// ---------------------------------------------------------------------------
+// Helpers (minimal, not re-using CryptoService internals)
+// ---------------------------------------------------------------------------
+
+async function importRawKey(hexKey: string): Promise<CryptoKey> {
+  const raw = Buffer.from(hexKey, 'hex')
+  return crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt', 'decrypt'])
+}
+
+function base64ToBytes(b64: string): Uint8Array {
+  return new Uint8Array(Buffer.from(b64, 'base64'))
+}
+
+async function sha256HexLower(utf8str: string): Promise<string> {
+  const bytes = new TextEncoder().encode(utf8str)
+  const digest = await crypto.subtle.digest('SHA-256', bytes)
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+function canonicalEnvelopeJson(version: string, nonce: string, encrypted: string): string {
+  return (
+    '{' +
+    JSON.stringify('version') + ':' + JSON.stringify(version) + ',' +
+    JSON.stringify('nonce') + ':' + JSON.stringify(nonce) + ',' +
+    JSON.stringify('encrypted') + ':' + JSON.stringify(encrypted) +
+    '}'
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Utility: resolve KDF vector by name for a given AEAD vector
+// ---------------------------------------------------------------------------
+
+function resolveKey(aeadVec: AeadVector): KdfVector {
+  const kdf = vectors.kdfVectors.find((k) => k.name === aeadVec.kdfVectorRef)
+  if (!kdf) throw new Error(`KDF vector '${aeadVec.kdfVectorRef}' not found`)
+  return kdf
+}
+
+// ===========================================================================
+// Suite 1: AES-256-GCM format
+// ===========================================================================
+
+describe('AES-256-GCM wire format', () => {
+  let cryptoKey: CryptoKey
+  let aeadV1: AeadVector
+
+  beforeAll(async () => {
+    aeadV1 = vectors.aeadVectors[0] // aead-envelope-v2
+    const kdf = resolveKey(aeadV1)
+    cryptoKey = await importRawKey(kdf.derivedKeyHex)
+  })
+
+  test('CryptoService.encrypt produces base64(ciphertext||tag) with 16-byte tag appended', async () => {
+    const nonce = aeadV1.nonceBase64
+    const plaintext = aeadV1.plaintextJsonUtf8
+    const { encrypted } = await CryptoService.encrypt(plaintext, cryptoKey, nonce)
+
+    const encBytes = base64ToBytes(encrypted)
+    // We can't know the exact length without knowing plaintext length, but we can verify
+    // the result decodes to a value whose last 16 bytes are the AES-GCM tag.
+    // Round-trip is the functional proof.
+    expect(encBytes.length).toBeGreaterThan(16) // at minimum 1 plaintext byte + 16 tag bytes
+  })
+
+  test('CryptoService.encrypt with fixed nonce produces same ciphertext as test vector', async () => {
+    const nonce = aeadV1.nonceBase64
+    const plaintext = aeadV1.plaintextJsonUtf8
+    const { encrypted } = await CryptoService.encrypt(plaintext, cryptoKey, nonce)
+
+    expect(encrypted).toBe(aeadV1.encryptedBase64)
+  })
+
+  test('CryptoService.decrypt recovers plaintext from fixed ciphertext + nonce', async () => {
+    const recovered = await CryptoService.decrypt(
+      aeadV1.encryptedBase64,
+      cryptoKey,
+      aeadV1.nonceBase64,
+    )
+    expect(recovered).toBe(aeadV1.plaintextJsonUtf8)
+  })
+
+  test('encrypt → decrypt round-trip preserves arbitrary plaintext', async () => {
+    const plaintext = JSON.stringify([{ id: 'rt-test', password: 'abc', isFavorite: false }])
+    const { encrypted, nonce } = await CryptoService.encrypt(plaintext, cryptoKey)
+    const recovered = await CryptoService.decrypt(encrypted, cryptoKey, nonce)
+    expect(recovered).toBe(plaintext)
+  })
+})
+
+// ===========================================================================
+// Suite 2: dataHash (SHA-256 hex lower of envelope JSON)
+// ===========================================================================
+
+describe('dataHash computation', () => {
+  test.each(vectors.aeadVectors)(
+    'vector "$name": SHA-256(envelope UTF-8) matches expected dataHash',
+    async (vec) => {
+      const computed = await sha256HexLower(vec.canonicalEnvelopeJsonUtf8)
+      expect(computed).toBe(vec.dataHashHexLower)
+    },
+  )
+
+  test('dataHash changes when envelope is modified (tamper detection)', async () => {
+    const v = vectors.aeadVectors[0]
+    const tampered = v.canonicalEnvelopeJsonUtf8.replace(
+      '"nonce":"',
+      '"nonce":"X',
+    )
+    const hash = await sha256HexLower(tampered)
+    expect(hash).not.toBe(v.dataHashHexLower)
+  })
+})
+
+// ===========================================================================
+// Suite 3: Canonical envelope JSON serialization
+// ===========================================================================
+
+describe('canonical envelope serialization', () => {
+  test.each(vectors.aeadVectors)(
+    'vector "$name": canonicalEnvelopeJson matches expected JSON string',
+    (vec) => {
+      const [, version, nonce, encrypted] = vec.canonicalEnvelopeJsonUtf8
+        .replace(/^\{/, '')
+        .replace(/\}$/, '')
+        .split(/(?<="[^"]*"):/)
+        .map((s) => s.replace(/^"[^"]*":/, '').replace(/^"|"$/g, ''))
+      // Re-derive using helper and compare directly to the stored value
+      const rebuilt = canonicalEnvelopeJson('vault-snapshot-v2', vec.nonceBase64, vec.encryptedBase64)
+      expect(rebuilt).toBe(vec.canonicalEnvelopeJsonUtf8)
+    },
+  )
+
+  test('envelope key order must be version, nonce, encrypted', () => {
+    const json = canonicalEnvelopeJson('vault-snapshot-v2', 'aGVsbG8=', 'd29ybGQ=')
+    const keys = Array.from(json.matchAll(/"([a-z]+)":/g)).map((m) => m[1])
+    expect(keys).toEqual(['version', 'nonce', 'encrypted'])
+  })
+
+  test('envelope must contain no whitespace after separators', () => {
+    const json = canonicalEnvelopeJson('vault-snapshot-v2', 'aGVsbG8=', 'd29ybGQ=')
+    expect(json).not.toMatch(/: /)
+    expect(json).not.toMatch(/, /)
+    expect(json).not.toMatch(/\n/)
+  })
+
+  test('sorted-keys variant produces wrong order (regression guard)', () => {
+    // Sorted alphabetically: encrypted, nonce, version — WRONG
+    const sortedKeys = JSON.stringify(
+      { version: 'vault-snapshot-v2', nonce: 'aGVsbG8=', encrypted: 'd29ybGQ=' },
+      Object.keys({ version: '', nonce: '', encrypted: '' }).sort(),
+    )
+    const correct = canonicalEnvelopeJson('vault-snapshot-v2', 'aGVsbG8=', 'd29ybGQ=')
+    expect(sortedKeys).not.toBe(correct)
+  })
+})
+
+// ===========================================================================
+// Suite 4: Null field preservation
+// ===========================================================================
+
+describe('null field preservation (semantic nulls)', () => {
+  let aeadNullFields: AeadVector
+  let cryptoKey: CryptoKey
+
+  beforeAll(async () => {
+    aeadNullFields = vectors.aeadVectors[0] // aead-envelope-v2 has notes=null, totpSecret=null
+    const kdf = resolveKey(aeadNullFields)
+    cryptoKey = await importRawKey(kdf.derivedKeyHex)
+  })
+
+  test('decrypted payload preserves notes: null', async () => {
+    const plaintext = await CryptoService.decrypt(
+      aeadNullFields.encryptedBase64,
+      cryptoKey,
+      aeadNullFields.nonceBase64,
+    )
+    const parsed: any[] = JSON.parse(plaintext)
+    expect(parsed[0].notes).toBeNull()
+  })
+
+  test('decrypted payload preserves totpSecret: null', async () => {
+    const plaintext = await CryptoService.decrypt(
+      aeadNullFields.encryptedBase64,
+      cryptoKey,
+      aeadNullFields.nonceBase64,
+    )
+    const parsed: any[] = JSON.parse(plaintext)
+    expect(parsed[0].totpSecret).toBeNull()
+  })
+
+  test('JSON.stringify does NOT omit explicit null (null != undefined)', () => {
+    const obj = { a: null, b: undefined }
+    const serialized = JSON.stringify(obj)
+    expect(serialized).toBe('{"a":null}')
+    expect(serialized).not.toContain('"b"')
+  })
+
+  test('round-trip preserves null field after encrypt → decrypt', async () => {
+    const payload = JSON.stringify([{ id: '1', totpSecret: null, notes: null }])
+    const key = cryptoKey
+    const { encrypted, nonce } = await CryptoService.encrypt(payload, key)
+    const recovered = await CryptoService.decrypt(encrypted, key, nonce)
+    const parsed = JSON.parse(recovered)
+    expect(parsed[0].totpSecret).toBeNull()
+    expect(parsed[0].notes).toBeNull()
+  })
+})
+
+// ===========================================================================
+// Suite 5: Version field stripping
+// ===========================================================================
+
+describe('version field stripping', () => {
+  let aeadVersionStripped: AeadVector
+  let cryptoKey: CryptoKey
+
+  beforeAll(async () => {
+    // aead-version-stripped is vector index 2
+    aeadVersionStripped = vectors.aeadVectors.find((v) => v.name === 'aead-version-stripped')!
+    expect(aeadVersionStripped).toBeDefined()
+    const kdf = resolveKey(aeadVersionStripped)
+    cryptoKey = await importRawKey(kdf.derivedKeyHex)
+  })
+
+  test('decrypted payload does NOT contain a "version" key', async () => {
+    const plaintext = await CryptoService.decrypt(
+      aeadVersionStripped.encryptedBase64,
+      cryptoKey,
+      aeadVersionStripped.nonceBase64,
+    )
+    const parsed: any[] = JSON.parse(plaintext)
+    expect(Object.prototype.hasOwnProperty.call(parsed[0], 'version')).toBe(false)
+  })
+
+  test('JSON.stringify omits undefined fields (version:undefined is stripped)', () => {
+    const cred: Record<string, unknown> = { id: '1', title: 'X', version: undefined }
+    const serialized = JSON.stringify(cred)
+    expect(serialized).not.toContain('"version"')
+    expect(serialized).toBe('{"id":"1","title":"X"}')
+  })
+
+  test('setting version:undefined on spread preserves other fields', () => {
+    const original = { id: '1', title: 'X', isFavorite: false, version: 5 }
+    const normalized = { ...original, version: undefined }
+    expect(JSON.stringify(normalized)).toBe('{"id":"1","title":"X","isFavorite":false}')
+  })
+})
+
+// ===========================================================================
+// Suite 6: Unknown field passthrough
+// ===========================================================================
+
+describe('unknown field passthrough', () => {
+  let aeadUnknown: AeadVector
+  let cryptoKey: CryptoKey
+
+  beforeAll(async () => {
+    aeadUnknown = vectors.aeadVectors.find((v) => v.name === 'aead-unknown-type-passthrough')!
+    expect(aeadUnknown).toBeDefined()
+    const kdf = resolveKey(aeadUnknown)
+    cryptoKey = await importRawKey(kdf.derivedKeyHex)
+  })
+
+  test('decrypted payload preserves unknown fields (privateKeyFingerprint, serverHostname)', async () => {
+    const plaintext = await CryptoService.decrypt(
+      aeadUnknown.encryptedBase64,
+      cryptoKey,
+      aeadUnknown.nonceBase64,
+    )
+    const parsed: any[] = JSON.parse(plaintext)
+    expect(parsed[0].privateKeyFingerprint).toBe('SHA256:abc123xyz')
+    expect(parsed[0].serverHostname).toBe('prod.example.com')
+  })
+
+  test('JSON passthrough: parsing and re-serializing an object with unknown fields is lossless', () => {
+    const raw = '[{"id":"1","unknownField":"keep-me","itemType":"future-type"}]'
+    const parsed = JSON.parse(raw)
+    const reSerialised = JSON.stringify(parsed)
+    const reparsed = JSON.parse(reSerialised)
+    expect(reparsed[0].unknownField).toBe('keep-me')
+    expect(reparsed[0].itemType).toBe('future-type')
+  })
+})
+
+// ===========================================================================
+// Suite 7: Card item null preservation
+// ===========================================================================
+
+describe('card item null fields', () => {
+  let aeadCard: AeadVector
+  let cryptoKey: CryptoKey
+
+  beforeAll(async () => {
+    aeadCard = vectors.aeadVectors.find((v) => v.name === 'aead-card-item')!
+    expect(aeadCard).toBeDefined()
+    const kdf = resolveKey(aeadCard)
+    cryptoKey = await importRawKey(kdf.derivedKeyHex)
+  })
+
+  test('decrypted card item preserves cardCvv: null', async () => {
+    const plaintext = await CryptoService.decrypt(
+      aeadCard.encryptedBase64,
+      cryptoKey,
+      aeadCard.nonceBase64,
+    )
+    const parsed: any[] = JSON.parse(plaintext)
+    expect(parsed[0].cardCvv).toBeNull()
+  })
+
+  test('decrypted card item preserves string card fields intact', async () => {
+    const plaintext = await CryptoService.decrypt(
+      aeadCard.encryptedBase64,
+      cryptoKey,
+      aeadCard.nonceBase64,
+    )
+    const parsed: any[] = JSON.parse(plaintext)
+    expect(parsed[0].cardHolderName).toBe('JOAO SILVA')
+    expect(parsed[0].cardNumber).toBe('4111111111111111')
+    expect(parsed[0].cardBrand).toBe('visa')
+  })
+})

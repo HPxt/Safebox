@@ -157,9 +157,21 @@ const FIXED_SALTS = {
   c: Buffer.from('safebox-ios-test-vector-salt-0001', 'utf-8').subarray(0, 32).toString('base64'),
 }
 
-// nonce fixo de 12 bytes para vetor de AES-GCM
+// nonces fixos de 12 bytes para vetores de AES-GCM
 const FIXED_NONCE_B64 = Buffer.from([
   0xa0, 0xb1, 0xc2, 0xd3, 0xe4, 0xf5, 0x06, 0x17, 0x28, 0x39, 0x4a, 0x5b,
+]).toString('base64')
+
+const FIXED_NONCE2_B64 = Buffer.from([
+  0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc,
+]).toString('base64')
+
+const FIXED_NONCE3_B64 = Buffer.from([
+  0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe, 0x00, 0x01, 0x02, 0x03,
+]).toString('base64')
+
+const FIXED_NONCE4_B64 = Buffer.from([
+  0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98,
 ]).toString('base64')
 
 async function main() {
@@ -227,36 +239,136 @@ async function main() {
   }
 
   // Vetor de encrypt/envelope/dataHash usando a chave do primeiro vetor KDF
-  console.log('  aead: vault-snapshot-v2 envelope + dataHash')
+  console.log('  aead: building round-trip vectors')
   const firstKdf = kdfVectors[0]
   const rawKey = Buffer.from(firstKdf.derivedKeyHex, 'hex')
-  const nonceBytes = base64ToBytes(FIXED_NONCE_B64)
-  const plaintext = JSON.stringify([
-    {
-      id: 'fixed-id-0001',
-      itemType: 'credential',
-      title: 'Example',
-      username: 'user@example.com',
-      password: 'p@ssw0rd!',
-      website: 'https://example.com',
-      notes: null,
-      totpSecret: null,
-    },
-  ])
-  const ciphertextAndTag = await encryptAesGcm(rawKey, plaintext, nonceBytes)
-  const encryptedB64 = bytesToBase64(ciphertextAndTag)
-  const envelopeJson = canonicalEnvelopeJson('vault-snapshot-v2', FIXED_NONCE_B64, encryptedB64)
-  const envelopeHash = await dataHashOf(envelopeJson)
 
-  const aeadVector = {
-    name: 'aead-envelope-v2',
-    kdfVectorRef: firstKdf.name,
-    nonceBase64: FIXED_NONCE_B64,
-    plaintextJsonUtf8: plaintext,
-    encryptedBase64: encryptedB64,
-    canonicalEnvelopeJsonUtf8: envelopeJson,
-    dataHashHexLower: envelopeHash,
+  // Helper: build a full AEAD vector from a payload array
+  async function buildAeadVector(name, kdfRef, nonceBuf, payloadObj, description) {
+    const nonceB64 = bytesToBase64(nonceBuf)
+    const plaintext = JSON.stringify(payloadObj)
+    const ct = await encryptAesGcm(rawKey, plaintext, nonceBuf)
+    const encB64 = bytesToBase64(ct)
+    const envJson = canonicalEnvelopeJson('vault-snapshot-v2', nonceB64, encB64)
+    const hash = await dataHashOf(envJson)
+    return {
+      name,
+      description,
+      kdfVectorRef: kdfRef,
+      nonceBase64: nonceB64,
+      plaintextJsonUtf8: plaintext,
+      encryptedBase64: encB64,
+      canonicalEnvelopeJsonUtf8: envJson,
+      dataHashHexLower: hash,
+    }
   }
+
+  // Vector 1: credential with explicit null fields (notes + totpSecret removed)
+  console.log('  aead: v1 credential with null semantic fields')
+  const v1 = await buildAeadVector(
+    'aead-envelope-v2',
+    firstKdf.name,
+    base64ToBytes(FIXED_NONCE_B64),
+    [
+      {
+        id: 'fixed-id-0001',
+        userId: 'user-uuid-0001',
+        title: 'Example',
+        username: 'user@example.com',
+        encryptedPassword: 'p@ssw0rd!',
+        website: 'https://example.com',
+        notes: null,          // explicit null: user cleared the notes field
+        isFavorite: false,
+        isHidden: false,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        itemType: 'credential',
+        totpSecret: null,     // explicit null: TOTP was removed
+      },
+    ],
+    'Single credential with notes=null and totpSecret=null (semantic nulls must be preserved)'
+  )
+
+  // Vector 2: card item with all card fields set (some null, some string)
+  console.log('  aead: v2 card item with card fields')
+  const v2 = await buildAeadVector(
+    'aead-card-item',
+    firstKdf.name,
+    base64ToBytes(FIXED_NONCE2_B64),
+    [
+      {
+        id: 'fixed-id-0002',
+        userId: 'user-uuid-0001',
+        title: 'My Visa Card',
+        encryptedPassword: '1234',
+        isFavorite: false,
+        isHidden: false,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        itemType: 'card',
+        totpSecret: null,
+        cardHolderName: 'JOAO SILVA',
+        cardNumber: '4111111111111111',
+        cardBrand: 'visa',
+        cardExpMonth: '12',
+        cardExpYear: '2029',
+        cardCvv: null,        // null: user did not provide CVV
+      },
+    ],
+    'Card item: some card fields set, cardCvv=null (not provided)'
+  )
+
+  // Vector 3: credential where version field is stripped (set to undefined -> omitted)
+  console.log('  aead: v3 version field stripped')
+  const credWithVersionStripped = {
+    id: 'fixed-id-0003',
+    userId: 'user-uuid-0001',
+    title: 'Login After Sync',
+    username: 'bob@example.com',
+    encryptedPassword: 'SecurePass!99',
+    isFavorite: true,
+    isHidden: false,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-02T00:00:00.000Z',
+    itemType: 'credential',
+    totpSecret: null,
+    // NOTE: no 'version' field – it must be stripped before serialization
+  }
+  const v3 = await buildAeadVector(
+    'aead-version-stripped',
+    firstKdf.name,
+    base64ToBytes(FIXED_NONCE3_B64),
+    [credWithVersionStripped],
+    'Credential after sync: version field MUST be absent. JSON.stringify with version:undefined omits it.'
+  )
+
+  // Vector 4: passthrough unknown item type with unknown fields intact
+  console.log('  aead: v4 unknown item type passthrough')
+  const v4 = await buildAeadVector(
+    'aead-unknown-type-passthrough',
+    firstKdf.name,
+    base64ToBytes(FIXED_NONCE4_B64),
+    [
+      {
+        id: 'fixed-id-0004',
+        userId: 'user-uuid-0001',
+        title: 'SSH Key for server',
+        encryptedPassword: '-----BEGIN RSA PRIVATE KEY-----',
+        isFavorite: false,
+        isHidden: false,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        itemType: 'ssh_key',              // may not be rendered natively on iOS v1
+        totpSecret: null,
+        privateKeyFingerprint: 'SHA256:abc123xyz',  // unknown extra field
+        serverHostname: 'prod.example.com',          // unknown extra field
+      },
+    ],
+    'Unknown itemType with extra fields: iOS must preserve unknown fields on round-trip (passthrough)'
+  )
+
+  const aeadVectors = [v1, v2, v3, v4]
+  console.log(`  aead: ${aeadVectors.length} vectors built`)
 
   // Preserve generatedAt when the cryptographic values are unchanged to avoid
   // timestamp-only commits that add noise to parity reviews.
@@ -267,7 +379,7 @@ async function main() {
       const sameKdf = JSON.stringify(existing.kdfVectors?.map(v => v.derivedKeyHex)) ===
                       JSON.stringify(kdfVectors.map(v => v.derivedKeyHex))
       const sameAead = JSON.stringify(existing.aeadVectors?.map(v => v.dataHashHexLower)) ===
-                       JSON.stringify([aeadVector].map(v => v.dataHashHexLower))
+                       JSON.stringify(aeadVectors.map(v => v.dataHashHexLower))
       if (sameKdf && sameAead && existing.generatedAt) {
         generatedAt = existing.generatedAt
       }
@@ -292,13 +404,13 @@ async function main() {
       step5: 'Envelope vault-snapshot-v2: {"version","nonce","encrypted"} ordem fixa; dataHash = SHA-256 hex lower do JSON UTF-8',
     },
     kdfVectors,
-    aeadVectors: [aeadVector],
+    aeadVectors,
   }
 
   writeFileSync(VECTORS_PATH, JSON.stringify(output, null, 2) + '\n', 'utf-8')
 
   const tookSec = ((Date.now() - started) / 1000).toFixed(2)
-  console.log(`OK - ${kdfVectors.length} vetores KDF + ${output.aeadVectors.length} vetor AEAD gerados em ${tookSec}s`)
+  console.log(`OK - ${kdfVectors.length} vetores KDF + ${output.aeadVectors.length} vetores AEAD gerados em ${tookSec}s`)
   console.log(`Arquivo: ${VECTORS_PATH}`)
 }
 
