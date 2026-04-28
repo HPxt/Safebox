@@ -29,7 +29,7 @@ Tests: 87 passed, 2 skipped, 89 total
 npm --prefix backend run test:db-security-integration
 PASS src/__tests__/db-security.integration.test.ts
 Test Suites: 1 passed, 1 total
-Tests: 2 passed, 2 total
+Tests: 4 passed, 4 total
 ```
 
 ```text
@@ -72,7 +72,7 @@ npm audit --omit=dev --json
 | Vazamento de erro | Coberto | sem stack trace, SQL, path local, token ou segredo |
 | Rate limit em login | Coberto | `429 TOO_MANY_REQUESTS` apos limite |
 | Rate limit em 2FA verify | Coberto e hardening aplicado | `429 TOO_MANY_REQUESTS` apos limite |
-| RLS/Supabase real staging | Coberto em staging autorizado | `user A cannot list credentials owned by user B`; `user A cannot read audit logs owned by user B` |
+| RLS/Supabase real staging | Coberto em staging autorizado | Read/update/delete/insert cross-tenant bloqueados em tabelas multi-tenant |
 
 ## Vulnerabilidades Encontradas e Tratadas
 
@@ -88,7 +88,7 @@ npm audit --omit=dev --json
 | ID | Residual | Motivo | Proximo tratamento recomendado |
 |---|---|---|---|
 | APPSEC-RESIDUAL-IOS-01 | `HTTPResponseValidator` no iOS ainda deve ser revisado para nunca propagar corpo bruto de erro HTTP vindo do backend/Supabase para UI ou telemetria. | O arquivo iOS correspondente ja estava modificado no worktree antes desta rodada; nao foi incluido no commit AppSec para nao misturar trabalho nao relacionado. | Sanitizar erros iOS para expor somente status/codigo seguro e adicionar teste Swift de resposta 4xx/5xx com corpo contendo segredo fake. |
-| APPSEC-RESIDUAL-STAGING-01 | Cobertura RLS real ainda e basica. | A suite staging passou, mas cobre somente `credentials` e `audit_logs`. | Ampliar para `vaults`, `user_settings`, `vault_backups`, `credential_backups`, `user_sessions`, `folders` e `categories`. |
+| APPSEC-RESIDUAL-STAGING-01 | Cobertura RLS real ainda pode ser aprofundada em funcoes/RPC e views. | A suite staging cobre tabelas multi-tenant principais, mas ainda nao cobre todas as RPCs, views e triggers em cenarios adversariais. | Ampliar para RPCs privilegiadas, views com `security_invoker`, e tentativas de update em relacionamentos cross-tenant. |
 
 ## O Que Mudou no Codigo
 
@@ -111,7 +111,7 @@ Esta execucao nao prova seguranca absoluta contra todas as variantes possiveis. 
 
 ## Limites e Proximos Passos
 
-1. Ampliar `test:db-security-integration` para mais tabelas multi-tenant.
-2. Rodar o roteiro Burp em `docs/reports/appsec-offensive-test-plan-2026-04-28.md` contra staging, com usuarios reais de teste.
+1. Rodar o roteiro Burp em `docs/reports/appsec-offensive-test-plan-2026-04-28.md` contra staging, com usuarios reais de teste.
+2. Ampliar `test:db-security-integration` para RPCs, views e triggers cross-tenant.
 3. Quando existir rota de upload backend, adicionar testes reais de arquivo invalido, MIME falso, tamanho excessivo e filename malicioso.
 4. Ampliar testes iOS de rede para garantir que erros `401`, `403`, `409`, `413` e `429` geram UX segura e nao logs sensiveis.

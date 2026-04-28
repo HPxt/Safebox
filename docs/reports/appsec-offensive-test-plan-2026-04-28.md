@@ -310,10 +310,17 @@ Resultado nesta sessao contra staging autorizado:
 
 ```text
 PASS src/__tests__/db-security.integration.test.ts
-Tests: 2 passed, 2 total
+Tests: 4 passed, 4 total
 ```
 
 A suite provisionou usuarios temporarios, semeou dados do `userB`, validou isolamento para `userA` e executou limpeza ao final.
+
+Cobertura real de staging:
+
+- `SELECT` cross-tenant bloqueado em `credentials`, `audit_logs`, `user_settings`, `categories`, `folders`, `user_sessions`, `credential_backups`, `vaults` e `vault_backups`.
+- `UPDATE` cross-tenant bloqueado em `credentials`, `user_settings`, `categories`, `folders`, `user_sessions` e `vaults`.
+- `DELETE` cross-tenant bloqueado em `credentials`, `user_settings`, `categories`, `folders` e `vaults`.
+- `INSERT` cross-tenant bloqueado em `credentials`, `categories`, `folders`, `user_settings`, `vaults` e `user_sessions`.
 
 ## Evidencias
 
@@ -342,8 +349,10 @@ A suite provisionou usuarios temporarios, semeou dados do `userB`, validou isola
 | Rate limit em login | `429 TOO_MANY_REQUESTS` apos limite | `rate limits repeated login attempts before backend auth logic is trusted` |
 | Rate limit em 2FA verify | `429 TOO_MANY_REQUESTS` apos limite | `rate limits repeated 2FA verification attempts` |
 | Override de token no helper web | `Authorization` da sessao Supabase prevalece | `does not allow callers to override the Supabase Authorization header` |
-| RLS real em `credentials` | `userA` recebe lista vazia ao consultar dados de `userB` | `user A cannot list credentials owned by user B` |
-| RLS real em `audit_logs` | `userA` recebe lista vazia ao consultar logs de `userB` | `user A cannot read audit logs owned by user B` |
+| RLS real em SELECT cross-tenant | `userA` recebe lista vazia ao consultar dados de `userB` | `user A cannot read rows owned by user B across multi-tenant tables` |
+| RLS real em UPDATE cross-tenant | `userA` recebe lista vazia e nao altera dados de `userB` | `user A cannot update rows owned by user B across mutable multi-tenant tables` |
+| RLS real em DELETE cross-tenant | `userA` recebe lista vazia e nao apaga dados de `userB` | `user A cannot delete rows owned by user B across mutable multi-tenant tables` |
+| RLS real em INSERT cross-tenant | Supabase rejeita insert com `user_id` de outro usuario | `user A cannot insert rows for user B in tenant-owned tables` |
 
 ## Observacoes de Hardening Aplicadas
 
