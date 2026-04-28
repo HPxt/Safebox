@@ -533,6 +533,160 @@ Testes ofensivos minimos por app com backend:
 - [ ] Testar resposta uniforme para login/recuperacao quando usuario existe e quando nao existe.
 - [ ] Confirmar que logs do fluxo testado nao registram senha, token, segredo, ciphertext completo ou chave.
 
+Roteiro para IA/revisor AppSec executar testes ofensivos controlados:
+
+```text
+Atue como um revisor AppSec autorizado do projeto.
+
+Objetivo:
+Criar e executar uma bateria de testes ofensivos controlados simulando uma pessoa usando Burp Suite para modificar requests e tentar encontrar falhas de autenticacao, autorizacao, validacao, mass assignment, IDOR, abuso de payload, upload e vazamento de erro.
+
+Regras obrigatorias:
+- Nao testar producao.
+- Usar apenas ambiente local ou staging explicitamente autorizado.
+- Nao executar ataques destrutivos, volumetricos ou de exfiltracao.
+- Nao usar dados reais.
+- Criar usuarios de teste `userA`, `userB` e `admin`, se aplicavel.
+- Usar dados descartaveis e limpar tudo ao final.
+- O objetivo e validar que frontend nunca e camada confiavel.
+- Se um teste exigir permissao perigosa ou ambiente nao confirmado, parar e registrar como bloqueado.
+
+Entregaveis obrigatorios:
+1. Lista de rotas sensiveis encontradas.
+2. Roteiro manual para executar no Burp Suite.
+3. Testes automatizados equivalentes usando a stack do projeto.
+4. Comando para rodar os testes.
+5. Tabela final com risco testado, resultado esperado, resultado obtido e evidencia.
+```
+
+1. Inventariar rotas sensiveis:
+
+- [ ] Listar rotas de auth: login, register, logout, refresh, reset, change password, 2FA, crypto profile.
+- [ ] Listar rotas de dados por usuario: vault, credentials, folders, settings, backups, exports/imports.
+- [ ] Listar rotas admin/backoffice, se existirem.
+- [ ] Listar webhooks, uploads, imports, jobs manuais e endpoints internos.
+- [ ] Para cada rota, registrar metodo, path, auth exigida, body esperado, recurso acessado, owner field e permissao requerida.
+
+Tabela sugerida:
+
+| Rota | Metodo | Sensibilidade | Auth esperada | Recurso/owner | Campos criticos | Testes obrigatorios |
+|---|---|---|---|---|---|---|
+| `/api/vault` | `GET` | Cofre | Bearer Supabase | `user_id` do token | n/a | sem token, token invalido, userA/userB |
+| `/api/vault` | `POST/PUT/DELETE` | Cofre | Bearer Supabase | `user_id` do token | `encryptedData`, `dataHash`, `expectedVersion` | payload grande, campo extra, conflito, hash invalido |
+| `/api/auth/crypto-profile` | `GET/PUT` | Identidade/cripto | Bearer Supabase | `user_id` do token | `kdfSalt`, `kdfParams`, `keyHash` | mass assignment, campos extras, token invalido |
+
+Comandos uteis para inventario no projeto:
+
+```powershell
+rg -n "router\\.(get|post|put|patch|delete)" backend/src/routes
+rg -n "app\\.(get|post|put|patch|delete)|router\\.(get|post|put|patch|delete)" backend/src
+rg -n "backendRequest<|fetch\\(|axios\\." frontend/src
+```
+
+2. Preparar ambiente e dados de teste:
+
+- [ ] Confirmar URL local/staging e registrar no relatorio.
+- [ ] Confirmar que nao e producao.
+- [ ] Criar `userA`, `userB` e `admin` apenas no ambiente de teste.
+- [ ] Obter tokens validos de `userA` e `userB`.
+- [ ] Criar recurso pertencente a `userA` e recurso equivalente pertencente a `userB`.
+- [ ] Criar dados descartaveis de vault/folder/settings/backups, se aplicavel.
+- [ ] Ativar log detalhado apenas no ambiente de teste, com redaction.
+- [ ] Definir plano de limpeza dos usuarios e recursos criados.
+
+3. Roteiro manual no Burp Suite:
+
+- [ ] Configurar proxy do browser para Burp e importar certificado apenas no ambiente de teste.
+- [ ] Fazer login com `userA` e capturar requests autenticados.
+- [ ] Enviar requests sensiveis para Repeater.
+- [ ] Repetir cada request removendo o header `Authorization`; esperado: `401`.
+- [ ] Repetir com token aleatorio, expirado ou truncado; esperado: `401` ou `403`, sem stack trace.
+- [ ] Trocar token de `userA` por token de `userB` mantendo IDs de recursos de `userA`; esperado: `403` ou `404` sem indicar se recurso existe.
+- [ ] Alterar `userId`, `ownerId`, `tenantId`, `organizationId` no body, query e path; esperado: ignorado ou rejeitado, nunca troca ownership.
+- [ ] Injetar campos extras como `role`, `roles`, `isAdmin`, `status`, `emailVerified`, `two_factor_enabled`, `kdf_salt`, `key_hash`, `plan`, `limits`; esperado: `400` por schema strict ou campos ignorados sem efeito.
+- [ ] Remover campos obrigatorios; esperado: `400` controlado.
+- [ ] Alterar tipos de campos: string onde deveria ser number, array onde deveria ser string, objeto aninhado inesperado; esperado: `400`.
+- [ ] Enviar payload acima do limite por rota critica; esperado: `400`, `413` ou erro controlado sem queda do processo.
+- [ ] Testar `Content-Type` errado (`text/plain`, `multipart/form-data`, JSON invalido); esperado: rejeicao controlada.
+- [ ] Trocar metodo HTTP (`GET` para `POST`, `POST` para `PATCH`, `DELETE` sem body esperado); esperado: `404`, `405` ou rejeicao controlada.
+- [ ] Duplicar parametros em query/body com valores conflitantes; esperado: regra server-side clara, sem preferir valor manipulavel.
+- [ ] Se houver upload/import: enviar extensao falsa, MIME falso, arquivo vazio, arquivo acima do limite, nome com `../`, arquivo compactado suspeito; esperado: rejeicao controlada.
+- [ ] Se houver webhook: remover assinatura, alterar timestamp, repetir evento antigo, alterar payload sem recalcular assinatura; esperado: rejeicao e idempotencia.
+- [ ] Se houver cookie auth: tentar request mutavel sem CSRF token e com Origin/Referer externo; esperado: bloqueio.
+- [ ] Forcar erro com UUID invalido, hash invalido, version conflito, JSON malformado; esperado: sem stack trace, SQL, path interno, token ou segredo.
+- [ ] Repetir chamadas sensiveis ate atingir rate limit moderado; esperado: `429`, `Retry-After` e log redigido.
+- [ ] Conferir logs apos cada grupo: nenhum token, segredo, senha, ciphertext completo, service role ou stack sensivel.
+
+4. Testes automatizados equivalentes:
+
+Use a stack do projeto em vez de scripts soltos. Preferencia:
+
+- Backend Node/Express: Jest + Supertest ou testes de integracao existentes.
+- Frontend: Playwright apenas para fluxos que precisam capturar requests do browser.
+- Banco Supabase/Postgres: suite multi-tenant com dois usuarios reais em staging.
+- Upload/webhook: testes de integracao com fixtures pequenas e descartaveis.
+
+Arquivo sugerido para backend:
+
+```text
+backend/src/__tests__/offensive-security.integration.test.ts
+```
+
+Cenarios automatizados minimos:
+
+- [ ] `401` sem token em todas as rotas sensiveis.
+- [ ] `401/403` com token invalido.
+- [ ] `userB` nao le, altera, exporta, restaura ou deleta recurso de `userA`.
+- [ ] Body com `userId`/`ownerId`/`tenantId` divergente nao altera ownership.
+- [ ] Mass assignment com `role`, `isAdmin`, `status`, `emailVerified`, `two_factor_*`, `kdf_*`, `key_hash` e rejeitado ou nao tem efeito.
+- [ ] Campos extras em rotas `.strict()` retornam `400`.
+- [ ] Payload acima do limite retorna erro controlado.
+- [ ] `dataHash` invalido ou divergente retorna erro controlado.
+- [ ] `expectedVersion` ausente ou antigo em update/delete/restore retorna erro/conflito.
+- [ ] Duas escritas concorrentes no mesmo recurso produzem apenas uma escrita valida e a outra conflito controlado.
+- [ ] UUID de pasta/recurso de outro tenant e bloqueado no backend e/ou banco.
+- [ ] Respostas de erro nao contem padroes sensiveis: `stack`, `SELECT`, `INSERT`, `UPDATE`, `service_role`, `Bearer`, `JWT`, path local, segredo ou token.
+- [ ] Rate limit de endpoint sensivel retorna `429` sem derrubar o processo.
+- [ ] Se upload existir: MIME falso, extensao falsa, tamanho excessivo e path traversal sao bloqueados.
+- [ ] Se webhook existir: assinatura invalida, replay e evento duplicado sao bloqueados ou tratados idempotentemente.
+
+Comando sugerido:
+
+```powershell
+cd C:\Users\KABUM\Documents\SafeBox\Safebox-3
+npm --prefix backend test -- --runInBand src/__tests__/offensive-security.integration.test.ts
+```
+
+Se o teste depender de staging/Supabase real:
+
+```powershell
+set RUN_OFFENSIVE_SECURITY_INTEGRATION=1
+set SUPABASE_URL=https://xxx.supabase.co
+set SUPABASE_ANON_KEY=...
+set SUPABASE_SERVICE_ROLE_KEY=...
+npm --prefix backend test -- --runInBand src/__tests__/offensive-security.integration.test.ts
+```
+
+5. Evidencia e relatorio final:
+
+| Risco testado | Rota/caso | Metodo manual Burp | Teste automatizado | Resultado esperado | Resultado obtido | Evidencia | Status |
+|---|---|---|---|---|---|---|---|
+| Acesso sem token | `/api/vault` | Remover `Authorization` | `rejects request without token` | `401` |  | print/log/test output |  |
+| Token invalido | rota sensivel | Token aleatorio/truncado | `rejects invalid token` | `401/403` sem stack |  |  |  |
+| IDOR userA/userB | recurso de `userA` com token `userB` | Trocar Bearer token | `userB cannot access userA resource` | `403/404` |  |  |  |
+| Mass assignment | update de perfil/crypto/settings | Inserir `role/isAdmin/status` | `rejects extra privileged fields` | `400` ou sem efeito |  |  |  |
+| Payload grande | vault/import/upload | Aumentar body | `rejects oversized payload` | `400/413` |  |  |  |
+| Erro sem vazamento | inputs invalidos | Forcar erro | `error response is redacted` | sem stack/SQL/path/token |  |  |  |
+| Rate limit | login/vault | Repetir chamadas | `rate limit returns 429` | `429` + `Retry-After` |  |  |  |
+
+Ao final, classificar:
+
+- `OK`: controle resistiu no manual e no automatizado.
+- `Falhou`: comportamento exploravel ou ausencia de controle.
+- `Parcial`: bloqueia em uma camada, mas falta banco/teste/evidencia.
+- `Bloqueado`: ambiente, token ou fixture nao disponivel.
+- `N/A`: rota/caso nao existe no app.
+
 Matriz minima de autorizacao:
 
 | Recurso | Acao | Quem pode | Condicao obrigatoria | Onde validar | Teste esperado |
