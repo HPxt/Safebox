@@ -24,6 +24,7 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.env.appsec.local
 
 # Backend environment variables
 backend/.env
