@@ -24,6 +24,7 @@
     "audit:frontend:prod": "npm --prefix frontend run audit:prod",
     "lint:backend": "npm --prefix backend run lint",
     "typecheck:backend": "npm --prefix backend run type-check",
+    "ios:static-gate": "node scripts/ios-static-gate.mjs",
     "quality:gate": "npm run test && npm run build && npm run lint:backend && npm run typecheck:backend"
   },
   "packageManager": "npm@10.9.2"

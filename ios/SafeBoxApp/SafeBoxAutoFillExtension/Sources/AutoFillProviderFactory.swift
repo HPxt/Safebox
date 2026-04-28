@@ -2,17 +2,16 @@ import Foundation
 import SafeBoxCrypto
 
 enum AutoFillProviderFactory {
+    private static let appGroupID = "group.app.safebox.ios.shared"
+
     static func makeProvider() -> AutoFillCredentialProviding {
-        DomainFilteringAutoFillProvider(
-            indexStore: EmptyAutoFillIndexStore(),
+        let sessionStore = AutoFillSharedSessionStore(appGroupIdentifier: appGroupID)
+        let indexStore = AutoFillSharedCandidatesStore(appGroupIdentifier: appGroupID)
+        let inner = DomainFilteringAutoFillProvider(
+            indexStore: indexStore,
             secretResolver: LockedAutoFillSecretResolver()
         )
-    }
-}
-
-private struct EmptyAutoFillIndexStore: AutoFillIndexStoring {
-    func loadCandidates() async throws -> [AutoFillCredentialCandidate] {
-        []
+        return AutoFillSessionGatingProvider(sessionStore: sessionStore, inner: inner)
     }
 }
 

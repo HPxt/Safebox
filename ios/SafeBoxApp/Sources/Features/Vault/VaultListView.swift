@@ -54,6 +54,9 @@ struct VaultListView: View {
                 }
             }
             .navigationTitle("Meu cofre")
+            .onAppear {
+                coordinator.recordUserInteraction()
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Bloquear") {
@@ -62,6 +65,15 @@ struct VaultListView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
+                        if coordinator.biometricUnlockAvailable {
+                            Button("Desativar biometria", role: .destructive) {
+                                coordinator.disableBiometricUnlock()
+                            }
+                        } else {
+                            Button("Ativar biometria") {
+                                coordinator.enableBiometricUnlock()
+                            }
+                        }
                         Button("Atualizar") {
                             Task { await coordinator.reloadVault() }
                         }

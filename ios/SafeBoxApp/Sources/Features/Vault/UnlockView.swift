@@ -47,6 +47,17 @@ struct UnlockView: View {
                 .controlSize(.large)
                 .disabled(coordinator.masterPassword.isEmpty)
 
+                if coordinator.biometricUnlockAvailable {
+                    Button {
+                        Task { await coordinator.unlockVaultWithBiometrics() }
+                    } label: {
+                        Label("Usar biometria", systemImage: "lock.open.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                }
+
                 Button("Sair da conta") {
                     Task { await coordinator.signOut() }
                 }
@@ -57,6 +68,9 @@ struct UnlockView: View {
             }
             .padding(24)
             .navigationTitle("Cofre bloqueado")
+            .onAppear {
+                coordinator.prepareUnlockSurface()
+            }
         }
     }
 }

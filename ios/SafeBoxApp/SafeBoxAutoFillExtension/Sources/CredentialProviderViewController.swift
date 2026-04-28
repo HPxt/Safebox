@@ -6,7 +6,7 @@ final class CredentialProviderViewController: ASCredentialProviderViewController
     private let provider: AutoFillCredentialProviding = AutoFillProviderFactory.makeProvider()
 
     override func prepareCredentialList(for serviceIdentifiers: [ASCredentialServiceIdentifier]) {
-        Task {
+        Task { @MainActor in
             do {
                 let candidates = try await provider.candidates(for: serviceIdentifiers.map(\.identifier))
                 if candidates.isEmpty {
@@ -37,37 +37,15 @@ final class CredentialProviderViewController: ASCredentialProviderViewController
     }
 
     override func provideCredentialWithoutUserInteraction(for credentialIdentity: ASPasswordCredentialIdentity) {
-        Task {
-            do {
-                let resolved = try await provider.password(
-                    for: credentialIdentity.recordIdentifier ?? "",
-                    accessGrant: nil
-                )
-                extensionContext.completeRequest(
-                    withSelectedCredential: ASPasswordCredential(
-                        user: resolved.username,
-                        password: resolved.password
-                    ),
-                    completionHandler: nil
-                )
-            } catch AutoFillProviderError.locked {
-                extensionContext.cancelRequest(
-                    withError: NSError(
-                        domain: "app.safebox.autofill",
-                        code: ASExtensionError.Code.userInteractionRequired.rawValue,
-                        userInfo: [NSLocalizedDescriptionKey: "Desbloqueie o cofre no app SafeBox para usar AutoFill."]
-                    )
-                )
-            } catch {
-                extensionContext.cancelRequest(
-                    withError: NSError(
-                        domain: "app.safebox.autofill",
-                        code: ASExtensionError.Code.failed.rawValue,
-                        userInfo: [NSLocalizedDescriptionKey: "Nao foi possivel fornecer a credencial."]
-                    )
-                )
-            }
-        }
+        _ = credentialIdentity
+        // E7 / política SafeBox: nunca injetar senha sem UI + biometria explícita.
+        extensionContext.cancelRequest(
+            withError: NSError(
+                domain: ASExtensionErrorDomain,
+                code: ASExtensionError.Code.userInteractionRequired.rawValue,
+                userInfo: [NSLocalizedDescriptionKey: "Abra o SafeBox e use AutoFill pela interface protegida do cofre."]
+            )
+        )
     }
 
     override func prepareInterfaceToProvideCredential(for credentialIdentity: ASPasswordCredentialIdentity) {

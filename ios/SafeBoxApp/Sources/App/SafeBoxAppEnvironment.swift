@@ -38,11 +38,25 @@ struct SafeBoxAppEnvironment: Sendable {
         )
         let metadataProfile = SupabaseMetadataKDFProfileProvider(sessionStore: sessionStore)
         let backendVault = BackendVaultRemoteStore(backendURL: backendURL, sessionStore: sessionStore)
+        let directVaultFallback = SupabaseDirectVaultReadStore(
+            supabaseURL: supabaseURL,
+            anonKey: supabaseAnonKey,
+            sessionStore: sessionStore
+        )
+        let folders = SupabaseFoldersRemoteStore(
+            supabaseURL: supabaseURL,
+            anonKey: supabaseAnonKey,
+            sessionStore: sessionStore
+        )
 
         return SafeBoxAppEnvironment(
             auth: auth,
             profileProvider: FallbackUserKDFProfileProvider(providers: [usersProfile, metadataProfile]),
-            vaultStore: FallbackVaultRemoteStore(primary: backendVault),
+            vaultStore: FallbackVaultRemoteStore(
+                primary: backendVault,
+                readFallbacks: [directVaultFallback],
+                folderStore: folders
+            ),
             kdfPipeline: KDFPipeline(argon2Provider: LibArgon2Provider())
         )
     }
@@ -50,11 +64,20 @@ struct SafeBoxAppEnvironment: Sendable {
 
 enum SafeBoxAppError: LocalizedError, Equatable {
     case missingProductionAdapter(String)
+    case authSessionExpired
+    case httpRequestFailed(statusCode: Int, code: String?)
 
     var errorDescription: String? {
         switch self {
         case let .missingProductionAdapter(name):
             return "Adapter de producao ainda nao configurado: \(name)."
+        case .authSessionExpired:
+            return "Sua sessao expirou. Entre novamente para continuar."
+        case let .httpRequestFailed(statusCode, code):
+            if let code {
+                return "Nao foi possivel concluir a requisicao (\(statusCode), \(code))."
+            }
+            return "Nao foi possivel concluir a requisicao (\(statusCode))."
         }
     }
 }

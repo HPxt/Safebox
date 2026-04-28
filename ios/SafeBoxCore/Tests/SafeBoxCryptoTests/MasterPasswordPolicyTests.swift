@@ -64,4 +64,25 @@ final class MasterPasswordPolicyTests: XCTestCase {
         XCTAssertTrue(strong.accepted)
         XCTAssertGreaterThanOrEqual(strong.score, 8)
     }
+
+    func testDefaultScorerRejectsDangerousPatternsWithoutInjectedScore() {
+        let policy = MasterPasswordPolicy()
+
+        for password in ["123456789012", "aaaaaaaaaaaa", "qwertyuiop"] {
+            let result = policy.evaluate(password: password, confirmation: password)
+            XCTAssertFalse(result.accepted, "Expected \(password) to be rejected")
+            XCTAssertEqual(result.score, 0)
+            XCTAssertTrue(result.violations.contains(.scoreTooLow))
+        }
+    }
+
+    func testDefaultScorerAcceptsScoreSevenOrHigherWithoutUIProvidedScore() {
+        let policy = MasterPasswordPolicy()
+        let password = "correct horse battery staple 2026!"
+
+        let result = policy.evaluate(password: password, confirmation: password)
+
+        XCTAssertTrue(result.accepted)
+        XCTAssertGreaterThanOrEqual(result.score, 7)
+    }
 }

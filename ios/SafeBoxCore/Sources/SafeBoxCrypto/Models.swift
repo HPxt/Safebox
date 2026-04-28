@@ -41,6 +41,7 @@ public enum VaultCryptoError: Error, Equatable {
     case invalidBase64
     case invalidSaltLength
     case invalidNonceLength
+    case invalidKeyLength
     case invalidCiphertext
     case invalidEnvelopeVersion
     case unsupportedKDFAlgorithm

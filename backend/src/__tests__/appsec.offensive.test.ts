@@ -1,5 +1,6 @@
 import http, { type Server } from 'http'
 import { type AddressInfo } from 'net'
+import { type Express } from 'express'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
@@ -117,8 +118,8 @@ jest.mock('@/utils/logger', () => ({
   logSecurityEvent: jest.fn().mockResolvedValue(undefined),
 }))
 
-const { app } = require('@/index') as typeof import('@/index')
-const { requireAdmin } = require('@/middleware/auth.middleware') as typeof import('@/middleware/auth.middleware')
+let app: Express
+let requireAdmin: typeof import('@/middleware/auth.middleware').requireAdmin
 
 const getFilterValue = (state: QueryState, column: string): unknown => {
   return state.filters.find(filter => filter.column === column)?.value
@@ -449,6 +450,11 @@ describe('AppSec offensive request battery', () => {
   }
 
   beforeAll(async () => {
+    const appModule = await import('@/index')
+    const authMiddleware = await import('@/middleware/auth.middleware')
+    app = appModule.app
+    requireAdmin = authMiddleware.requireAdmin
+
     await new Promise<void>((resolve) => {
       server = http.createServer(app)
       server.listen(0, '127.0.0.1', () => {

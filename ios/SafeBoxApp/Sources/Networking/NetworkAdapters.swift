@@ -200,6 +200,131 @@ struct BackendVaultRemoteStore: VaultRemoteStoring {
     }
 }
 
+struct SupabaseDirectVaultReadStore: VaultRemoteStoring {
+    let supabaseURL: URL
+    let anonKey: String
+    let sessionStore: SafeBoxSessionStore
+    let urlSession: URLSession
+
+    init(supabaseURL: URL, anonKey: String, sessionStore: SafeBoxSessionStore, urlSession: URLSession = .shared) {
+        self.supabaseURL = supabaseURL
+        self.anonKey = anonKey
+        self.sessionStore = sessionStore
+        self.urlSession = urlSession
+    }
+
+    func fetchVault() async throws -> VaultRecord? {
+        if let credentialsVault = try await fetchCredentialsVault() {
+            return credentialsVault
+        }
+        return try await fetchLegacyVault()
+    }
+
+    func createVault(_ payload: VaultWritePayload) async throws -> VaultRecord {
+        _ = payload
+        throw SafeBoxAppError.missingProductionAdapter("Direct Supabase vault writes are disabled on iOS v1")
+    }
+
+    func updateVault(_ payload: VaultWritePayload) async throws -> VaultRecord {
+        _ = payload
+        throw SafeBoxAppError.missingProductionAdapter("Direct Supabase vault writes are disabled on iOS v1")
+    }
+
+    func fetchFolders() async throws -> [FolderSummary] {
+        []
+    }
+
+    private func fetchCredentialsVault() async throws -> VaultRecord? {
+        let data = try await supabaseRequest(
+            table: "credentials",
+            queryItems: [
+                URLQueryItem(name: "select", value: "id,enc_blob,data_hash,version,created_at,updated_at"),
+                URLQueryItem(name: "user_id", value: "eq.\(try sessionStore.userID())"),
+                URLQueryItem(name: "enc_blob", value: "not.is.null"),
+                URLQueryItem(name: "order", value: "updated_at.desc"),
+                URLQueryItem(name: "limit", value: "1"),
+            ]
+        )
+        let rows = try JSONDecoder().decode([CredentialVaultRow].self, from: data)
+        return rows.first?.record()
+    }
+
+    private func fetchLegacyVault() async throws -> VaultRecord? {
+        let data = try await supabaseRequest(
+            table: "vaults",
+            queryItems: [
+                URLQueryItem(name: "select", value: "id,encrypted_data,data_hash,version,created_at,updated_at"),
+                URLQueryItem(name: "user_id", value: "eq.\(try sessionStore.userID())"),
+                URLQueryItem(name: "order", value: "updated_at.desc"),
+                URLQueryItem(name: "limit", value: "1"),
+            ]
+        )
+        let rows = try JSONDecoder().decode([LegacyVaultRow].self, from: data)
+        return try rows.first?.record()
+    }
+
+    private func supabaseRequest(table: String, queryItems: [URLQueryItem]) async throws -> Data {
+        var components = URLComponents(url: supabaseURL.appendingPathComponent("rest/v1/\(table)"), resolvingAgainstBaseURL: false)
+        components?.queryItems = queryItems
+        guard let url = components?.url else {
+            throw SafeBoxAppError.missingProductionAdapter("Supabase REST URL")
+        }
+        var request = URLRequest(url: url)
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(try sessionStore.token())", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await urlSession.data(for: request)
+        try HTTPResponseValidator.validate(response: response, data: data)
+        return data
+    }
+}
+
+struct SupabaseFoldersRemoteStore: VaultRemoteStoring {
+    let supabaseURL: URL
+    let anonKey: String
+    let sessionStore: SafeBoxSessionStore
+    let urlSession: URLSession
+
+    init(supabaseURL: URL, anonKey: String, sessionStore: SafeBoxSessionStore, urlSession: URLSession = .shared) {
+        self.supabaseURL = supabaseURL
+        self.anonKey = anonKey
+        self.sessionStore = sessionStore
+        self.urlSession = urlSession
+    }
+
+    func fetchVault() async throws -> VaultRecord? {
+        throw SafeBoxAppError.missingProductionAdapter("SupabaseFoldersRemoteStore.fetchVault")
+    }
+
+    func createVault(_ payload: VaultWritePayload) async throws -> VaultRecord {
+        _ = payload
+        throw SafeBoxAppError.missingProductionAdapter("SupabaseFoldersRemoteStore.createVault")
+    }
+
+    func updateVault(_ payload: VaultWritePayload) async throws -> VaultRecord {
+        _ = payload
+        throw SafeBoxAppError.missingProductionAdapter("SupabaseFoldersRemoteStore.updateVault")
+    }
+
+    func fetchFolders() async throws -> [FolderSummary] {
+        var components = URLComponents(url: supabaseURL.appendingPathComponent("rest/v1/folders"), resolvingAgainstBaseURL: false)
+        components?.queryItems = [
+            URLQueryItem(name: "select", value: "id,name"),
+            URLQueryItem(name: "user_id", value: "eq.\(try sessionStore.userID())"),
+            URLQueryItem(name: "order", value: "name.asc"),
+        ]
+        guard let url = components?.url else {
+            throw VaultSyncError.folderLoadFailed
+        }
+
+        var request = URLRequest(url: url)
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(try sessionStore.token())", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await urlSession.data(for: request)
+        try HTTPResponseValidator.validate(response: response, data: data)
+        return try JSONDecoder().decode([FolderRow].self, from: data).map { $0.summary() }
+    }
+}
+
 enum HTTPResponseValidator {
     static func validate(response: URLResponse, data: Data) throws {
         guard let http = response as? HTTPURLResponse else {
@@ -208,10 +333,31 @@ enum HTTPResponseValidator {
         if http.statusCode == 409 {
             throw VaultSyncError.versionConflict
         }
+        if http.statusCode == 401 {
+            throw SafeBoxAppError.authSessionExpired
+        }
         guard (200..<300).contains(http.statusCode) else {
-            throw SafeBoxAppError.missingProductionAdapter("HTTP \(http.statusCode): \(String(decoding: data, as: UTF8.self))")
+            throw SafeBoxAppError.httpRequestFailed(
+                statusCode: http.statusCode,
+                code: sanitizedErrorCode(from: data)
+            )
         }
     }
+
+    private static func sanitizedErrorCode(from data: Data) -> String? {
+        guard
+            let body = try? JSONDecoder().decode(APIErrorBody.self, from: data),
+            let rawCode = body.code?.trimmingCharacters(in: .whitespacesAndNewlines),
+            rawCode.range(of: #"^[A-Z0-9_:-]{1,64}$"#, options: .regularExpression) != nil
+        else {
+            return nil
+        }
+        return rawCode
+    }
+}
+
+private struct APIErrorBody: Decodable {
+    let code: String?
 }
 
 private struct AuthTokenResponse: Decodable {
@@ -285,6 +431,58 @@ private struct VaultWriteBody: Encodable {
     let encryptedData: String
     let dataHash: String
     let expectedVersion: Int?
+}
+
+private struct CredentialVaultRow: Decodable {
+    let encBlob: String
+    let dataHash: String
+    let version: Int
+
+    enum CodingKeys: String, CodingKey {
+        case encBlob = "enc_blob"
+        case dataHash = "data_hash"
+        case version
+    }
+
+    func record() -> VaultRecord {
+        VaultRecord(
+            encryptedData: encBlob,
+            dataHash: dataHash,
+            version: version,
+            source: .supabaseCredentials
+        )
+    }
+}
+
+private struct LegacyVaultRow: Decodable {
+    let encryptedData: VaultSnapshotV2Envelope
+    let dataHash: String
+    let version: Int
+
+    enum CodingKeys: String, CodingKey {
+        case encryptedData = "encrypted_data"
+        case dataHash = "data_hash"
+        case version
+    }
+
+    func record() throws -> VaultRecord {
+        let envelopeJSON = try VaultEnvelopeCodec().canonicalEnvelopeJSON(envelope: encryptedData)
+        return VaultRecord(
+            encryptedData: String(decoding: envelopeJSON, as: UTF8.self),
+            dataHash: dataHash,
+            version: version,
+            source: .supabaseLegacyVaults
+        )
+    }
+}
+
+private struct FolderRow: Decodable {
+    let id: String
+    let name: String
+
+    func summary() -> FolderSummary {
+        FolderSummary(id: id, name: name)
+    }
 }
 
 private enum JSONValue: Decodable {

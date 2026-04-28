@@ -1,0 +1,5 @@
+version: 2
+secret:
+  ignored_paths:
+    - ".cursor/skills/swift-crypto-parity/test-vectors.json"
+    - "ios/SafeBoxCore/Tests/SafeBoxCryptoTests/Fixtures/test-vectors.json"

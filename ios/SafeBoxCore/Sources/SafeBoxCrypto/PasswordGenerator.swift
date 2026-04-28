@@ -105,7 +105,7 @@ public struct PasswordGenerator: Sendable {
     private func fisherYatesShuffle(_ chars: inout [Character]) throws {
         guard chars.count > 1 else { return }
         for i in stride(from: chars.count - 1, to: 0, by: -1) {
-            let j = Int(try randomSource.randomUInt32() % UInt32(i + 1))
+            let j = try randomIndex(upperBound: i + 1)
             if i != j {
                 chars.swapAt(i, j)
             }
