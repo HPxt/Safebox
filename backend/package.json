@@ -44,7 +44,7 @@
   "author": "SafeBox Team",
   "license": "MIT",
   "dependencies": {
-    "@supabase/supabase-js": "~2.49.8",
+    "@supabase/supabase-js": "2.78.0",
     "axios": "^1.12.2",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
@@ -58,7 +58,7 @@
     "nodemailer": "^8.0.5",
     "rate-limiter-flexible": "^4.0.1",
     "redis": "^5.12.1",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "winston": "^3.19.0",
     "zod": "^3.22.4"
   },
