@@ -95,6 +95,10 @@ const maybeCleanupById = async (
   await admin.from(table).delete().eq('id', id)
 }
 
+const expectSafeAuthorizationError = (message: string | undefined) => {
+  expect(message ?? '').toMatch(/permission denied|row-level security|violates row-level security/i)
+}
+
 ;(enabled ? describe : describe.skip)('DB security multi-tenant integration (Supabase staging)', () => {
   let url: string
   let anonKey: string
@@ -118,6 +122,11 @@ const maybeCleanupById = async (
   let seededCredentialBackupId: string | undefined
   let seededVaultId: string | undefined
   let seededVaultBackupId: string | undefined
+  let seededUserAFolderId: string | undefined
+  let seededUserACredentialId: string | undefined
+  let seededUserAActiveCredentialId: string | undefined
+  let seededUserAVaultId: string | undefined
+  const userACreatedRows: Array<{ table: string; id: string }> = []
 
   beforeAll(async () => {
     if (!enabled) {
@@ -179,6 +188,10 @@ const maybeCleanupById = async (
     seededCredentialBackupId = randomUUID()
     seededVaultId = randomUUID()
     seededVaultBackupId = randomUUID()
+    seededUserAFolderId = randomUUID()
+    seededUserACredentialId = randomUUID()
+    seededUserAActiveCredentialId = randomUUID()
+    seededUserAVaultId = randomUUID()
 
     const credentialInsert = await admin.from('credentials').insert({
       id: seededCredentialId,
@@ -186,7 +199,7 @@ const maybeCleanupById = async (
       title: 'db-security-seeded',
       encrypted_password: 'cipher-b',
       enc_blob: 'cipher-b',
-      data_hash: 'hash-b',
+      data_hash: 'b'.repeat(64),
       version: 1,
     })
     if (credentialInsert.error) {
@@ -293,6 +306,53 @@ const maybeCleanupById = async (
     if (vaultBackupInsert.error) {
       throw vaultBackupInsert.error
     }
+
+    const userAFolderInsert = await admin.from('folders').insert({
+      id: seededUserAFolderId,
+      user_id: userAId,
+      name: `dbsec-folder-a-${Date.now()}`,
+      color: '#778899',
+      icon: 'folder',
+      position: 1,
+    })
+    if (userAFolderInsert.error) {
+      throw userAFolderInsert.error
+    }
+
+    const userACredentialInsert = await admin.from('credentials').insert({
+      id: seededUserACredentialId,
+      user_id: userAId,
+      title: 'db-security-user-a-credential',
+      encrypted_password: 'cipher-a',
+      folder_id: seededUserAFolderId,
+    })
+    if (userACredentialInsert.error) {
+      throw userACredentialInsert.error
+    }
+
+    const userAActiveCredentialInsert = await admin.from('credentials').insert({
+      id: seededUserAActiveCredentialId,
+      user_id: userAId,
+      title: 'db-security-user-a-active-vault',
+      encrypted_password: 'cipher-a-active',
+      enc_blob: 'cipher-a-active',
+      data_hash: 'e'.repeat(64),
+      version: 1,
+    })
+    if (userAActiveCredentialInsert.error) {
+      throw userAActiveCredentialInsert.error
+    }
+
+    const userAVaultInsert = await admin.from('vaults').insert({
+      id: seededUserAVaultId,
+      user_id: userAId,
+      encrypted_data: { encrypted: 'vault-cipher-a' },
+      data_hash: 'a'.repeat(64),
+      version: 1,
+    })
+    if (userAVaultInsert.error) {
+      throw userAVaultInsert.error
+    }
   }, 60000)
 
   afterAll(async () => {
@@ -303,6 +363,10 @@ const maybeCleanupById = async (
     const admin = createClient(url, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
     })
+
+    for (const row of [...userACreatedRows].reverse()) {
+      await maybeCleanupById(admin, row.table, row.id)
+    }
 
     await maybeCleanupById(admin, 'vault_backups', seededVaultBackupId)
     await maybeCleanupById(admin, 'credential_backups', seededCredentialBackupId)
@@ -315,6 +379,10 @@ const maybeCleanupById = async (
     await maybeCleanupById(admin, 'folders', seededFolderId)
     await maybeCleanupById(admin, 'vaults', seededVaultId)
     await maybeCleanupById(admin, 'credentials', seededCredentialId)
+    await maybeCleanupById(admin, 'credentials', seededUserAActiveCredentialId)
+    await maybeCleanupById(admin, 'credentials', seededUserACredentialId)
+    await maybeCleanupById(admin, 'vaults', seededUserAVaultId)
+    await maybeCleanupById(admin, 'folders', seededUserAFolderId)
 
     if (tempUserAId) {
       await admin.auth.admin.deleteUser(tempUserAId)
@@ -332,7 +400,11 @@ const maybeCleanupById = async (
       .eq('user_id', userBId)
       .limit(5)
 
-    expect(error).toBeNull()
+    if (error) {
+      expectSafeAuthorizationError(error.message)
+      return
+    }
+
     expect(data ?? []).toEqual([])
   }
 
@@ -343,7 +415,11 @@ const maybeCleanupById = async (
       .eq('id', id)
       .select('id')
 
-    expect(error).toBeNull()
+    if (error) {
+      expectSafeAuthorizationError(error.message)
+      return
+    }
+
     expect(data ?? []).toEqual([])
   }
 
@@ -354,8 +430,24 @@ const maybeCleanupById = async (
       .eq('id', id)
       .select('id')
 
-    expect(error).toBeNull()
+    if (error) {
+      expectSafeAuthorizationError(error.message)
+      return
+    }
+
     expect(data ?? []).toEqual([])
+  }
+
+  const expectRejectedWrite = async (
+    table: string,
+    id: string,
+    write: PromiseLike<{ error: unknown }>,
+  ) => {
+    const { error } = await write
+    if (!error) {
+      userACreatedRows.push({ table, id })
+    }
+    expect(error).not.toBeNull()
   }
 
   it('user A cannot read rows owned by user B across multi-tenant tables', async () => {
@@ -443,7 +535,251 @@ const maybeCleanupById = async (
     for (const attempt of insertAttempts) {
       const { error } = await attempt
       expect(error).not.toBeNull()
-      expect(error?.message).toMatch(/row-level security|violates row-level security/i)
+      expectSafeAuthorizationError(error?.message)
     }
+  })
+
+  it('rejects user and tenant tampering inside relationships, not only top-level ownership', async () => {
+    if (!enabled || !serviceRoleKey) {
+      return
+    }
+
+    const credentialWithUserBFolderId = randomUUID()
+    await expectRejectedWrite(
+      'credentials',
+      credentialWithUserBFolderId,
+      clientA.from('credentials').insert({
+        id: credentialWithUserBFolderId,
+        user_id: userAId,
+        folder_id: seededFolderId,
+        title: 'cross-tenant-folder-reference',
+        encrypted_password: 'cipher-a',
+      }),
+    )
+
+    const folderWithUserBParentId = randomUUID()
+    await expectRejectedWrite(
+      'folders',
+      folderWithUserBParentId,
+      clientA.from('folders').insert({
+        id: folderWithUserBParentId,
+        user_id: userAId,
+        parent_id: seededFolderId,
+        name: `cross-tenant-parent-${Date.now()}`,
+        color: '#abcdef',
+        position: 3,
+      }),
+    )
+
+    const selfParentFolderId = randomUUID()
+    await expectRejectedWrite(
+      'folders',
+      selfParentFolderId,
+      clientA.from('folders').insert({
+        id: selfParentFolderId,
+        user_id: userAId,
+        parent_id: selfParentFolderId,
+        name: `self-parent-${Date.now()}`,
+        color: '#abcdef',
+        position: 4,
+      }),
+    )
+  })
+
+  it('blocks mass assignment of sensitive profile and auth columns', async () => {
+    if (!enabled) {
+      return
+    }
+
+    const currentUser = await clientA
+      .from('users')
+      .select('email,status,login_count')
+      .eq('id', userAId)
+      .maybeSingle()
+
+    expect(currentUser.error).toBeNull()
+    expect(currentUser.data?.email).toBeTruthy()
+
+    const allowedProfileUpdate = await clientA
+      .from('users')
+      .update({ full_name: `dbsec-profile-${Date.now()}` })
+      .eq('id', userAId)
+      .select('id,full_name')
+      .maybeSingle()
+
+    expect(allowedProfileUpdate.error).toBeNull()
+    expect(allowedProfileUpdate.data?.id).toEqual(userAId)
+
+    const sensitiveUpdate = await clientA
+      .from('users')
+      .update({
+        email: currentUser.data!.email,
+        status: currentUser.data!.status,
+        login_count: currentUser.data!.login_count,
+        key_hash: '0'.repeat(64),
+        two_factor_enabled: true,
+      })
+      .eq('id', userAId)
+
+    expect(sensitiveUpdate.error).not.toBeNull()
+  })
+
+  it('rejects direct writes to audit, backup, session and 2FA auxiliary tables', async () => {
+    if (!enabled || !serviceRoleKey) {
+      return
+    }
+
+    const credentialBackupId = randomUUID()
+    await expectRejectedWrite(
+      'credential_backups',
+      credentialBackupId,
+      clientA.from('credential_backups').insert({
+        id: credentialBackupId,
+        user_id: userAId,
+        credential_id: seededUserACredentialId,
+        enc_blob: 'client-forged-backup',
+        backup_type: 'manual',
+      }),
+    )
+
+    const vaultBackupId = randomUUID()
+    await expectRejectedWrite(
+      'vault_backups',
+      vaultBackupId,
+      clientA.from('vault_backups').insert({
+        id: vaultBackupId,
+        user_id: userAId,
+        vault_id: seededUserAVaultId,
+        encrypted_data: { encrypted: 'client-forged-vault-backup' },
+        backup_type: 'manual',
+      }),
+    )
+
+    const auditId = randomUUID()
+    await expectRejectedWrite(
+      'audit_logs',
+      auditId,
+      clientA.from('audit_logs').insert({
+        id: auditId,
+        user_id: userAId,
+        event_type: 'password_changed',
+        event_data: { forged: true },
+      }),
+    )
+
+    const sessionId = randomUUID()
+    await expectRejectedWrite(
+      'user_sessions',
+      sessionId,
+      clientA.from('user_sessions').insert({
+        id: sessionId,
+        user_id: userAId,
+        session_token: `client-forged-session-${randomUUID()}`,
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      }),
+    )
+
+    const twoFactorAttemptId = randomUUID()
+    await expectRejectedWrite(
+      'two_factor_attempts',
+      twoFactorAttemptId,
+      clientA.from('two_factor_attempts').insert({
+        id: twoFactorAttemptId,
+        user_id: userAId,
+        success: false,
+        error_message: 'client-forged-attempt',
+      }),
+    )
+  })
+
+  it('enforces business rules for one active vault snapshot per user', async () => {
+    if (!enabled || !serviceRoleKey) {
+      return
+    }
+
+    const duplicateCredentialVaultId = randomUUID()
+    await expectRejectedWrite(
+      'credentials',
+      duplicateCredentialVaultId,
+      clientA.from('credentials').insert({
+        id: duplicateCredentialVaultId,
+        user_id: userAId,
+        title: 'duplicate-active-vault',
+        encrypted_password: 'cipher-a-duplicate',
+        enc_blob: 'cipher-a-duplicate',
+        data_hash: 'f'.repeat(64),
+        version: 1,
+      }),
+    )
+
+    const duplicateVaultId = randomUUID()
+    await expectRejectedWrite(
+      'vaults',
+      duplicateVaultId,
+      clientA.from('vaults').insert({
+        id: duplicateVaultId,
+        user_id: userAId,
+        encrypted_data: { encrypted: 'duplicate-vault' },
+        data_hash: '1'.repeat(64),
+        version: 1,
+      }),
+    )
+  })
+
+  it('enforces payload size and data format constraints against direct API writes', async () => {
+    if (!enabled || !serviceRoleKey) {
+      return
+    }
+
+    const invalidHashCredentialId = randomUUID()
+    await expectRejectedWrite(
+      'credentials',
+      invalidHashCredentialId,
+      clientA.from('credentials').insert({
+        id: invalidHashCredentialId,
+        user_id: userAId,
+        title: 'invalid-hash',
+        encrypted_password: 'cipher-a',
+        data_hash: 'not-a-hex-sha256',
+      }),
+    )
+
+    const oversizedCredentialId = randomUUID()
+    await expectRejectedWrite(
+      'credentials',
+      oversizedCredentialId,
+      clientA.from('credentials').insert({
+        id: oversizedCredentialId,
+        user_id: userAId,
+        title: 'oversized-password',
+        encrypted_password: 'x'.repeat(200001),
+      }),
+    )
+
+    const emptyTitleCredentialId = randomUUID()
+    await expectRejectedWrite(
+      'credentials',
+      emptyTitleCredentialId,
+      clientA.from('credentials').insert({
+        id: emptyTitleCredentialId,
+        user_id: userAId,
+        title: '   ',
+        encrypted_password: 'cipher-a',
+      }),
+    )
+
+    const invalidVaultHash = await clientA
+      .from('vaults')
+      .update({ data_hash: 'not-a-hex-sha256' })
+      .eq('id', seededUserAVaultId)
+
+    expect(invalidVaultHash.error).not.toBeNull()
+
+    const oversizedVaultPayload = await clientA
+      .from('vaults')
+      .update({ encrypted_data: { encrypted: 'x'.repeat(1500001) } })
+      .eq('id', seededUserAVaultId)
+
+    expect(oversizedVaultPayload.error).not.toBeNull()
   })
 })

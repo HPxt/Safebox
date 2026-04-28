@@ -306,14 +306,20 @@ Teste RLS/Supabase staging:
 npm --prefix backend run test:db-security-integration
 ```
 
+Para executar contra staging com variaveis locais ignoradas pelo Git:
+
+```powershell
+Get-Content .env.appsec.local | ForEach-Object { if ($_ -match '^\s*([^#][^=]+)=(.*)$') { [Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2], 'Process') } }; npm.cmd --prefix backend run test:db-security-integration
+```
+
 Resultado nesta sessao contra staging autorizado:
 
 ```text
 PASS src/__tests__/db-security.integration.test.ts
-Tests: 4 passed, 4 total
+Tests: 9 passed, 9 total
 ```
 
-A suite provisionou usuarios temporarios, semeou dados do `userB`, validou isolamento para `userA` e executou limpeza ao final.
+A suite provisionou usuarios temporarios, semeou dados de `userA` e `userB`, validou isolamento e regras de negocio, e executou limpeza ao final.
 
 Cobertura real de staging:
 
@@ -321,6 +327,18 @@ Cobertura real de staging:
 - `UPDATE` cross-tenant bloqueado em `credentials`, `user_settings`, `categories`, `folders`, `user_sessions` e `vaults`.
 - `DELETE` cross-tenant bloqueado em `credentials`, `user_settings`, `categories`, `folders` e `vaults`.
 - `INSERT` cross-tenant bloqueado em `credentials`, `categories`, `folders`, `user_settings`, `vaults` e `user_sessions`.
+- IDOR por relacionamento interno bloqueado em `credentials.folder_id` e `folders.parent_id`.
+- Mass assignment bloqueado em colunas sensiveis de `public.users`.
+- Escrita direta client-side bloqueada em `audit_logs`, `user_sessions`, `credential_backups`, `vault_backups` e `two_factor_attempts`.
+- Duplicidade de vault ativo bloqueada em `credentials` e `vaults`.
+- Payload/formato invalido bloqueado para hashes, titulo vazio, campos gigantes e payload grande de vault.
+
+Migrations de hardening aplicadas no Supabase staging:
+
+```bash
+npx supabase db query --linked --file docs/sql/migrations/008_business_rule_hardening.sql
+npx supabase db query --linked --file docs/sql/migrations/009_rls_business_rule_extra_hardening.sql
+```
 
 ## Evidencias
 
@@ -353,6 +371,11 @@ Cobertura real de staging:
 | RLS real em UPDATE cross-tenant | `userA` recebe lista vazia e nao altera dados de `userB` | `user A cannot update rows owned by user B across mutable multi-tenant tables` |
 | RLS real em DELETE cross-tenant | `userA` recebe lista vazia e nao apaga dados de `userB` | `user A cannot delete rows owned by user B across mutable multi-tenant tables` |
 | RLS real em INSERT cross-tenant | Supabase rejeita insert com `user_id` de outro usuario | `user A cannot insert rows for user B in tenant-owned tables` |
+| IDOR por relacionamento interno no banco | Supabase rejeita `folder_id`/`parent_id` de outro usuario | `rejects user and tenant tampering inside relationships, not only top-level ownership` |
+| Mass assignment direto em `users` | Supabase rejeita update de `email`, `status`, `login_count`, `key_hash`, `two_factor_enabled` | `blocks mass assignment of sensitive profile and auth columns` |
+| Escrita direta em tabelas server-owned | Supabase rejeita insert de cliente autenticado | `rejects direct writes to audit, backup, session and 2FA auxiliary tables` |
+| Duplicidade de vault ativo | Supabase rejeita segundo vault ativo por usuario | `enforces business rules for one active vault snapshot per user` |
+| Payload/formato invalido direto no banco | Supabase rejeita hash invalido, titulo vazio e campos grandes | `enforces payload size and data format constraints against direct API writes` |
 
 ## Observacoes de Hardening Aplicadas
 
@@ -363,3 +386,4 @@ Cobertura real de staging:
 - O helper web de API aplica o token Supabase da sessao por ultimo, impedindo override acidental por `init.headers`.
 - `/api/auth/2fa/verify` agora tem rate limit dedicado para reduzir brute force de codigo 2FA.
 - O timer de limpeza de seguranca usa `unref()` para nao prender a suite Jest.
+- Supabase staging recebeu hardening SQL 008/009 para reforcar RLS, grants, triggers de ownership, indices unicos e constraints de payload.
