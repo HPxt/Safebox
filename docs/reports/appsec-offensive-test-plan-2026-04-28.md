@@ -316,7 +316,7 @@ Resultado nesta sessao contra staging autorizado:
 
 ```text
 PASS src/__tests__/db-security.integration.test.ts
-Tests: 9 passed, 9 total
+Tests: 11 passed, 11 total
 ```
 
 A suite provisionou usuarios temporarios, semeou dados de `userA` e `userB`, validou isolamento e regras de negocio, e executou limpeza ao final.
@@ -332,12 +332,31 @@ Cobertura real de staging:
 - Escrita direta client-side bloqueada em `audit_logs`, `user_sessions`, `credential_backups`, `vault_backups` e `two_factor_attempts`.
 - Duplicidade de vault ativo bloqueada em `credentials` e `vaults`.
 - Payload/formato invalido bloqueado para hashes, titulo vazio, campos gigantes e payload grande de vault.
+- Campos estendidos de `credentials` bloqueados contra payload excessivo: `totp_secret`, `uris` e campos de cartao.
+- RPC/funcoes internas nao chamaveis por `anon`/`authenticated`.
+- Edge Functions: nenhuma exposta no staging.
+- Storage buckets: nenhum bucket no staging.
+- Views publicas: nenhuma view em `public` no staging.
 
 Migrations de hardening aplicadas no Supabase staging:
 
 ```bash
 npx supabase db query --linked --file docs/sql/migrations/008_business_rule_hardening.sql
 npx supabase db query --linked --file docs/sql/migrations/009_rls_business_rule_extra_hardening.sql
+npx supabase db query --linked --file docs/sql/migrations/010_revoke_trigger_function_execute.sql
+npx supabase db query --linked --file docs/sql/migrations/011_credentials_extended_field_bounds.sql
+```
+
+Teste estatico web/CSP/XSS:
+
+```bash
+npm run test:appsec:static
+```
+
+Resultado:
+
+```text
+AppSec static checks passed
 ```
 
 ## Evidencias
@@ -376,6 +395,12 @@ npx supabase db query --linked --file docs/sql/migrations/009_rls_business_rule_
 | Escrita direta em tabelas server-owned | Supabase rejeita insert de cliente autenticado | `rejects direct writes to audit, backup, session and 2FA auxiliary tables` |
 | Duplicidade de vault ativo | Supabase rejeita segundo vault ativo por usuario | `enforces business rules for one active vault snapshot per user` |
 | Payload/formato invalido direto no banco | Supabase rejeita hash invalido, titulo vazio e campos grandes | `enforces payload size and data format constraints against direct API writes` |
+| Campos estendidos em `credentials` | Supabase rejeita payload excessivo em TOTP/URI/cartao | `enforces bounds on extended credential, folder, category and settings fields` |
+| RPC/funcoes internas | Supabase nao expoe/chama funcoes internas por cliente | `rejects direct RPC calls to internal trigger functions` |
+| Backup/restore/export | Ownership derivado do token; body adulterado falha | `scopes backup, restore and export flows to the authenticated user` |
+| Headers defensivos backend | CSP, nosniff, frame deny, referrer e permissions presentes | `sets defensive API security headers` |
+| Headers defensivos Vercel | `vercel.json` e `frontend/vercel.json` declaram CSP/HSTS/permissions | `npm run test:appsec:static` |
+| Fallback de API em deploy estatico | `/api/*` nao deve ser reescrito para HTML SPA | `npm run test:appsec:static` valida exclusao de `/api/*`; revalidar apos deploy |
 
 ## Observacoes de Hardening Aplicadas
 
@@ -387,3 +412,6 @@ npx supabase db query --linked --file docs/sql/migrations/009_rls_business_rule_
 - `/api/auth/2fa/verify` agora tem rate limit dedicado para reduzir brute force de codigo 2FA.
 - O timer de limpeza de seguranca usa `unref()` para nao prender a suite Jest.
 - Supabase staging recebeu hardening SQL 008/009 para reforcar RLS, grants, triggers de ownership, indices unicos e constraints de payload.
+- Supabase staging recebeu hardening SQL 010/011 para revogar RPC de funcoes internas e limitar campos estendidos de credentials.
+- Deploy estatico Vercel recebeu headers defensivos em `vercel.json` e `frontend/vercel.json`.
+- Fallback SPA da Vercel agora exclui `/api/*` para evitar `200 text/html` em rotas API inexistentes.

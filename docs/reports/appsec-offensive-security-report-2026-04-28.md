@@ -29,7 +29,7 @@ Tests: 87 passed, 2 skipped, 89 total
 npm --prefix backend run test:db-security-integration
 PASS src/__tests__/db-security.integration.test.ts
 Test Suites: 1 passed, 1 total
-Tests: 9 passed, 9 total
+Tests: 11 passed, 11 total
 ```
 
 ```text
@@ -78,6 +78,13 @@ npm audit --omit=dev --json
 | Escrita direta em tabelas auxiliares | Coberto e hardening aplicado | `audit_logs`, `user_sessions`, `credential_backups`, `vault_backups`, `two_factor_attempts` rejeitam writes client-side |
 | Regra de negocio de vault unico | Coberto e hardening aplicado | Duplicidade em `credentials.enc_blob` e `vaults.user_id` rejeitada |
 | Payload/format direto no banco | Coberto e hardening aplicado | Hash invalido, titulo vazio, campo gigante e vault payload gigante rejeitados |
+| Campos estendidos de credentials | Coberto e hardening aplicado | `totp_secret`, `uris` e campos de cartao agora possuem limite no banco |
+| RPC/funcoes internas | Coberto e hardening aplicado | Funcoes de trigger nao ficam expostas via RPC para `anon`/`authenticated` |
+| Supabase Storage | Inventariado | 0 buckets no staging; sem superficie Storage ativa |
+| Supabase Edge Functions | Inventariado | `supabase functions list` retornou `[]` |
+| Views publicas | Inventariado | 0 views em `public` no staging |
+| XSS sinks no frontend | Coberto por check estatico | Sem `dangerouslySetInnerHTML`, `.innerHTML =`, `eval`, `new Function` ou `document.write` em `frontend/src` |
+| CSP/headers web | Hardening aplicado | `vercel.json` e `frontend/vercel.json` agora definem CSP/HSTS/frame/nosniff/referrer/permissions |
 
 ## Vulnerabilidades Encontradas e Tratadas
 
@@ -91,6 +98,10 @@ npm audit --omit=dev --json
 | APPSEC-2026-04-28-06 | Supabase staging aceitava escrita direta client-side em tabelas auxiliares usadas pelo backend, permitindo inflar logs/sessoes/backups/tentativas 2FA. | Medio/Alto | Aplicada `009_rls_business_rule_extra_hardening.sql` revogando `INSERT/UPDATE/DELETE` de `authenticated` em `audit_logs`, `user_sessions`, backups e `two_factor_attempts`. | Antes: teste `rejects direct writes to audit, backup, session and 2FA auxiliary tables` falhou. Depois: PASS. |
 | APPSEC-2026-04-28-07 | Supabase staging permitia multiplos vault snapshots ativos por usuario em `credentials` e multiplos registros em `vaults`. | Alto | Aplicadas constraints/indices unicos em `008` e `009`. | Antes: teste `enforces business rules for one active vault snapshot per user` falhou. Depois: PASS. |
 | APPSEC-2026-04-28-08 | Supabase staging aceitava payload/formato invalido direto via anon key: hash invalido, titulo vazio, campos gigantes e vault payload excessivo. | Medio/Alto | Aplicadas constraints de tamanho/formato em `008` e `009`. | Antes: teste `enforces payload size and data format constraints against direct API writes` falhou. Depois: PASS. |
+| APPSEC-2026-04-28-09 | Funcoes internas/trigger `SECURITY DEFINER` ainda tinham `EXECUTE` para `PUBLIC`, `anon` e `authenticated`, embora nao precisem ser chamadas pelo cliente. | Medio | Aplicada `010_revoke_trigger_function_execute.sql`; catalogo passou a retornar 0 grants para essas roles. | `rejects direct RPC calls to internal trigger functions`; query de grants retornou `[]`. |
+| APPSEC-2026-04-28-10 | Campos estendidos de `credentials` (`totp_secret`, `uris`, campos de cartao) nao estavam cobertos pela constraint de tamanho da migration 008. | Medio | Aplicada `011_credentials_extended_field_bounds.sql`. | `enforces bounds on extended credential, folder, category and settings fields`. |
+| APPSEC-2026-04-28-11 | Deploy estatico Vercel nao tinha headers de seguranca declarados no `vercel.json` do frontend/root. | Medio | Adicionados CSP, HSTS, `X-Frame-Options`, `nosniff`, `Referrer-Policy` e `Permissions-Policy`. | `npm run test:appsec:static` PASS; `sets defensive API security headers` PASS para backend. |
+| APPSEC-2026-04-28-12 | Verificacao passiva da producao atual mostrou `/api/vault` retornando HTML da SPA com `200` apos redirect para `app.zksafe.pro`. | Medio | Ajustado fallback SPA da Vercel para nao reescrever `/api/*` para `index.html`. | `curl -L https://safebox.vercel.app/api/vault` mostrou HTML; `npm run test:appsec:static` agora valida exclusao de `/api/*`. |
 
 ## Risco Residual Documentado
 
@@ -98,7 +109,9 @@ npm audit --omit=dev --json
 |---|---|---|---|
 | APPSEC-RESIDUAL-IOS-01 | `HTTPResponseValidator` no iOS ainda deve ser revisado para nunca propagar corpo bruto de erro HTTP vindo do backend/Supabase para UI ou telemetria. | O arquivo iOS correspondente ja estava modificado no worktree antes desta rodada; nao foi incluido no commit AppSec para nao misturar trabalho nao relacionado. | Sanitizar erros iOS para expor somente status/codigo seguro e adicionar teste Swift de resposta 4xx/5xx com corpo contendo segredo fake. |
 | APPSEC-RESIDUAL-STAGING-01 | Cobertura RLS real ainda pode ser aprofundada em funcoes/RPC e views. | A suite staging cobre tabelas multi-tenant principais, mass assignment, payload, tabelas auxiliares e triggers de relacionamento, mas ainda nao cobre todas as RPCs e views. | Ampliar para RPCs privilegiadas, views com `security_invoker`, storage buckets e Edge Functions, se existirem. |
-| APPSEC-RESIDUAL-SECRET-01 | A service role key foi compartilhada no chat durante a sessao. | Mesmo nao sendo commitada e estando apenas em `.env.appsec.local` ignorado pelo Git, segredo compartilhado em canal de trabalho deve ser tratado como exposto. | Rotacionar a secret key/service role no Supabase depois da rodada de testes e atualizar `.env.appsec.local`/ambientes seguros. |
+| APPSEC-RESIDUAL-SECRET-01 | A service role key foi compartilhada no chat durante a sessao. | A chave nao esta no `origin/main` nem no working tree rastreado, mas `git log --all -S <secret>` encontrou um branch local antigo de backup. | Apagar manualmente o branch local `backup-pre-rewrite-20260419-1155`; a tentativa automatizada foi bloqueada pelo aprovador da sessao. Rotacao continua sendo higiene recomendada para segredo compartilhado em chat. |
+| APPSEC-RESIDUAL-PROD-01 | Producao atual ainda precisa ser revalidada apos deploy do commit novo. | HEAD/GET passivo mostrou que o deploy ativo antes deste push ainda nao tinha CSP/nosniff/frame headers e reescrevia `/api/vault` para HTML. | Depois que Vercel publicar o commit, repetir HEAD `/`, GET `/robots.txt`, GET `/api/vault` sem token. |
+| APPSEC-RESIDUAL-RATE-REDIS-01 | Rate limit foi testado local/mockado, mas nao com Redis real. | O ambiente local/staging desta sessao nao tem `REDIS_URL` configurado; backend `.env` usa rate limit em memoria. | Configurar Redis em staging/producao e repetir login/2FA/vault rate-limit em ambiente real. |
 
 ## O Que Mudou no Codigo
 
@@ -115,6 +128,11 @@ npm audit --omit=dev --json
 - `backend/src/__tests__/db-security.integration.test.ts`: suite staging ampliada para 9 testes reais de IDOR, mass assignment, regras de negocio e payload no Supabase.
 - `docs/sql/migrations/008_business_rule_hardening.sql`: aplicada no staging via `supabase db query --linked --file`.
 - `docs/sql/migrations/009_rls_business_rule_extra_hardening.sql`: nova migration complementar aplicada no staging.
+- `docs/sql/migrations/010_revoke_trigger_function_execute.sql`: revoga chamada direta de funcoes internas/trigger.
+- `docs/sql/migrations/011_credentials_extended_field_bounds.sql`: adiciona limites para campos estendidos de `credentials`.
+- `vercel.json` e `frontend/vercel.json`: headers de seguranca para deploy estatico.
+- `scripts/appsec-static-checks.js`: check estatico de XSS sinks e headers Vercel.
+- `vercel.json` e `frontend/vercel.json`: fallback SPA exclui `/api/*` para evitar resposta HTML `200` em rotas API inexistentes.
 
 ## Evidencia Staging Antes/Depois
 
@@ -142,7 +160,7 @@ Depois do hardening:
 ```text
 npm --prefix backend run test:db-security-integration
 PASS src/__tests__/db-security.integration.test.ts
-Tests: 9 passed, 9 total
+Tests: 11 passed, 11 total
 ```
 
 Checks read-only no catalogo do Supabase tambem confirmaram:
@@ -162,6 +180,20 @@ authenticated grants em tabelas auxiliares:
 authenticated UPDATE em users:
 - avatar_url
 - full_name
+
+Edge/Storage/views:
+- Edge Functions: []
+- Storage buckets: 0
+- public views: 0
+
+RPC/funcoes:
+- grants PUBLIC/anon/authenticated em funcoes publicas: 0 linhas apos 010
+
+Constraints de campos:
+- credentials_extended_field_size_check presente
+- credentials_field_size_check presente
+- credentials_enc_blob_size_check presente
+- credentials_data_hash_format_check presente
 ```
 
 ## Tabela Final De Evidencia
@@ -176,6 +208,95 @@ authenticated UPDATE em users:
 | Escrita direta em tabelas auxiliares | Cliente autenticado nao insere/edita/deleta | PASS apos `009` |
 | Duplicidade de vault ativo | Banco rejeita segundo vault ativo | PASS apos `008`/`009` |
 | Payload grande/formato invalido | Banco rejeita antes de persistir | PASS apos `008`/`009` |
+| Campos estendidos de credentials | Banco rejeita abuso em TOTP/URI/cartao | PASS apos `011` |
+| RPC/funcoes internas | Cliente nao consegue chamar triggers/RPC internas | PASS apos `010` |
+| Edge Functions | Nenhuma function exposta | `supabase functions list` retornou `[]` |
+| Storage buckets | Nenhum bucket exposto | `storage.buckets` retornou 0 linhas |
+| CSP/headers web | Deploy config declara headers defensivos | `npm run test:appsec:static` PASS |
+| Backup/restore/export | Ownership vem do token e body adulterado falha | `scopes backup, restore and export flows to the authenticated user` |
+| API fallback no deploy estatico | `/api/*` nao deve voltar HTML da SPA | config Vercel alterada para excluir `/api/*`; revalidar apos deploy |
+
+## Execucoes Complementares
+
+```text
+npm run test:appsec
+PASS
+Tests: 50 passed, 50 total
+```
+
+```text
+npm run test:appsec:static
+PASS
+```
+
+```text
+npm --prefix frontend test -- --watchAll=false --runInBand src/services/backendApi.test.ts src/services/importExportUtils.test.ts src/components/TwoFactorVerification.test.tsx
+PASS
+Tests: 9 passed, 9 total
+```
+
+```text
+npm --prefix backend test -- --runInBand
+PASS
+Tests: 89 passed, 11 skipped, 100 total
+```
+
+```text
+npm --prefix backend run type-check
+PASS
+```
+
+```text
+npm --prefix backend run build
+PASS
+```
+
+```text
+npm --prefix frontend run build
+PASS
+```
+
+```text
+npm audit --omit=dev --json
+0 production vulnerabilities
+```
+
+```text
+npm --prefix backend audit --omit=dev --json
+0 production vulnerabilities
+```
+
+```text
+npm --prefix frontend audit --omit=dev --json
+0 production vulnerabilities
+```
+
+## Verificacao Passiva De Producao
+
+Executada em 2026-04-28, sem login, sem fuzzing e sem carga:
+
+```text
+curl -I -L https://safebox.vercel.app
+```
+
+Resultado: `safebox.vercel.app` redireciona `307` para `https://app.zksafe.pro/`. O destino respondeu `200` com HSTS, mas sem CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` e `Permissions-Policy` visiveis no deploy ativo naquele momento.
+
+```text
+curl -L https://safebox.vercel.app/robots.txt
+```
+
+Resultado:
+
+```text
+User-agent: *
+Disallow:
+```
+
+```text
+curl -i -L https://safebox.vercel.app/api/vault
+```
+
+Resultado: `200 text/html` com HTML da SPA no deploy ativo antes deste push. Tratamento aplicado nesta rodada: excluir `/api/*` do fallback SPA no `vercel.json` para o proximo deploy nao mascarar API ausente como HTML `200`.
 
 ## O Que Podemos Afirmar Com Base Nesta Execucao
 
@@ -186,6 +307,7 @@ Esta execucao nao prova seguranca absoluta contra todas as variantes possiveis. 
 ## Limites e Proximos Passos
 
 1. Rodar o roteiro Burp em `docs/reports/appsec-offensive-test-plan-2026-04-28.md` contra staging, com usuarios reais de teste.
-2. Ampliar `test:db-security-integration` para RPCs, views, storage buckets e Edge Functions.
+2. Repetir verificacao passiva online de producao quando houver aprovacao de rede.
 3. Quando existir rota de upload backend, adicionar testes reais de arquivo invalido, MIME falso, tamanho excessivo e filename malicioso.
 4. Ampliar testes iOS de rede para garantir que erros `401`, `403`, `409`, `413` e `429` geram UX segura e nao logs sensiveis.
+5. Configurar Redis real em staging/producao e repetir rate-limit distribuido.

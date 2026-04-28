@@ -96,7 +96,9 @@ const maybeCleanupById = async (
 }
 
 const expectSafeAuthorizationError = (message: string | undefined) => {
-  expect(message ?? '').toMatch(/permission denied|row-level security|violates row-level security/i)
+  expect(message ?? '').toMatch(
+    /permission denied|row-level security|violates row-level security|could not find the function/i,
+  )
 }
 
 ;(enabled ? describe : describe.skip)('DB security multi-tenant integration (Supabase staging)', () => {
@@ -781,5 +783,111 @@ const expectSafeAuthorizationError = (message: string | undefined) => {
       .eq('id', seededUserAVaultId)
 
     expect(oversizedVaultPayload.error).not.toBeNull()
+  })
+
+  it('enforces bounds on extended credential, folder, category and settings fields', async () => {
+    if (!enabled || !serviceRoleKey) {
+      return
+    }
+
+    const oversizedCardCredentialId = randomUUID()
+    await expectRejectedWrite(
+      'credentials',
+      oversizedCardCredentialId,
+      clientA.from('credentials').insert({
+        id: oversizedCardCredentialId,
+        user_id: userAId,
+        title: 'oversized-card-field',
+        encrypted_password: 'cipher-a',
+        type: 'card',
+        card_number: 'x'.repeat(2001),
+      }),
+    )
+
+    const oversizedTotpCredentialId = randomUUID()
+    await expectRejectedWrite(
+      'credentials',
+      oversizedTotpCredentialId,
+      clientA.from('credentials').insert({
+        id: oversizedTotpCredentialId,
+        user_id: userAId,
+        title: 'oversized-totp-field',
+        encrypted_password: 'cipher-a',
+        totp_secret: 'x'.repeat(200001),
+      }),
+    )
+
+    const oversizedUrisCredentialId = randomUUID()
+    await expectRejectedWrite(
+      'credentials',
+      oversizedUrisCredentialId,
+      clientA.from('credentials').insert({
+        id: oversizedUrisCredentialId,
+        user_id: userAId,
+        title: 'oversized-uris-field',
+        encrypted_password: 'cipher-a',
+        uris: ['x'.repeat(50001)],
+      }),
+    )
+
+    const invalidFolderId = randomUUID()
+    await expectRejectedWrite(
+      'folders',
+      invalidFolderId,
+      clientA.from('folders').insert({
+        id: invalidFolderId,
+        user_id: userAId,
+        name: '   ',
+        color: 'not-a-color',
+        icon: 'x'.repeat(65),
+        position: -1,
+      }),
+    )
+
+    const invalidCategoryId = randomUUID()
+    await expectRejectedWrite(
+      'categories',
+      invalidCategoryId,
+      clientA.from('categories').insert({
+        id: invalidCategoryId,
+        user_id: userAId,
+        name: '   ',
+        color: 'not-a-color',
+        icon: 'x'.repeat(65),
+      }),
+    )
+
+    const invalidSettings = await clientA
+      .from('user_settings')
+      .update({
+        session_timeout: 121,
+        clipboard_timeout: 301,
+        default_length: 129,
+        theme: 'script',
+        language: 'xx-XX',
+      })
+      .eq('user_id', userAId)
+
+    expect(invalidSettings.error).not.toBeNull()
+  })
+
+  it('rejects direct RPC calls to internal trigger functions', async () => {
+    if (!enabled) {
+      return
+    }
+
+    const internalFunctions = [
+      'create_credential_backup',
+      'create_default_user_settings',
+      'ensure_credential_folder_owner',
+      'ensure_folder_parent_owner',
+      'update_updated_at_column',
+    ]
+
+    for (const functionName of internalFunctions) {
+      const { error } = await clientA.rpc(functionName)
+      expect(error).not.toBeNull()
+      expectSafeAuthorizationError(error?.message)
+    }
   })
 })

@@ -76,9 +76,9 @@ ORDER BY p.proname, args;
 -- ---------------------------------------------------------------------------
 -- 6) EXECUTE concedido a authenticated em funções “sensíveis” (deve estar vazio após 005)
 -- ---------------------------------------------------------------------------
-SELECT routine_name, routine_schema, privilege_type
+SELECT routine_name, routine_schema, grantee, privilege_type
 FROM information_schema.routine_privileges
-WHERE grantee = 'authenticated'
+WHERE grantee IN ('PUBLIC', 'anon', 'authenticated')
   AND routine_schema = 'public'
   AND routine_name IN (
     'cleanup_old_audit_logs',
@@ -86,11 +86,16 @@ WHERE grantee = 'authenticated'
     'cleanup_old_backups',
     'log_audit_event',
     'update_user_last_login',
-    'get_user_vault'
+    'get_user_vault',
+    'create_credential_backup',
+    'create_default_user_settings',
+    'ensure_credential_folder_owner',
+    'ensure_folder_parent_owner',
+    'update_updated_at_column'
   )
-ORDER BY routine_name;
+ORDER BY routine_name, grantee;
 
--- Esperado: 0 linhas.
+-- Esperado: 0 linhas para PUBLIC/anon/authenticated.
 
 -- ---------------------------------------------------------------------------
 -- 7) Regras de negocio adicionadas em 008/009
@@ -131,3 +136,20 @@ ORDER BY column_name;
 -- - indice vaults_single_active_per_user_idx presente.
 -- - users sem UPDATE amplo de tabela; UPDATE apenas via column grants para full_name/avatar_url.
 -- - audit_logs, user_sessions, backups e two_factor_attempts sem INSERT/UPDATE/DELETE para authenticated.
+
+SELECT conrelid::regclass::text AS table_name, conname, pg_get_constraintdef(oid) AS definition
+FROM pg_constraint
+WHERE connamespace = 'public'::regnamespace
+  AND conname IN (
+    'credentials_extended_field_size_check',
+    'credentials_field_size_check',
+    'credentials_enc_blob_size_check',
+    'credentials_data_hash_format_check',
+    'folders_business_bounds_check',
+    'categories_business_bounds_check',
+    'user_settings_security_bounds_check',
+    'users_crypto_profile_size_check'
+  )
+ORDER BY table_name, conname;
+
+-- Esperado: todas as constraints acima presentes.

@@ -726,6 +726,50 @@ describe('AppSec offensive request battery', () => {
     expectNoSensitiveLeak(auditLogs.text)
   })
 
+  test('scopes backup, restore and export flows to the authenticated user', async () => {
+    const createBackup = await request('POST', '/api/vault/backup', {
+      token: 'token-userA',
+    })
+    const listBackups = await request('GET', '/api/vault/backups?limit=10', {
+      token: 'token-userA',
+    })
+    const restoreBackup = await request('POST', `/api/vault/restore/${backupId}`, {
+      token: 'token-userA',
+      body: {
+        expectedVersion: 1,
+        userId: 'user-b',
+        ownerId: 'user-b',
+        tenantId: 'tenant-b',
+      },
+    })
+    const exportVault = await request('GET', '/api/vault/export?user_id=user-b&tenantId=tenant-b', {
+      token: 'token-userA',
+    })
+
+    expect(createBackup.status).toBe(201)
+    expect(listBackups.status).toBe(200)
+    expect(restoreBackup.status).toBe(400)
+    expect(restoreBackup.json.code).toBe('VALIDATION_ERROR')
+    expect(exportVault.status).toBe(200)
+    expect(exportVault.text).not.toContain('user-b')
+    expect(mockVaultService.createBackup).toHaveBeenCalledWith('user-a')
+    expect(mockVaultService.listBackups).toHaveBeenCalledWith('user-a', 10)
+    expect(mockVaultService.restoreBackup).not.toHaveBeenCalled()
+    expect(mockVaultService.exportVault).toHaveBeenCalledWith('user-a')
+  })
+
+  test('sets defensive API security headers', async () => {
+    const response = await request('GET', '/health')
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-security-policy')).toContain("default-src 'self'")
+    expect(response.headers.get('content-security-policy')).toContain("object-src 'none'")
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(response.headers.get('x-frame-options')).toBe('DENY')
+    expect(response.headers.get('referrer-policy')).toBe('strict-origin-when-cross-origin')
+    expect(response.headers.get('permissions-policy')).toContain('camera=()')
+  })
+
   test('does not leak stack traces, SQL, paths, tokens or secrets on internal errors', async () => {
     mockAuthService.getProfile.mockRejectedValueOnce(
       new Error('select * from users where service_role_key=super-secret-token at C:\\Users\\KABUM\\Documents\\SafeBox\\Safebox-3\\backend\\src\\routes\\auth.routes.ts:1'),
