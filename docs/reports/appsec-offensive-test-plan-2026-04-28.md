@@ -306,7 +306,14 @@ Teste RLS/Supabase staging:
 npm --prefix backend run test:db-security-integration
 ```
 
-Resultado nesta sessao: suite pulada porque `RUN_DB_SECURITY_INTEGRATION`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` e credenciais de teste staging nao estavam presentes no ambiente local. A suite existe e deve ser executada somente contra staging autorizado. Evidencia historica de staging ja consta em `docs/reports/db-security-phase-03-staging.md`.
+Resultado nesta sessao contra staging autorizado:
+
+```text
+PASS src/__tests__/db-security.integration.test.ts
+Tests: 2 passed, 2 total
+```
+
+A suite provisionou usuarios temporarios, semeou dados do `userB`, validou isolamento para `userA` e executou limpeza ao final.
 
 ## Evidencias
 
@@ -335,6 +342,8 @@ Resultado nesta sessao: suite pulada porque `RUN_DB_SECURITY_INTEGRATION`, `SUPA
 | Rate limit em login | `429 TOO_MANY_REQUESTS` apos limite | `rate limits repeated login attempts before backend auth logic is trusted` |
 | Rate limit em 2FA verify | `429 TOO_MANY_REQUESTS` apos limite | `rate limits repeated 2FA verification attempts` |
 | Override de token no helper web | `Authorization` da sessao Supabase prevalece | `does not allow callers to override the Supabase Authorization header` |
+| RLS real em `credentials` | `userA` recebe lista vazia ao consultar dados de `userB` | `user A cannot list credentials owned by user B` |
+| RLS real em `audit_logs` | `userA` recebe lista vazia ao consultar logs de `userB` | `user A cannot read audit logs owned by user B` |
 
 ## Observacoes de Hardening Aplicadas
 
