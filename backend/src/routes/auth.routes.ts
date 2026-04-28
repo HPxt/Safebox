@@ -19,6 +19,7 @@ import { requireSupabaseAuthenticatedUser } from '@/security/authorization'
 import { AppError, NotFoundError, UnauthorizedError, ValidationError } from '@/security/errors'
 import { asyncHandler, sendSuccess } from '@/security/http'
 import { validateWithSchema } from '@/security/validation'
+import { toCleanPublicUrl } from '@/security/urlSafety'
 import {
   decryptTwoFactorSecret,
   encryptTwoFactorSecret,
@@ -45,7 +46,9 @@ const changePasswordSchema = z.object({
 
 const updateProfileSchema = z.object({
   fullName: z.string().trim().min(1).max(120).optional(),
-  avatarUrl: z.string().url().optional(),
+  avatarUrl: z.string().trim().max(1000).optional()
+    .transform((value) => value === undefined ? undefined : toCleanPublicUrl(value))
+    .refine((value) => value === undefined || value.length > 0, 'Invalid avatar URL'),
 }).strict()
 
 const twoFactorEnableSchema = z.object({

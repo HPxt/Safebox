@@ -830,6 +830,45 @@ const expectSafeAuthorizationError = (message: string | undefined) => {
       }),
     )
 
+    const trackingPixelWebsiteCredentialId = randomUUID()
+    await expectRejectedWrite(
+      'credentials',
+      trackingPixelWebsiteCredentialId,
+      clientA.from('credentials').insert({
+        id: trackingPixelWebsiteCredentialId,
+        user_id: userAId,
+        title: 'tracking-pixel-url',
+        encrypted_password: 'cipher-a',
+        website: 'https://attacker.example/pixel.png',
+      }),
+    )
+
+    const queryTrackingUriCredentialId = randomUUID()
+    await expectRejectedWrite(
+      'credentials',
+      queryTrackingUriCredentialId,
+      clientA.from('credentials').insert({
+        id: queryTrackingUriCredentialId,
+        user_id: userAId,
+        title: 'query-tracking-uri',
+        encrypted_password: 'cipher-a',
+        uris: ['https://example.com/login?tracking=attacker'],
+      }),
+    )
+
+    const privateNetworkUriCredentialId = randomUUID()
+    await expectRejectedWrite(
+      'credentials',
+      privateNetworkUriCredentialId,
+      clientA.from('credentials').insert({
+        id: privateNetworkUriCredentialId,
+        user_id: userAId,
+        title: 'private-network-uri',
+        encrypted_password: 'cipher-a',
+        uris: ['https://127.0.0.1/admin'],
+      }),
+    )
+
     const invalidFolderId = randomUUID()
     await expectRejectedWrite(
       'folders',

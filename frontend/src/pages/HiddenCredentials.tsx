@@ -6,6 +6,7 @@ import { Credential, CredentialFormData } from '../types'
 import { credentialsService } from '../services/credentialsService'
 import ProtectedRoute from '../components/ProtectedRoute'
 import CryptoService from '../services/cryptoService'
+import { toCleanPublicUrl } from '../utils/urlSafety'
 import { 
   ArrowLeft,
   EyeOff,
@@ -310,16 +311,16 @@ const HiddenCredentials: React.FC = () => {
                             </button>
                           </div>
 
-                          {credential.website && (
+                          {toCleanPublicUrl(credential.website) && (
                             <div className="flex items-center text-sm text-gray-600 dark:text-dark-600">
                               <span className="font-medium mr-2">Site:</span>
                               <a
-                                href={credential.website}
+                                href={toCleanPublicUrl(credential.website)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-primary-600 hover:text-primary-700 truncate"
                               >
-                                {credential.website}
+                                {toCleanPublicUrl(credential.website)}
                               </a>
                             </div>
                           )}

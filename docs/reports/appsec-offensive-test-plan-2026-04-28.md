@@ -200,6 +200,30 @@ Adicione campos extras no topo e dentro de objetos aninhados:
 
 Resultado esperado: `400 VALIDATION_ERROR`.
 
+### 7.1. URL limpa e beacon/tracking
+
+Objetivo: validar que campos de URL nao aceitam valores que possam virar tracking pixel/web beacon, recurso remoto ou alvo local caso sejam renderizados por engano no frontend.
+
+No Burp, intercepte criacao/edicao de credencial ou perfil e troque campos como `website`, `uris[]` e `avatarUrl` por:
+
+```json
+{
+  "website": "https://attacker.example/pixel.png",
+  "uris": [
+    "https://example.com/login?tracking=userA",
+    "https://127.0.0.1/admin"
+  ],
+  "avatarUrl": "javascript:alert(1)"
+}
+```
+
+Resultado esperado:
+
+- frontend nao renderiza link clicavel para URL suja salva anteriormente;
+- backend rejeita `avatarUrl` sujo com `400 VALIDATION_ERROR`;
+- Supabase staging rejeita writes diretos em `credentials.website` e `credentials.uris`;
+- CSP nao permite `img-src https:` arbitrario.
+
 ### 8. Payload grande
 
 Envie body JSON acima de 2 MB em:

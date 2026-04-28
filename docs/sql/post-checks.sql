@@ -142,14 +142,17 @@ FROM pg_constraint
 WHERE connamespace = 'public'::regnamespace
   AND conname IN (
     'credentials_extended_field_size_check',
+    'credentials_website_clean_url_check',
+    'credentials_uris_clean_url_check',
     'credentials_field_size_check',
     'credentials_enc_blob_size_check',
     'credentials_data_hash_format_check',
     'folders_business_bounds_check',
     'categories_business_bounds_check',
     'user_settings_security_bounds_check',
-    'users_crypto_profile_size_check'
+    'users_crypto_profile_size_check',
+    'users_avatar_url_clean_url_check'
   )
 ORDER BY table_name, conname;
 
--- Esperado: todas as constraints acima presentes.
+-- Esperado: todas as constraints acima presentes quando as colunas existem no schema.

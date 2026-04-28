@@ -45,6 +45,8 @@ const assertSecurityHeaders = (relativePath) => {
 
   assert(csp.includes("default-src 'self'"), `${relativePath}: CSP missing default-src self`)
   assert(csp.includes("script-src 'self'"), `${relativePath}: CSP missing script-src self`)
+  assert(csp.includes("img-src 'self' data: blob:"), `${relativePath}: CSP must not allow arbitrary remote images`)
+  assert(!csp.includes('img-src') || !csp.includes('img-src https:'), `${relativePath}: CSP img-src must not allow remote HTTPS beacons`)
   assert(csp.includes("object-src 'none'"), `${relativePath}: CSP missing object-src none`)
   assert(csp.includes("frame-ancestors 'none'"), `${relativePath}: CSP missing frame-ancestors none`)
   assert(csp.includes("base-uri 'self'"), `${relativePath}: CSP missing base-uri self`)

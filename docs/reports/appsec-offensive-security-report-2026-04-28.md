@@ -13,7 +13,7 @@ Resultado local:
 ```text
 npm run test:appsec
 PASS src/__tests__/appsec.offensive.test.ts
-Tests: 48 passed, 48 total
+Tests: 51 passed, 51 total
 ```
 
 Tambem foram executados:
@@ -85,6 +85,7 @@ npm audit --omit=dev --json
 | Views publicas | Inventariado | 0 views em `public` no staging |
 | XSS sinks no frontend | Coberto por check estatico | Sem `dangerouslySetInnerHTML`, `.innerHTML =`, `eval`, `new Function` ou `document.write` em `frontend/src` |
 | CSP/headers web | Hardening aplicado | `vercel.json` e `frontend/vercel.json` agora definem CSP/HSTS/frame/nosniff/referrer/permissions |
+| URL beacon/tracking em campos de URL | Coberto e hardening aplicado | `website`, `uris` e `avatarUrl` rejeitam URL com imagem/script, query, fragment, credenciais, localhost ou IP privado |
 
 ## Vulnerabilidades Encontradas e Tratadas
 
@@ -102,6 +103,7 @@ npm audit --omit=dev --json
 | APPSEC-2026-04-28-10 | Campos estendidos de `credentials` (`totp_secret`, `uris`, campos de cartao) nao estavam cobertos pela constraint de tamanho da migration 008. | Medio | Aplicada `011_credentials_extended_field_bounds.sql`. | `enforces bounds on extended credential, folder, category and settings fields`. |
 | APPSEC-2026-04-28-11 | Deploy estatico Vercel nao tinha headers de seguranca declarados no `vercel.json` do frontend/root. | Medio | Adicionados CSP, HSTS, `X-Frame-Options`, `nosniff`, `Referrer-Policy` e `Permissions-Policy`. | `npm run test:appsec:static` PASS; `sets defensive API security headers` PASS para backend. |
 | APPSEC-2026-04-28-12 | Verificacao passiva da producao atual mostrou `/api/vault` retornando HTML da SPA com `200` apos redirect para `app.zksafe.pro`. | Medio | Ajustado fallback SPA da Vercel para nao reescrever `/api/*` para `index.html`. | `curl -L https://safebox.vercel.app/api/vault` mostrou HTML; `npm run test:appsec:static` agora valida exclusao de `/api/*`. |
+| APPSEC-2026-04-28-13 | Campos de URL podiam aceitar valores capazes de atuar como tracking pixel/web beacon se algum fluxo futuro renderizasse imagem remota, favicon remoto ou recurso externo a partir do dado salvo. | Medio | Adicionada politica de URL limpa no frontend/backend: somente `https`, sem query/fragment, sem usuario/senha, sem localhost/IP privado e sem extensoes de imagem/script/recurso ativo. CSP tambem deixou de permitir `img-src https:` arbitrario. | `urlSafety.test.ts` frontend/backend PASS; `rejects beacon-style avatar URLs`; staging rejeita `website=https://attacker.example/pixel.png`, `uris` com query e `uris=https://127.0.0.1/admin`. |
 
 ## Risco Residual Documentado
 
@@ -133,6 +135,11 @@ npm audit --omit=dev --json
 - `vercel.json` e `frontend/vercel.json`: headers de seguranca para deploy estatico.
 - `scripts/appsec-static-checks.js`: check estatico de XSS sinks e headers Vercel.
 - `vercel.json` e `frontend/vercel.json`: fallback SPA exclui `/api/*` para evitar resposta HTML `200` em rotas API inexistentes.
+- `frontend/src/utils/urlSafety.ts`: normaliza e valida URL limpa antes de salvar/renderizar links.
+- `backend/src/security/urlSafety.ts`: aplica a mesma politica em rotas backend sensiveis, como perfil/avatar.
+- `docs/sql/migrations/012_clean_public_url_constraints.sql`: adiciona constraints SQL para `credentials.website`, `credentials.uris` e `users.avatar_url`.
+- `docs/sql/migrations/013_grant_clean_url_constraint_functions.sql`: permite que `authenticated` execute apenas os validadores puros usados por CHECK constraints.
+- `docs/sql/migrations/014_fix_private_ip_clean_url_regex.sql`: corrige bloqueio de IP privado/local completo, como `127.0.0.1`.
 
 ## Evidencia Staging Antes/Depois
 
@@ -191,6 +198,9 @@ RPC/funcoes:
 
 Constraints de campos:
 - credentials_extended_field_size_check presente
+- credentials_website_clean_url_check presente
+- credentials_uris_clean_url_check presente
+- users_avatar_url_clean_url_check presente
 - credentials_field_size_check presente
 - credentials_enc_blob_size_check presente
 - credentials_data_hash_format_check presente
@@ -209,6 +219,7 @@ Constraints de campos:
 | Duplicidade de vault ativo | Banco rejeita segundo vault ativo | PASS apos `008`/`009` |
 | Payload grande/formato invalido | Banco rejeita antes de persistir | PASS apos `008`/`009` |
 | Campos estendidos de credentials | Banco rejeita abuso em TOTP/URI/cartao | PASS apos `011` |
+| URL beacon/tracking em campos de URL | Banco/app rejeitam URL suja antes de persistir/renderizar | PASS apos `012`/`013`/`014` |
 | RPC/funcoes internas | Cliente nao consegue chamar triggers/RPC internas | PASS apos `010` |
 | Edge Functions | Nenhuma function exposta | `supabase functions list` retornou `[]` |
 | Storage buckets | Nenhum bucket exposto | `storage.buckets` retornou 0 linhas |
@@ -221,7 +232,7 @@ Constraints de campos:
 ```text
 npm run test:appsec
 PASS
-Tests: 50 passed, 50 total
+Tests: 51 passed, 51 total
 ```
 
 ```text

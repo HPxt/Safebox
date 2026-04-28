@@ -16,6 +16,7 @@ import {
   mergeCredentialSnapshots,
   toExportCredential,
 } from './importExportUtils'
+import { toCleanPublicUrl } from '../utils/urlSafety'
 
 type EncryptedExportEnvelope = {
   encrypted?: boolean
@@ -286,7 +287,7 @@ export class ImportExportService {
           username: item.login?.username || '',
           email: item.login?.username && this.isEmail(item.login.username) ? item.login.username : '',
           encryptedPassword: item.login?.password || '',
-          website: item.login?.uris?.[0]?.uri || '',
+          website: toCleanPublicUrl(item.login?.uris?.[0]?.uri),
           notes: item.notes || '',
           folderId: targetFolderId || (item.folderId ? folderIdMap.get(item.folderId) || undefined : undefined),
           isFavorite: item.favorite || false,
@@ -361,7 +362,7 @@ export class ImportExportService {
           username,
           email: this.isEmail(username) ? username : '',
           encryptedPassword: this.extractValue(row, mapping.password) || '',
-          website: this.extractValue(row, mapping.url) || '',
+          website: toCleanPublicUrl(this.extractValue(row, mapping.url)),
           notes: this.extractValue(row, mapping.notes) || '',
           folderId: targetFolderId || (() => {
             const folderName = this.extractValue(row, mapping.folder)
@@ -418,7 +419,7 @@ export class ImportExportService {
       username: credential.username || '',
       email: credential.email || '',
       encryptedPassword: credential.password || '',
-      website: credential.url || '',
+      website: toCleanPublicUrl(credential.url),
       notes: credential.notes || '',
       folderId: targetFolderId || (credential.folderId ? folderIdMap.get(credential.folderId) || undefined : undefined),
       isFavorite: credential.favorite || false,

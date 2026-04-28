@@ -264,7 +264,7 @@ export const advancedSecurityHeaders = (_req: Request, res: Response, next: Next
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https:",
+    "img-src 'self' data: blob:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
     "font-src 'self'",
     "object-src 'none'",

@@ -14,6 +14,7 @@ import SimpleGlowCard from '../components/ui/SimpleGlowCard'
 import CryptoService from '../services/cryptoService'
 import TwoFactorService from '../services/twoFactorService'
 import { supabase } from '../config/supabase'
+import { toCleanPublicUrl } from '../utils/urlSafety'
 import { 
   Shield, 
   Plus, 
@@ -867,16 +868,16 @@ const Dashboard: React.FC = () => {
                             </button>
                           </div>
 
-                          {credential.website && (
+                          {toCleanPublicUrl(credential.website) && (
                             <div className="flex items-center text-sm text-secondary-600 dark:text-dark-600">
                               <span className="font-medium mr-2">Site:</span>
                               <a
-                                href={credential.website}
+                                href={toCleanPublicUrl(credential.website)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-safebox-500 hover:text-safebox-600 dark:text-safebox-400 dark:hover:text-safebox-300 truncate"
                               >
-                                {credential.website}
+                                {toCleanPublicUrl(credential.website)}
                               </a>
                             </div>
                           )}

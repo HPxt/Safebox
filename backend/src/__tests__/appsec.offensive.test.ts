@@ -608,6 +608,31 @@ describe('AppSec offensive request battery', () => {
     expect(mockAuthService.updateProfile).not.toHaveBeenCalled()
   })
 
+  test('rejects beacon-style avatar URLs on profile updates', async () => {
+    const dirtyAvatarUrls = [
+      'https://attacker.example/pixel.png',
+      'https://example.com/avatar.svg',
+      'https://example.com/profile?track=user-a',
+      'https://127.0.0.1/admin',
+      'javascript:alert(1)',
+    ]
+
+    for (const avatarUrl of dirtyAvatarUrls) {
+      const response = await request('PUT', '/api/auth/profile', {
+        token: 'token-userA',
+        body: {
+          fullName: 'User A',
+          avatarUrl,
+        },
+      })
+
+      expect(response.status).toBe(400)
+      expect(response.json.code).toBe('VALIDATION_ERROR')
+    }
+
+    expect(mockAuthService.updateProfile).not.toHaveBeenCalled()
+  })
+
   test('rejects mass assignment on crypto profile updates', async () => {
     const response = await request('PUT', '/api/auth/crypto-profile', {
       token: 'token-userA',

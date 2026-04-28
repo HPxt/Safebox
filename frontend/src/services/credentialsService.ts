@@ -2,6 +2,7 @@ import { supabase } from '../config/supabase'
 import { Credential, CredentialFormData } from '../types'
 import CryptoService from './cryptoService'
 import { backendRequest } from './backendApi'
+import { toCleanPublicUrl } from '../utils/urlSafety'
 
 type VaultApiResponse = {
   id: string
@@ -264,7 +265,7 @@ class CredentialsService {
         username: credentialData.username || '',
         email: credentialData.email || '',
         encryptedPassword: credentialData.password,
-        website: credentialData.website || '',
+        website: toCleanPublicUrl(credentialData.website),
         notes: credentialData.notes || '',
         folderId: credentialData.folderId || undefined,
         isFavorite: credentialData.isFavorite || false,
@@ -358,7 +359,7 @@ class CredentialsService {
         username: updates.username || '',
         email: updates.email || '',
         encryptedPassword: updates.password || credentials[index].encryptedPassword,
-        website: updates.website || '',
+        website: toCleanPublicUrl(updates.website),
         notes: updates.notes || '',
         folderId: updates.folderId || undefined,
         isFavorite: updates.isFavorite || false,
