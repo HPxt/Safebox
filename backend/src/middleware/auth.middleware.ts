@@ -22,6 +22,11 @@ declare global {
   }
 }
 
+const extractBearerToken = (authHeader: string | undefined): string | null => {
+  const match = authHeader?.match(/^Bearer\s+([^\s]+)$/i)
+  return match?.[1] ?? null
+}
+
 /**
  * Authentication middleware
  * Verifies JWT token and adds user info to request
@@ -33,7 +38,7 @@ export const authenticateToken = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization
-    const token = authHeader && authHeader.split(' ')[1] // Bearer TOKEN
+    const token = extractBearerToken(authHeader)
 
     if (!token) {
       next(new UnauthorizedError('Access token required'))
@@ -63,7 +68,7 @@ export const optionalAuth = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization
-    const token = authHeader && authHeader.split(' ')[1]
+    const token = extractBearerToken(authHeader)
 
     if (token) {
       try {
@@ -90,7 +95,7 @@ export const authenticateSupabaseAccessToken = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization
-    const token = authHeader && authHeader.split(' ')[1]
+    const token = extractBearerToken(authHeader)
 
     if (!token) {
       next(new UnauthorizedError('Supabase access token required'))

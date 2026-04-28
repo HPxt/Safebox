@@ -70,6 +70,37 @@ describe('authenticateSupabaseAccessToken', () => {
     expect(res.json).not.toHaveBeenCalled()
   })
 
+  it('rejects non-Bearer authorization schemes without calling Supabase', async () => {
+    const req: any = {
+      headers: {
+        authorization: 'Basic valid-token',
+      },
+    }
+    const res: any = createResponse()
+    const next = jest.fn()
+
+    await authenticateSupabaseAccessToken(req, res, next)
+
+    expect(mockGetUser).not.toHaveBeenCalled()
+    expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError))
+    expect(next.mock.calls[0][0].code).toBe('UNAUTHORIZED')
+  })
+
+  it('rejects malformed Bearer headers with extra tokens', async () => {
+    const req: any = {
+      headers: {
+        authorization: 'Bearer valid-token injected-token',
+      },
+    }
+    const res: any = createResponse()
+    const next = jest.fn()
+
+    await authenticateSupabaseAccessToken(req, res, next)
+
+    expect(mockGetUser).not.toHaveBeenCalled()
+    expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError))
+  })
+
   it('attaches Supabase user and auth token for valid sessions', async () => {
     mockGetUser.mockResolvedValueOnce({
       data: {

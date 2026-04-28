@@ -33,12 +33,16 @@ export const getSupabaseAuthHeaders = async (): Promise<HeadersInit> => {
 }
 
 export const backendRequest = async <T>(path: string, init?: RequestInit): Promise<T> => {
+  const headers = new Headers(init?.headers)
+  const authHeaders = await getSupabaseAuthHeaders()
+
+  for (const [key, value] of Object.entries(authHeaders)) {
+    headers.set(key, value)
+  }
+
   const response = await fetch(`${getBackendBaseUrl()}${path}`, {
     ...init,
-    headers: {
-      ...(await getSupabaseAuthHeaders()),
-      ...(init?.headers || {}),
-    },
+    headers,
   })
 
   let invalidJson = false

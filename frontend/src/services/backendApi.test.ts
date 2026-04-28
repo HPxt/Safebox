@@ -51,4 +51,25 @@ describe('backendApi', () => {
 
     await expect(backendRequest('/vault')).rejects.toThrow('Resposta invalida do backend')
   })
+
+  it('does not allow callers to override the Supabase Authorization header', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({ success: true, data: { ok: true } }),
+    } as unknown as Response)
+
+    const { backendRequest } = await import('./backendApi')
+
+    await backendRequest('/vault', {
+      headers: {
+        Authorization: 'Bearer attacker-token',
+        'X-Test': 'kept',
+      },
+    })
+
+    const fetchInit = (global.fetch as jest.Mock).mock.calls[0][1] as RequestInit
+    const headers = fetchInit.headers as Headers
+    expect(headers.get('Authorization')).toBe('Bearer token-1')
+    expect(headers.get('X-Test')).toBe('kept')
+  })
 })

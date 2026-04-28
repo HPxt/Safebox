@@ -77,20 +77,19 @@ describe('security/errors contract', () => {
     })
   })
 
-  test('non-exposed AppError includes debug details only in development', () => {
+  test('non-exposed AppError never includes debug details in client responses', () => {
     const err = new AppError('Sensitive failure detail', 500, 'INTERNAL_ERROR', { expose: false })
     const prodPayload = toClientErrorResponse(err, false)
     const devPayload = toClientErrorResponse(err, true)
 
-    expect(prodPayload).toEqual({
+    const expectedPayload = {
       success: false,
       error: 'Internal server error',
       code: 'INTERNAL_ERROR',
-    })
-    expect(devPayload.success).toBe(false)
-    expect(devPayload.code).toBe('INTERNAL_ERROR')
-    expect(devPayload.error).toBe('Internal server error')
-    expect(devPayload.details).toEqual({ debug: 'Sensitive failure detail' })
+    }
+
+    expect(prodPayload).toEqual(expectedPayload)
+    expect(devPayload).toEqual(expectedPayload)
   })
 
   test('fromUnknownError normalizes generic Error into INTERNAL_ERROR', () => {

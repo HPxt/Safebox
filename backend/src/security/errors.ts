@@ -150,7 +150,7 @@ export const fromUnknownError = (error: unknown): AppError => {
 
 export const toClientErrorResponse = (
   error: unknown,
-  isDevelopment: boolean,
+  _isDevelopment: boolean,
 ): {
   success: false
   error: string
@@ -173,8 +173,6 @@ export const toClientErrorResponse = (
 
   if (shouldExposeDetails) {
     response.details = redactObject(appError.details as Record<string, unknown>)
-  } else if (isDevelopment && !appError.expose) {
-    response.details = { debug: redactErrorForClient(appError) }
   }
 
   return response

@@ -22,7 +22,7 @@ Tambem foram executados:
 npm --prefix backend test -- --runInBand
 PASS
 Test Suites: 10 passed, 1 skipped, 11 total
-Tests: 85 passed, 2 skipped, 87 total
+Tests: 87 passed, 2 skipped, 89 total
 ```
 
 ```text
@@ -40,6 +40,17 @@ PASS
 ```text
 npm --prefix backend run type-check
 PASS
+```
+
+```text
+npm --prefix frontend test -- --watchAll=false --runInBand src/services/backendApi.test.ts
+PASS
+Tests: 3 passed, 3 total
+```
+
+```text
+npm audit --omit=dev --json
+0 production vulnerabilities
 ```
 
 ## O Que Foi Testado
@@ -63,14 +74,33 @@ PASS
 | Rate limit em 2FA verify | Coberto e hardening aplicado | `429 TOO_MANY_REQUESTS` apos limite |
 | RLS/Supabase real staging | Preparado, nao executado nesta sessao | suite existe, mas credenciais staging nao estavam no ambiente |
 
+## Vulnerabilidades Encontradas e Tratadas
+
+| ID | Achado | Risco | Tratamento | Evidencia |
+|---|---|---|---|---|
+| APPSEC-2026-04-28-01 | Respostas internas podiam incluir `details.debug` quando o backend rodava com `NODE_ENV=development`. Em staging mal configurado isso poderia expor mensagem interna. | Medio | Removida exposicao de debug em respostas client-side para erros nao expostos. Logs internos continuam no logger do servidor. | `non-exposed AppError never includes debug details in client responses` |
+| APPSEC-2026-04-28-02 | O middleware aceitava qualquer esquema com token na segunda posicao do header `Authorization`, em vez de exigir `Bearer` bem formado. | Baixo/Medio | Parsing centralizado agora aceita somente `Bearer <token>` sem tokens extras. | `rejects non-Bearer authorization schemes without calling Supabase`; `rejects malformed Bearer headers with extra tokens` |
+| APPSEC-2026-04-28-03 | O helper web `backendRequest` permitia que callers internos sobrescrevessem o `Authorization` calculado pela sessao Supabase. | Baixo/Medio | `Authorization` e `Content-Type` da sessao sao aplicados por ultimo e nao podem ser sobrescritos por `init.headers`. | `does not allow callers to override the Supabase Authorization header` |
+| APPSEC-2026-04-28-04 | `/api/auth/2fa/verify` dependia de rate limit global, fraco para brute force de TOTP. | Medio | Adicionado rate limit dedicado para verificacao 2FA. | `rate limits repeated 2FA verification attempts` |
+
+## Risco Residual Documentado
+
+| ID | Residual | Motivo | Proximo tratamento recomendado |
+|---|---|---|---|
+| APPSEC-RESIDUAL-IOS-01 | `HTTPResponseValidator` no iOS ainda deve ser revisado para nunca propagar corpo bruto de erro HTTP vindo do backend/Supabase para UI ou telemetria. | O arquivo iOS correspondente ja estava modificado no worktree antes desta rodada; nao foi incluido no commit AppSec para nao misturar trabalho nao relacionado. | Sanitizar erros iOS para expor somente status/codigo seguro e adicionar teste Swift de resposta 4xx/5xx com corpo contendo segredo fake. |
+| APPSEC-RESIDUAL-STAGING-01 | RLS/Supabase real nao foi reexecutado nesta maquina. | Variaveis/credenciais staging ausentes. | Rodar `RUN_DB_SECURITY_INTEGRATION=1 npm --prefix backend run test:db-security-integration` contra staging autorizado. |
+
 ## O Que Mudou no Codigo
 
 - `backend/src/__tests__/appsec.offensive.test.ts`: nova bateria ofensiva automatizada.
 - `backend/src/routes/settings.routes.ts`: objetos aninhados de settings agora rejeitam campos extras.
 - `backend/src/security/errors.ts`: erros 4xx do parser HTTP sao normalizados sem vazar detalhes internos.
+- `backend/src/security/errors.ts`: erros internos nao expostos nao retornam mais `details.debug` para clientes.
+- `backend/src/middleware/auth.middleware.ts`: header `Authorization` precisa ser `Bearer` estrito.
 - `backend/src/middleware/rateLimiting.middleware.ts`: novo rate limit dedicado para 2FA verify.
 - `backend/src/routes/auth.routes.ts`: `/api/auth/2fa/verify` usa o rate limit dedicado.
 - `backend/src/middleware/security.middleware.ts`: timer de limpeza usa `unref()` para nao prender Jest.
+- `frontend/src/services/backendApi.ts`: chamadas web nao podem sobrescrever o token da sessao Supabase.
 - `package.json` e `backend/package.json`: novo comando `test:appsec`.
 
 ## O Que Podemos Afirmar Com Base Nesta Execucao

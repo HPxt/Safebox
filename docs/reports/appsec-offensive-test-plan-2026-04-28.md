@@ -315,6 +315,8 @@ Resultado nesta sessao: suite pulada porque `RUN_DB_SECURITY_INTEGRATION`, `SUPA
 | Acesso sem token | `401 UNAUTHORIZED` em rotas sensiveis | `blocks unauthenticated access to ...`, 30 casos |
 | Token invalido | `403 FORBIDDEN` sem segredo | `blocks invalid-token on protected routes` |
 | Token expirado | `403 FORBIDDEN` ou `401 UNAUTHORIZED` sem segredo | `blocks expired-token on protected routes` |
+| Header `Authorization` com esquema incorreto | `401 UNAUTHORIZED`, sem chamar Supabase | `rejects non-Bearer authorization schemes without calling Supabase` |
+| Header `Bearer` malformado | `401 UNAUTHORIZED`, sem aceitar token ambigue | `rejects malformed Bearer headers with extra tokens` |
 | IDOR userA/userB em categoria | `404 NOT_FOUND` ou `403 FORBIDDEN` | `prevents userA from updating userB category by IDOR` |
 | Query/body tentando trocar usuario | Ownership continua vindo do token | `keeps category reads scoped to userA even when query params ask for userB` |
 | `userId`/`ownerId`/`tenantId` em vault | `400 VALIDATION_ERROR` | `rejects client-supplied userId, ownerId and tenantId on vault writes` |
@@ -329,12 +331,17 @@ Resultado nesta sessao: suite pulada porque `RUN_DB_SECURITY_INTEGRATION`, `SUPA
 | Falha de autorizacao por perfil | Admin client-side nao bypassa ownership | `does not let an admin-looking client token bypass resource ownership` |
 | Admin nao configurado | Falha fechada com `403` | `keeps admin middleware fail-closed until explicit admin authorization is configured` |
 | Vazamento de stack/SQL/path/token/segredo | Resposta generica `INTERNAL_ERROR` | `does not leak stack traces, SQL, paths, tokens or secrets on internal errors` |
+| Debug de erro em development/staging | Sem `details.debug` em resposta para cliente | `non-exposed AppError never includes debug details in client responses` |
 | Rate limit em login | `429 TOO_MANY_REQUESTS` apos limite | `rate limits repeated login attempts before backend auth logic is trusted` |
 | Rate limit em 2FA verify | `429 TOO_MANY_REQUESTS` apos limite | `rate limits repeated 2FA verification attempts` |
+| Override de token no helper web | `Authorization` da sessao Supabase prevalece | `does not allow callers to override the Supabase Authorization header` |
 
 ## Observacoes de Hardening Aplicadas
 
 - `settingsSchema` agora rejeita campos extras tambem dentro de `security`, `generator` e `ui`.
 - Erros 4xx gerados pelo parser HTTP, como payload acima do limite, agora sao normalizados sem vazar mensagem interna.
+- Erros internos nao expostos nao retornam mais `details.debug` para clientes, mesmo em `NODE_ENV=development`.
+- O backend agora exige header `Authorization: Bearer <token>` estrito.
+- O helper web de API aplica o token Supabase da sessao por ultimo, impedindo override acidental por `init.headers`.
 - `/api/auth/2fa/verify` agora tem rate limit dedicado para reduzir brute force de codigo 2FA.
 - O timer de limpeza de seguranca usa `unref()` para nao prender a suite Jest.
