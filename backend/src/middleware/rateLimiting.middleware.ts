@@ -167,6 +167,38 @@ export const passwordChangeRateLimit = rateLimit({
   }
 })
 
+// Rate limiter para verificacao 2FA (sensivel a brute force)
+export const twoFactorVerifyRateLimit = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutos
+  max: 10, // maximo 10 verificacoes por usuario/IP
+  message: {
+    success: false,
+    error: 'Muitas tentativas de verificacao 2FA. Aguarde alguns minutos.',
+    code: 'TOO_MANY_REQUESTS',
+    retryAfter: 5 * 60,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  ...(redisClient ? { store: new RedisStore(redisClient, '2fa:') as any } : {}),
+  keyGenerator: (req: Request) => {
+    const userId = req.supabaseUser?.userId || req.user?.userId
+    return userId ? `user:${userId}` : `ip:${req.ip}`
+  },
+  handler: (req: Request, res: Response) => {
+    logger.warn('Rate limit exceeded for 2FA verification', redactObject({
+      userId: req.supabaseUser?.userId || req.user?.userId,
+      ip: req.ip,
+    }))
+
+    res.status(429).json({
+      success: false,
+      error: 'Muitas tentativas de verificacao 2FA. Aguarde alguns minutos.',
+      code: 'TOO_MANY_REQUESTS',
+      retryAfter: 5 * 60,
+    })
+  },
+})
+
 // Rate limiter geral para API (liberal)
 export const generalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
@@ -311,6 +343,7 @@ export default {
   loginRateLimit,
   registerRateLimit,
   passwordChangeRateLimit,
+  twoFactorVerifyRateLimit,
   generalRateLimit,
   suspiciousSlowDown,
   suspiciousActivityDetector,

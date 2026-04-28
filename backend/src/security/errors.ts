@@ -75,6 +75,26 @@ export class ExternalServiceError extends AppError {
   }
 }
 
+type HttpParserError = Error & {
+  status?: number
+  statusCode?: number
+  type?: string
+}
+
+const httpErrorCodeForStatus = (statusCode: number): string => {
+  if (statusCode === 400) return 'BAD_REQUEST'
+  if (statusCode === 413) return 'PAYLOAD_TOO_LARGE'
+  if (statusCode === 415) return 'UNSUPPORTED_MEDIA_TYPE'
+  return 'HTTP_ERROR'
+}
+
+const httpErrorMessageForStatus = (statusCode: number): string => {
+  if (statusCode === 400) return 'Invalid request body'
+  if (statusCode === 413) return 'Payload too large'
+  if (statusCode === 415) return 'Unsupported media type'
+  return 'Invalid request'
+}
+
 export const isAppError = (error: unknown): error is AppError => {
   return error instanceof AppError
 }
@@ -94,6 +114,31 @@ export const fromUnknownError = (error: unknown): AppError => {
   }
 
   if (error instanceof Error) {
+    const httpError = error as HttpParserError
+    const statusCode = httpError.statusCode ?? httpError.status
+
+    if (typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500) {
+      const options: {
+        expose: true
+        details?: Record<string, unknown>
+        cause: Error
+      } = {
+        expose: true,
+        cause: error,
+      }
+
+      if (httpError.type) {
+        options.details = { type: httpError.type }
+      }
+
+      return new AppError(
+        httpErrorMessageForStatus(statusCode),
+        statusCode,
+        httpErrorCodeForStatus(statusCode),
+        options,
+      )
+    }
+
     return new AppError(error.message, 500, 'INTERNAL_ERROR', {
       expose: false,
       cause: error,

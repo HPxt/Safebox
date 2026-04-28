@@ -17,7 +17,7 @@ const settingsSchema = z.object({
     requireConfirm: z.boolean().optional(),
     showHiddenCredentials: z.boolean().optional(),
     clipboardTimeout: z.number().int().min(5).max(300).optional(),
-  }).optional(),
+  }).strict().optional(),
   generator: z.object({
     defaultLength: z.number().int().min(8).max(128).optional(),
     useLowercase: z.boolean().optional(),
@@ -25,13 +25,13 @@ const settingsSchema = z.object({
     useNumbers: z.boolean().optional(),
     useSymbols: z.boolean().optional(),
     excludeAmbiguous: z.boolean().optional(),
-  }).optional(),
+  }).strict().optional(),
   ui: z.object({
     theme: z.enum(['light', 'dark', 'system']).optional(),
     language: z.enum(['pt-BR', 'en-US']).optional(),
     compactMode: z.boolean().optional(),
     showStrength: z.boolean().optional(),
-  }).optional(),
+  }).strict().optional(),
 }).strict()
 
 const categoryCreateSchema = z.object({

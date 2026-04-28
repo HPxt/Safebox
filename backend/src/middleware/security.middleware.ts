@@ -280,7 +280,7 @@ export const advancedSecurityHeaders = (_req: Request, res: Response, next: Next
 /**
  * Limpeza automática de dados expirados
  */
-setInterval(() => {
+const cleanupInterval = setInterval(() => {
   // Limpar tentativas de login expiradas
   const now = Date.now()
   for (const [key, attempt] of failedLoginAttempts.entries()) {
@@ -296,6 +296,8 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000) // Executar a cada 5 minutos
+
+cleanupInterval.unref()
 
 export {
   securityConfig,

@@ -15,6 +15,7 @@
     "start:ai": "node dist/ai/worker.js",
     "test": "jest",
     "test:security": "jest --runInBand src/security",
+    "test:appsec": "jest --runInBand src/__tests__/appsec.offensive.test.ts",
     "test:watch": "jest --watch",
     "test:audit": "tsx src/ai/agents/__tests__/test-audit-agent.ts",
     "jobs:maintenance": "tsx src/jobs/maintenance.ts --dry-run",

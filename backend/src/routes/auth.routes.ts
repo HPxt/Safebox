@@ -12,6 +12,7 @@ import {
   passwordChangeRateLimit,
   registerRateLimit,
   suspiciousActivityDetector,
+  twoFactorVerifyRateLimit,
 } from '@/middleware/rateLimiting.middleware'
 import { bruteForcePrevention } from '@/middleware/security.middleware'
 import { requireSupabaseAuthenticatedUser } from '@/security/authorization'
@@ -318,7 +319,7 @@ router.post('/2fa/enable', authenticateSupabaseAccessToken, asyncHandler(async (
   })
 }))
 
-router.post('/2fa/verify', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+router.post('/2fa/verify', authenticateSupabaseAccessToken, twoFactorVerifyRateLimit, asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const { code } = validateWithSchema(twoFactorVerifySchema, req.body)
   const scopedClient = createScopedClient(req.authToken!)

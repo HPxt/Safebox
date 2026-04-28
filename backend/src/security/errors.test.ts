@@ -98,5 +98,23 @@ describe('security/errors contract', () => {
     expect(normalized.code).toBe('INTERNAL_ERROR')
     expect(normalized.statusCode).toBe(500)
   })
+
+  test('fromUnknownError preserves controlled 4xx parser errors without leaking internals', () => {
+    const parserError = Object.assign(new Error('request entity too large at backend/src/index.ts:70'), {
+      statusCode: 413,
+      type: 'entity.too.large',
+    })
+
+    const payload = toClientErrorResponse(parserError, false)
+
+    expect(payload).toEqual({
+      success: false,
+      error: 'Payload too large',
+      code: 'PAYLOAD_TOO_LARGE',
+      details: {
+        type: 'entity.too.large',
+      },
+    })
+  })
 })
 
