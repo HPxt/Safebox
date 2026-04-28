@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { X, Lock, Shield, AlertCircle, Info, Eye, EyeOff } from 'lucide-react'
 import CryptoService from '../services/cryptoService'
+import { getCryptoProfile, updateCryptoProfile } from '../services/cryptoProfileService'
 import { supabase } from '../config/supabase'
 
 const passwordInputClasses = 'w-full pl-9 sm:pl-10 pr-10 py-2.5 sm:py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm'
@@ -86,53 +87,21 @@ const MasterPasswordModal: React.FC<MasterPasswordModalProps> = ({
         const keyHash = await CryptoService.hashKey(key)
         
         // Salvar salt, parâmetros e hash no banco - usando configuração LOW fixa
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({
-            kdf_salt: salt,
-            kdf_params: {
-              algorithm: 'argon2id',
-              memorySize: 65536,   // 64MB (LOW)
-              iterations: 3,        // 3 iterações (LOW)
-              parallelism: 4,
-              hashLength: 32
-            },
-            key_hash: keyHash
-          })
-          .eq('id', user.id)
-          .select()
-
-        
-        if (updateError) {
-          
-          // Abordagem alternativa: usar metadados do usuário
-          const { error: authUpdateError } = await supabase.auth.updateUser({
-            data: {
-              kdf_salt: salt,
-              kdf_params: {
-                algorithm: 'argon2id',
-                memorySize: 65536,   // 64MB (LOW)
-                iterations: 3,        // 3 iterações (LOW)
-                parallelism: 4,
-                hashLength: 32
-              }
-            }
-          })
-          
-          if (authUpdateError) {
-            throw updateError // lançar o erro original
-          }
-          
+        const kdfParams = {
+          algorithm: 'argon2id' as const,
+          memorySize: 65536,
+          iterations: 3,
+          parallelism: 4,
+          hashLength: 32
         }
 
-        // Verificar se realmente foi salvo
-        const { data: checkData } = await supabase
-          .from('users')
-          .select('kdf_salt')
-          .eq('id', user.id)
-          .single()
+        const savedProfile = await updateCryptoProfile({
+          kdfSalt: salt,
+          kdfParams,
+          keyHash
+        })
 
-        if (!checkData?.kdf_salt) {
+        if (!savedProfile.kdfSalt) {
           throw new Error('Nao foi possivel concluir a configuracao da senha-mestra')
         }
         
@@ -143,14 +112,9 @@ const MasterPasswordModal: React.FC<MasterPasswordModalProps> = ({
         onSuccess()
       } else {
         // Login - verificar senha-mestra COM RATE LIMITING
-        const { data: userData, error: fetchError } = await supabase
-          .from('users')
-          .select('kdf_salt, kdf_params')
-          .eq('id', user.id)
-          .single()
+        const cryptoProfile = await getCryptoProfile()
 
-        if (fetchError) throw fetchError
-        if (!userData?.kdf_salt) {
+        if (!cryptoProfile.kdfSalt || !cryptoProfile.kdfParams) {
           // Usuário ainda não configurou criptografia
           setError('Por favor, configure sua senha-mestra primeiro')
           return
@@ -165,34 +129,28 @@ const MasterPasswordModal: React.FC<MasterPasswordModalProps> = ({
         // Derivar chave com salt existente E RATE LIMITING
         const key = await CryptoService.deriveKeyWithRateLimit(
           password, 
-          userData.kdf_salt,
-          userData.kdf_params,  // Usar params salvos no banco
+          cryptoProfile.kdfSalt,
+          cryptoProfile.kdfParams,  // Usar params salvos no banco
           user.id               // Passar userId para rate limiting
         )
 
         // Verificar se a senha está correta
         const keyHash = await CryptoService.hashKey(key)
         
-        // Buscar o hash armazenado
-        const { data: userWithHash } = await supabase
-          .from('users')
-          .select('key_hash')
-          .eq('id', user.id)
-          .single()
-        
-        if (userWithHash?.key_hash) {
+        if (cryptoProfile.keyHash) {
           // Se já tem hash armazenado, verificar
-          if (keyHash !== userWithHash.key_hash) {
+          if (keyHash !== cryptoProfile.keyHash) {
             // Registrar tentativa falhada no rate limiting
             CryptoService.recordFailedAttempt(user.id)
             throw new Error('Senha incorreta')
           }
         } else {
           // Se não tem hash armazenado (primeira vez após configurar), salvar
-          await supabase
-            .from('users')
-            .update({ key_hash: keyHash })
-            .eq('id', user.id)
+          await updateCryptoProfile({
+            kdfSalt: cryptoProfile.kdfSalt,
+            kdfParams: cryptoProfile.kdfParams,
+            keyHash
+          })
         }
 
         // Se chegou até aqui, senha está correta

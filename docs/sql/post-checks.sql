@@ -91,3 +91,31 @@ WHERE grantee = 'authenticated'
 ORDER BY routine_name;
 
 -- Esperado: 0 linhas.
+
+-- ---------------------------------------------------------------------------
+-- 7) Regras de negocio adicionadas em 008
+-- ---------------------------------------------------------------------------
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE schemaname = 'public'
+  AND indexname = 'credentials_single_active_vault_per_user_idx';
+
+SELECT table_name, privilege_type
+FROM information_schema.role_table_grants
+WHERE grantee = 'authenticated'
+  AND table_schema = 'public'
+  AND table_name IN ('users', 'credential_backups', 'vault_backups', 'two_factor_attempts')
+ORDER BY table_name, privilege_type;
+
+SELECT table_name, column_name, privilege_type
+FROM information_schema.column_privileges
+WHERE grantee = 'authenticated'
+  AND table_schema = 'public'
+  AND table_name = 'users'
+  AND privilege_type = 'UPDATE'
+ORDER BY column_name;
+
+-- Esperado:
+-- - indice credentials_single_active_vault_per_user_idx presente.
+-- - users sem UPDATE amplo de tabela; UPDATE apenas via column grants para full_name/avatar_url.
+-- - backups e two_factor_attempts sem INSERT/UPDATE/DELETE para authenticated.

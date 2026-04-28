@@ -3,7 +3,9 @@ import crypto from 'crypto'
 import { z } from 'zod'
 import { config } from '@/config/environment'
 import { createSupabaseUserClient } from '@/config/database'
+import { getPrivilegedSupabase } from '@/config/privilegedDb'
 import { authService } from '@/services/auth.service'
+import type { Database } from '@/types/database'
 import { authenticateSupabaseAccessToken } from '@/middleware/auth.middleware'
 import {
   loginRateLimit,
@@ -13,7 +15,7 @@ import {
 } from '@/middleware/rateLimiting.middleware'
 import { bruteForcePrevention } from '@/middleware/security.middleware'
 import { requireSupabaseAuthenticatedUser } from '@/security/authorization'
-import { AppError, ValidationError } from '@/security/errors'
+import { AppError, NotFoundError, UnauthorizedError, ValidationError } from '@/security/errors'
 import { asyncHandler, sendSuccess } from '@/security/http'
 import { validateWithSchema } from '@/security/validation'
 import {
@@ -55,6 +57,23 @@ const twoFactorVerifySchema = z.object({
   code: z.string().trim().min(6).max(32),
 }).strict()
 
+const kdfParamsSchema = z.object({
+  algorithm: z.literal('argon2id'),
+  memorySize: z.number().int().min(8 * 1024).max(1024 * 1024),
+  iterations: z.number().int().min(1).max(20),
+  parallelism: z.number().int().min(1).max(16),
+  hashLength: z.number().int().min(16).max(64),
+}).strict()
+
+const base64HashSchema = z.string().trim().min(32).max(256).regex(/^[A-Za-z0-9+/=]+$/, 'Invalid key hash format')
+
+const cryptoProfileSchema = z.object({
+  kdfSalt: z.string().trim().min(16).max(512).regex(/^[A-Za-z0-9+/=]+$/, 'Invalid KDF salt format'),
+  kdfParams: kdfParamsSchema,
+  keyHash: base64HashSchema,
+  currentKeyHash: base64HashSchema.optional(),
+}).strict()
+
 const hashBackupCode = (code: string): string => {
   return crypto.createHash('sha256').update(code).digest('hex')
 }
@@ -73,15 +92,13 @@ const ensureLegacyBackendAuthEnabled = () => {
 }
 
 const logTwoFactorAttempt = async (
-  authToken: string,
   userId: string,
   success: boolean,
   errorMessage: string | undefined,
   ipAddress: string | undefined,
   userAgent: string | undefined,
 ): Promise<void> => {
-  const scopedClient = createScopedClient(authToken)
-  await scopedClient
+  await getPrivilegedSupabase()
     .from('two_factor_attempts')
     .insert({
       user_id: userId,
@@ -90,6 +107,26 @@ const logTwoFactorAttempt = async (
       ip_address: ipAddress ?? null,
       user_agent: userAgent ?? null,
     })
+}
+
+const updateSensitiveUserFields = async (
+  userId: string,
+  patch: Database['public']['Tables']['users']['Update'],
+): Promise<void> => {
+  const { data, error } = await getPrivilegedSupabase()
+    .from('users')
+    .update(patch)
+    .eq('id', userId)
+    .select('id')
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    throw new NotFoundError('User profile not found')
+  }
 }
 
 router.post('/register', suspiciousActivityDetector, registerRateLimit, asyncHandler(async (req, res) => {
@@ -153,6 +190,70 @@ router.put('/profile', authenticateSupabaseAccessToken, asyncHandler(async (req,
   })
 }))
 
+router.get('/crypto-profile', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+  const user = requireSupabaseAuthenticatedUser(req)
+
+  const { data, error } = await getPrivilegedSupabase()
+    .from('users')
+    .select('kdf_salt, kdf_params, key_hash')
+    .eq('id', user.userId)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    throw new NotFoundError('User profile not found')
+  }
+
+  sendSuccess(res, {
+    data: {
+      kdfSalt: data.kdf_salt,
+      kdfParams: data.kdf_params,
+      keyHash: data.key_hash,
+    },
+  })
+}))
+
+router.put('/crypto-profile', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
+  const user = requireSupabaseAuthenticatedUser(req)
+  const { kdfSalt, kdfParams, keyHash, currentKeyHash } = validateWithSchema(cryptoProfileSchema, req.body)
+
+  const { data: currentProfile, error: currentError } = await getPrivilegedSupabase()
+    .from('users')
+    .select('key_hash')
+    .eq('id', user.userId)
+    .maybeSingle()
+
+  if (currentError) {
+    throw currentError
+  }
+
+  if (!currentProfile) {
+    throw new NotFoundError('User profile not found')
+  }
+
+  if (currentProfile.key_hash && currentProfile.key_hash !== currentKeyHash) {
+    throw new UnauthorizedError('Current master password verification failed')
+  }
+
+  await updateSensitiveUserFields(user.userId, {
+    kdf_salt: kdfSalt,
+    kdf_params: kdfParams,
+    key_hash: keyHash,
+  })
+
+  sendSuccess(res, {
+    data: {
+      kdfSalt,
+      kdfParams,
+      keyHash,
+    },
+    message: 'Crypto profile updated successfully',
+  })
+}))
+
 router.post('/change-password', authenticateSupabaseAccessToken, passwordChangeRateLimit, asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const { currentPassword, newPassword } = validateWithSchema(changePasswordSchema, req.body)
@@ -194,31 +295,23 @@ router.get('/2fa/status', authenticateSupabaseAccessToken, asyncHandler(async (r
 router.post('/2fa/enable', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
   const { secret, verificationCode, backupCodes } = validateWithSchema(twoFactorEnableSchema, req.body)
-  const scopedClient = createScopedClient(req.authToken!)
 
   if (!verifyTwoFactorToken(secret, verificationCode)) {
-    await logTwoFactorAttempt(req.authToken!, user.userId, false, 'Invalid activation code', req.ip, req.get('User-Agent'))
+    await logTwoFactorAttempt(user.userId, false, 'Invalid activation code', req.ip, req.get('User-Agent'))
     throw new ValidationError('Invalid 2FA verification code')
   }
 
   const encryptedSecret = encryptTwoFactorSecret(secret)
   const hashedBackupCodes = backupCodes.map(hashBackupCode)
 
-  const { error } = await scopedClient
-    .from('users')
-    .update({
-      two_factor_secret: encryptedSecret,
-      two_factor_enabled: true,
-      two_factor_backup_codes: hashedBackupCodes,
-      two_factor_verified_at: new Date().toISOString(),
-    })
-    .eq('id', user.userId)
+  await updateSensitiveUserFields(user.userId, {
+    two_factor_secret: encryptedSecret,
+    two_factor_enabled: true,
+    two_factor_backup_codes: hashedBackupCodes,
+    two_factor_verified_at: new Date().toISOString(),
+  })
 
-  if (error) {
-    throw error
-  }
-
-  await logTwoFactorAttempt(req.authToken!, user.userId, true, 'Activated', req.ip, req.get('User-Agent'))
+  await logTwoFactorAttempt(user.userId, true, 'Activated', req.ip, req.get('User-Agent'))
 
   sendSuccess(res, {
     message: '2FA enabled successfully',
@@ -255,7 +348,7 @@ router.post('/2fa/verify', authenticateSupabaseAccessToken, asyncHandler(async (
     const secret = decryptTwoFactorSecret(data.two_factor_secret)
     verified = verifyTwoFactorToken(secret, normalizedCode)
   } catch (error) {
-    await logTwoFactorAttempt(req.authToken!, user.userId, false, 'Unable to decrypt 2FA secret', req.ip, req.get('User-Agent'))
+    await logTwoFactorAttempt(user.userId, false, 'Unable to decrypt 2FA secret', req.ip, req.get('User-Agent'))
     throw error
   }
 
@@ -266,19 +359,13 @@ router.post('/2fa/verify', authenticateSupabaseAccessToken, asyncHandler(async (
 
     if (verified) {
       const remainingCodes = data.two_factor_backup_codes.filter((item: string) => item !== hashedCode)
-      const { error: updateError } = await scopedClient
-        .from('users')
-        .update({ two_factor_backup_codes: remainingCodes })
-        .eq('id', user.userId)
-
-      if (updateError) {
-        throw updateError
-      }
+      await updateSensitiveUserFields(user.userId, {
+        two_factor_backup_codes: remainingCodes,
+      })
     }
   }
 
   await logTwoFactorAttempt(
-    req.authToken!,
     user.userId,
     verified,
     verified ? (usedBackupCode ? 'Backup code' : 'Verified') : 'Invalid code',
@@ -296,22 +383,14 @@ router.post('/2fa/verify', authenticateSupabaseAccessToken, asyncHandler(async (
 
 router.post('/2fa/disable', authenticateSupabaseAccessToken, asyncHandler(async (req, res) => {
   const user = requireSupabaseAuthenticatedUser(req)
-  const scopedClient = createScopedClient(req.authToken!)
-  const { error } = await scopedClient
-    .from('users')
-    .update({
-      two_factor_secret: null,
-      two_factor_enabled: false,
-      two_factor_backup_codes: null,
-      two_factor_verified_at: null,
-    })
-    .eq('id', user.userId)
+  await updateSensitiveUserFields(user.userId, {
+    two_factor_secret: null,
+    two_factor_enabled: false,
+    two_factor_backup_codes: null,
+    two_factor_verified_at: null,
+  })
 
-  if (error) {
-    throw error
-  }
-
-  await logTwoFactorAttempt(req.authToken!, user.userId, true, 'Deactivated', req.ip, req.get('User-Agent'))
+  await logTwoFactorAttempt(user.userId, true, 'Deactivated', req.ip, req.get('User-Agent'))
 
   sendSuccess(res, {
     message: '2FA disabled successfully',

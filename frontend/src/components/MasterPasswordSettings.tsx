@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Shield, Lock, AlertCircle, CheckCircle } from 'lucide-react'
 import CryptoService from '../services/cryptoService'
 import { credentialsService } from '../services/credentialsService'
-import { supabase } from '../config/supabase'
+import { getCryptoProfile, updateCryptoProfile } from '../services/cryptoProfileService'
 import { useAuth } from '../contexts/AuthContext'
 
 interface SecurityLevel {
@@ -71,14 +71,10 @@ const MasterPasswordSettings: React.FC = () => {
       if (!user) return
 
       try {
-        const { data } = await supabase
-          .from('users')
-          .select('kdf_params')
-          .eq('id', user.id)
-          .single()
+        const data = await getCryptoProfile()
 
-        if (data?.kdf_params) {
-          const memorySize = data.kdf_params.memorySize
+        if (data?.kdfParams) {
+          const memorySize = data.kdfParams.memorySize
           const currentLevelObj = SECURITY_LEVELS.find(level => 
             level.memorySize === memorySize
           )
@@ -117,35 +113,25 @@ const MasterPasswordSettings: React.FC = () => {
       if (!user) throw new Error('Usuário não autenticado')
 
       // Primeiro, verificar a senha atual
-      const { data: userData } = await supabase
-        .from('users')
-        .select('kdf_salt, kdf_params')
-        .eq('id', user.id)
-        .single()
+      const userData = await getCryptoProfile()
 
-      if (!userData?.kdf_salt) {
+      if (!userData?.kdfSalt || !userData.kdfParams) {
         throw new Error('Dados de criptografia não encontrados')
       }
 
       // Verificar senha atual
+      let currentKeyHash: string | undefined
       try {
         const currentKey = await CryptoService.deriveKeyWithRateLimit(
           currentPassword,
-          userData.kdf_salt,
-          userData.kdf_params,
+          userData.kdfSalt,
+          userData.kdfParams,
           user.id
         )
 
-        const currentKeyHash = await CryptoService.hashKey(currentKey)
-        
-        // Buscar hash armazenado
-        const { data: userWithHash } = await supabase
-          .from('users')
-          .select('key_hash')
-          .eq('id', user.id)
-          .single()
+        currentKeyHash = await CryptoService.hashKey(currentKey)
 
-        if (userWithHash?.key_hash && currentKeyHash !== userWithHash.key_hash) {
+        if (userData.keyHash && currentKeyHash !== userData.keyHash) {
           throw new Error('Senha atual incorreta')
         }
       } catch (err: any) {
@@ -158,8 +144,8 @@ const MasterPasswordSettings: React.FC = () => {
       // Gerar novo salt
       const currentKey = await CryptoService.deriveKeyWithRateLimit(
         currentPassword,
-        userData.kdf_salt,
-        userData.kdf_params,
+        userData.kdfSalt,
+        userData.kdfParams,
         user.id
       )
 
@@ -181,6 +167,13 @@ const MasterPasswordSettings: React.FC = () => {
       )
 
       const newKeyHash = await CryptoService.hashKey(newKey)
+      const newKdfParams = {
+        algorithm: 'argon2id' as const,
+        memorySize: selectedLevel.memorySize,
+        iterations: selectedLevel.iterations,
+        parallelism: 4,
+        hashLength: 32
+      }
 
       // Recriptografar sempre a partir do snapshot canônico atual e fazer rollback
       // caso a atualização do perfil criptográfico falhe.
@@ -189,24 +182,12 @@ const MasterPasswordSettings: React.FC = () => {
       try {
         await credentialsService.replaceCredentialsSnapshot(currentCredentials)
 
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({
-            kdf_salt: newSalt,
-            kdf_params: {
-              algorithm: 'argon2id',
-              memorySize: selectedLevel.memorySize,
-              iterations: selectedLevel.iterations,
-              parallelism: 4,
-              hashLength: 32
-            },
-            key_hash: newKeyHash
-          })
-          .eq('id', user.id)
-
-        if (updateError) {
-          throw updateError
-        }
+        await updateCryptoProfile({
+          kdfSalt: newSalt,
+          kdfParams: newKdfParams,
+          keyHash: newKeyHash,
+          ...(userData.keyHash && currentKeyHash ? { currentKeyHash } : {})
+        })
       } catch (rotationError) {
         await CryptoService.storeKey(currentKey)
         await credentialsService.replaceCredentialsSnapshot(currentCredentials)

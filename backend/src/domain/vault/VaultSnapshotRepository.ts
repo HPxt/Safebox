@@ -65,6 +65,10 @@ export class VaultSnapshotRepository {
       .maybeSingle()
 
     if (error || !data) {
+      if (error?.code === '23505') {
+        throw new ConflictError('Vault already exists')
+      }
+
       throw error
     }
 
@@ -115,6 +119,10 @@ export class VaultSnapshotRepository {
       .maybeSingle()
 
     if (error || !data) {
+      if (error?.code === '23505') {
+        throw new ConflictError('Vault already exists')
+      }
+
       throw error
     }
 

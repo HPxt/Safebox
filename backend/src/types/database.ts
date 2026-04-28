@@ -21,6 +21,8 @@ export interface Database {
           status: 'active' | 'suspended' | 'deleted'
           preferences: Json
           kdf_salt: string | null
+          kdf_params: Json | null
+          key_hash: string | null
           two_factor_enabled: boolean | null
           two_factor_secret: string | null
           two_factor_backup_codes: string[] | null
@@ -38,6 +40,8 @@ export interface Database {
           status?: 'active' | 'suspended' | 'deleted'
           preferences?: Json
           kdf_salt?: string | null
+          kdf_params?: Json | null
+          key_hash?: string | null
           two_factor_enabled?: boolean | null
           two_factor_secret?: string | null
           two_factor_backup_codes?: string[] | null
@@ -55,6 +59,8 @@ export interface Database {
           status?: 'active' | 'suspended' | 'deleted'
           preferences?: Json
           kdf_salt?: string | null
+          kdf_params?: Json | null
+          key_hash?: string | null
           two_factor_enabled?: boolean | null
           two_factor_secret?: string | null
           two_factor_backup_codes?: string[] | null

@@ -350,17 +350,18 @@ export class AuthService {
   }
 
   async deleteAccount(userId: string, accessToken?: string): Promise<void> {
-    const dataClient = this.getDataClient(accessToken)
+    void accessToken
 
-    await dataClient
+    const { error: statusError } = await getPrivilegedSupabase()
       .from('users')
       .update({ status: 'deleted' })
       .eq('id', userId)
 
-    await dataClient
-      .from('user_sessions')
-      .update({ is_active: false })
-      .eq('user_id', userId)
+    if (statusError) {
+      throw statusError
+    }
+
+    await privilegedUserSessionsUpdate({ userId }, { is_active: false })
 
     await logAuditEvent('settings_updated', userId, {
       event: 'account_deleted',

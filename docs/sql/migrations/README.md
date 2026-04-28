@@ -15,10 +15,12 @@ Aplicar **na ordem numérica** no SQL Editor do Supabase (ou via pipeline de mig
 4. `004_two_factor_attempts.sql` — tabela + RLS + grants
 5. `005_functions_hardening.sql` — `search_path` + REVOKE dinâmico
 6. `006_views_security_invoker.sql` — views com `security_invoker` (Postgres 15+)
+7. `007_grants_followup_hardening.sql` — follow-up de grants e default privileges
+8. `008_business_rule_hardening.sql` — constraints de payload, anti-race do vault, mass assignment e ownership cross-tenant
 
 ## Pós-validação (obrigatório antes de “fechar” fase BD)
 
-7. Executar [../post-checks.sql](../post-checks.sql) e anexar resultados ao relatório da fase 1 / checklist de release.
+9. Executar [../post-checks.sql](../post-checks.sql) e anexar resultados ao relatório da fase 1 / checklist de release.
 
 ## Testes multi-tenant (staging)
 

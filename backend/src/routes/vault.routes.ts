@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { createSupabaseUserClient } from '@/config/database'
+import { getPrivilegedSupabase } from '@/config/privilegedDb'
 import { VaultBackupRepository } from '@/domain/vault/VaultBackupRepository'
 import { VaultSnapshotRepository } from '@/domain/vault/VaultSnapshotRepository'
 import { VaultSnapshotService } from '@/domain/vault/VaultSnapshotService'
@@ -16,7 +17,7 @@ const router: Router = Router()
 const createVaultService = (authToken: string) => {
   const scopedClient = createSupabaseUserClient(authToken)
   const vaultRepository = new VaultSnapshotRepository(scopedClient)
-  const backupRepository = new VaultBackupRepository(scopedClient)
+  const backupRepository = new VaultBackupRepository(getPrivilegedSupabase())
 
   return new VaultSnapshotService(vaultRepository, backupRepository)
 }
