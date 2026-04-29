@@ -53,13 +53,20 @@ export const privilegedRpcLogAuditEvent = async (args: {
   p_user_agent?: string | null
 }): Promise<void> => {
   logPrivilegedUse('audit_rpc', { eventType: args.p_event_type, userId: args.p_user_id })
-  const { error } = await getPrivilegedSupabase().rpc('log_audit_event', {
+  const rpcArgs: Database['public']['Functions']['log_audit_event']['Args'] = {
     p_user_id: args.p_user_id,
     p_event_type: args.p_event_type as Database['public']['Functions']['log_audit_event']['Args']['p_event_type'],
     p_event_data: args.p_event_data ?? {},
-    p_ip_address: args.p_ip_address ?? undefined,
-    p_user_agent: args.p_user_agent ?? undefined,
-  })
+  }
+
+  if (args.p_ip_address) {
+    rpcArgs.p_ip_address = args.p_ip_address
+  }
+  if (args.p_user_agent) {
+    rpcArgs.p_user_agent = args.p_user_agent
+  }
+
+  const { error } = await getPrivilegedSupabase().rpc('log_audit_event', rpcArgs)
   if (error) {
     throw error
   }

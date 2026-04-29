@@ -205,10 +205,20 @@ router.put('/categories/:id', authenticateSupabaseAccessToken, asyncHandler(asyn
   const scopedClient = createScopedClient(req.authToken!)
   const { id } = validateWithSchema(idSchema, req.params)
   const updates = validateWithSchema(categoryUpdateSchema, req.body)
+  const categoryPatch: Record<string, string> = {}
+  if (updates.name !== undefined) {
+    categoryPatch['name'] = updates.name
+  }
+  if (updates.color !== undefined) {
+    categoryPatch['color'] = updates.color
+  }
+  if (updates.icon !== undefined) {
+    categoryPatch['icon'] = updates.icon
+  }
 
   const { data, error } = await scopedClient
     .from('categories')
-    .update(updates)
+    .update(categoryPatch)
     .eq('id', id)
     .eq('user_id', user.userId)
     .select('*')

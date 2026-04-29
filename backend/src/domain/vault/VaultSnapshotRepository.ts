@@ -1,13 +1,13 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { Database } from '@/types/database'
+import { Database, Json } from '@/types/database'
 import { ConflictError, ValidationError } from '@/security/errors'
 import { NormalizedVault } from './types'
 
 type ScopedClient = SupabaseClient<Database>
 
-const parseJsonVaultPayload = (value: string): unknown => {
+const parseJsonVaultPayload = (value: string): Json => {
   try {
-    return JSON.parse(value)
+    return JSON.parse(value) as Json
   } catch {
     throw new ValidationError('Legacy vault payload must be valid JSON')
   }

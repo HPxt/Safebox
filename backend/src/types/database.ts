@@ -189,6 +189,42 @@ export interface Database {
         }
         Relationships: []
       }
+      folders: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          color: string | null
+          icon: string | null
+          parent_id: string | null
+          position: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          color?: string | null
+          icon?: string | null
+          parent_id?: string | null
+          position?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          color?: string | null
+          icon?: string | null
+          parent_id?: string | null
+          position?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vaults: {
         Row: {
           id: string
@@ -389,6 +425,7 @@ export interface Database {
           backup_count: number
           vault_last_updated: string | null
         }
+        Relationships: []
       }
     }
     Functions: {
@@ -437,6 +474,9 @@ export interface Database {
     Enums: {
       user_status: 'active' | 'suspended' | 'deleted'
       audit_event_type: 'vault_unlock' | 'vault_lock' | 'credential_created' | 'credential_updated' | 'credential_deleted' | 'settings_updated' | 'login_success' | 'login_failure' | 'password_changed'
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }
@@ -534,10 +574,10 @@ export interface PaginatedResponse<T = any> extends ApiResponse<T[]> {
 export interface AuthUser {
   id: string
   email: string
-  fullName?: string
-  avatarUrl?: string
+  fullName?: string | undefined
+  avatarUrl?: string | undefined
   status: UserStatus
   createdAt: string
-  lastLoginAt?: string
+  lastLoginAt?: string | undefined
   loginCount: number
 } 

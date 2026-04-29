@@ -1,4 +1,5 @@
 import { supabase } from '../config/database'
+import type { Database } from '../types/database'
 
 const getErrorMessage = (error: unknown): string => (
   error instanceof Error ? error.message : 'Unknown script error'
@@ -30,7 +31,7 @@ async function testSupabaseConnection() {
 async function testDatabaseSchema() {
   console.log('🔍 Testing database schema...')
   
-  const tables = [
+  const tables: Array<keyof Database['public']['Tables']> = [
     'credentials', 
     'categories',
     'user_settings',
@@ -64,9 +65,8 @@ async function testDatabaseSchema() {
 async function testRPCFunctions() {
   console.log('🔍 Testing RPC functions...')
   
-  const functions = [
+  const functions: Array<keyof Database['public']['Functions']> = [
     'log_audit_event',
-    'get_user_stats',
     'cleanup_expired_sessions',
     'cleanup_old_audit_logs'
   ]

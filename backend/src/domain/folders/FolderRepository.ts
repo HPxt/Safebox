@@ -27,16 +27,20 @@ export class FolderRepository {
     parentId?: string | null
     position?: number
   }) {
+    const folderRow: Database['public']['Tables']['folders']['Insert'] = {
+      user_id: userId,
+      name: folder.name,
+      icon: folder.icon ?? 'folder',
+      parent_id: folder.parentId ?? null,
+      position: folder.position ?? 0,
+    }
+    if (folder.color !== undefined) {
+      folderRow.color = folder.color
+    }
+
     const { data, error } = await this.scopedClient
       .from('folders')
-      .insert({
-        user_id: userId,
-        name: folder.name,
-        color: folder.color,
-        icon: folder.icon ?? 'folder',
-        parent_id: folder.parentId ?? null,
-        position: folder.position ?? 0,
-      })
+      .insert(folderRow)
       .select('*')
       .single()
 
