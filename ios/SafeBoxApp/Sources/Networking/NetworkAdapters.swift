@@ -89,6 +89,10 @@ struct SupabasePasswordAuthProvider: AuthSessionProviding {
     func signOut() async throws {
         sessionStore.clear()
     }
+
+    func currentUserID() throws -> String? {
+        try? sessionStore.userID()
+    }
 }
 
 struct SupabaseUsersKDFProfileProvider: UserKDFProfileProviding {

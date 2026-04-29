@@ -1,7 +1,18 @@
+import SafeBoxCrypto
 import SwiftUI
 
 struct VaultListView: View {
     @EnvironmentObject private var coordinator: AppCoordinator
+    @State private var presentedDraft: PresentedDraft?
+
+    private struct PresentedDraft: Identifiable {
+        let mode: VaultItemFormView.Mode
+        let draft: VaultCredentialDraft
+
+        var id: String {
+            "\(mode.title)-\(draft.id)"
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -21,7 +32,7 @@ struct VaultListView: View {
                                 .foregroundStyle(.secondary)
                             Text("Cofre vazio")
                                 .font(.headline)
-                            Text("Crie itens no web ou implemente CRUD nativo na proxima fase.")
+                            Text("Toque em + para criar sua primeira credencial.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
@@ -30,25 +41,37 @@ struct VaultListView: View {
                         .padding(.vertical, 32)
                     } else {
                         ForEach(coordinator.vaultItems) { item in
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Text(item.title)
-                                        .font(.headline)
-                                    Spacer()
-                                    Text(item.itemType)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                            Button {
+                                if let draft = coordinator.draftForEditing(itemID: item.id) {
+                                    presentedDraft = PresentedDraft(mode: .edit, draft: draft)
                                 }
-                                Text(item.subtitle)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                if let folder = item.folderName {
-                                    Label(folder, systemImage: "folder")
-                                        .font(.caption)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Text(item.title)
+                                            .font(.headline)
+                                            .foregroundStyle(.primary)
+                                        Spacer()
+                                        Text(item.itemType)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Text(item.subtitle)
+                                        .font(.subheadline)
                                         .foregroundStyle(.secondary)
+                                    if let folder = item.folderName {
+                                        Label(folder, systemImage: "folder")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                            .swipeActions {
+                                Button("Excluir", role: .destructive) {
+                                    Task { await coordinator.deleteCredential(id: item.id) }
                                 }
                             }
-                            .padding(.vertical, 4)
                         }
                     }
                 }
@@ -65,6 +88,12 @@ struct VaultListView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
+                        Button("Novo item") {
+                            presentedDraft = PresentedDraft(
+                                mode: .create,
+                                draft: VaultCredentialDraft(title: "", password: "")
+                            )
+                        }
                         if coordinator.biometricUnlockAvailable {
                             Button("Desativar biometria", role: .destructive) {
                                 coordinator.disableBiometricUnlock()
@@ -83,6 +112,21 @@ struct VaultListView: View {
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        presentedDraft = PresentedDraft(
+                            mode: .create,
+                            draft: VaultCredentialDraft(title: "", password: "")
+                        )
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(item: $presentedDraft) { presented in
+                VaultItemFormView(mode: presented.mode, draft: presented.draft) { draft in
+                    await coordinator.saveCredential(draft)
                 }
             }
         }

@@ -4,6 +4,7 @@ import SafeBoxCrypto
 protocol AuthSessionProviding: Sendable {
     func signIn(email: String, password: String) async throws
     func signOut() async throws
+    func currentUserID() throws -> String?
 }
 
 struct SafeBoxAppEnvironment: Sendable {
@@ -88,6 +89,10 @@ private struct UnconfiguredAuthSessionProvider: AuthSessionProviding {
     }
 
     func signOut() async throws {}
+
+    func currentUserID() throws -> String? {
+        nil
+    }
 }
 
 private struct UnconfiguredKDFProfileProvider: UserKDFProfileProviding {

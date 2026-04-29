@@ -370,6 +370,88 @@ final class AppCoordinator: ObservableObject {
         }
     }
 
+    func draftForEditing(itemID: String) -> VaultCredentialDraft? {
+        guard let currentVault else { return nil }
+        return try? currentVault.plaintext.credentialDraft(id: itemID)
+    }
+
+    func saveCredential(_ draft: VaultCredentialDraft) async {
+        guard draft.isValidForSave else {
+            errorMessage = "Informe pelo menos um titulo e uma senha."
+            return
+        }
+        guard let key = unlockedSession?.key else {
+            errorMessage = "Desbloqueie o cofre antes de salvar."
+            syncPhaseFromSession()
+            return
+        }
+
+        errorMessage = nil
+        statusMessage = "Salvando item..."
+        phase = .loading
+
+        do {
+            let basePlaintext = try currentVault?.plaintext ?? VaultPlaintextPayload(jsonString: "[]")
+            var draftForWrite = draft
+            if draftForWrite.userId.isEmpty, let userID = try environment.auth.currentUserID() {
+                draftForWrite.userId = userID
+            }
+            let updatedPlaintext = try basePlaintext.upsertingCredential(draftForWrite)
+            let service = VaultSyncService(remoteStore: environment.vaultStore)
+            _ = try await service.writeVault(
+                plaintext: updatedPlaintext,
+                key: key,
+                expectedVersion: currentVault?.record.version
+            )
+            try await loadVault(using: key)
+            recordUserInteraction()
+            syncPhaseFromSession()
+            await republishAutoFillBridgeIgnoringErrors()
+        } catch {
+            if Self.isAuthSessionExpired(error) {
+                handleAuthSessionExpired()
+            } else if let syncError = error as? VaultSyncError, syncError == .versionConflict {
+                syncPhaseFromSession()
+            } else {
+                syncPhaseFromSession()
+            }
+            errorMessage = Self.message(for: error)
+        }
+    }
+
+    func deleteCredential(id: String) async {
+        guard let key = unlockedSession?.key, let currentVault else {
+            errorMessage = "Desbloqueie o cofre antes de excluir."
+            syncPhaseFromSession()
+            return
+        }
+
+        errorMessage = nil
+        statusMessage = "Excluindo item..."
+        phase = .loading
+
+        do {
+            let updatedPlaintext = try currentVault.plaintext.deletingCredential(id: id)
+            let service = VaultSyncService(remoteStore: environment.vaultStore)
+            _ = try await service.writeVault(
+                plaintext: updatedPlaintext,
+                key: key,
+                expectedVersion: currentVault.record.version
+            )
+            try await loadVault(using: key)
+            recordUserInteraction()
+            syncPhaseFromSession()
+            await republishAutoFillBridgeIgnoringErrors()
+        } catch {
+            if Self.isAuthSessionExpired(error) {
+                handleAuthSessionExpired()
+            } else {
+                syncPhaseFromSession()
+            }
+            errorMessage = Self.message(for: error)
+        }
+    }
+
     func lock() {
         guard sessionMachine.state == .unlocked else { return }
         clearVaultDataKeepingAuthSession()
