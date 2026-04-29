@@ -262,11 +262,12 @@ export const advancedSecurityHeaders = (_req: Request, res: Response, next: Next
   // Content Security Policy rigorosa
   const csp = [
     "default-src 'self'",
-    "script-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
     "font-src 'self'",
+    "worker-src 'self' blob:",
     "object-src 'none'",
     "media-src 'self'",
     "frame-src 'none'",

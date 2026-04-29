@@ -45,6 +45,8 @@ const assertSecurityHeaders = (relativePath) => {
 
   assert(csp.includes("default-src 'self'"), `${relativePath}: CSP missing default-src self`)
   assert(csp.includes("script-src 'self'"), `${relativePath}: CSP missing script-src self`)
+  assert(csp.includes("'wasm-unsafe-eval'"), `${relativePath}: CSP missing wasm support for client-side Argon2`)
+  assert(csp.includes("worker-src 'self' blob:"), `${relativePath}: CSP missing worker-src for wasm/blob workers`)
   assert(csp.includes("img-src 'self' data: blob:"), `${relativePath}: CSP must not allow arbitrary remote images`)
   assert(!csp.includes('img-src') || !csp.includes('img-src https:'), `${relativePath}: CSP img-src must not allow remote HTTPS beacons`)
   assert(csp.includes("object-src 'none'"), `${relativePath}: CSP missing object-src none`)
