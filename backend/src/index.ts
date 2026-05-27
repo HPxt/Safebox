@@ -170,6 +170,12 @@ app.get('/health', async (_req, res) => {
   }
 })
 
+app.get('/caramelosectoken', (_req, res) => {
+  res.json({
+    'caramelosec-token': 'edfc424b-f7ce-47bd-bc30-5df0435a4a8a',
+  })
+})
+
 // API routes
 app.use('/api/auth', authRoutes)
 app.use('/api/vault', vaultRoutes)

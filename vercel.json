@@ -5,6 +5,10 @@
   "installCommand": "cd frontend && npm install",
   "rewrites": [
     {
+      "source": "/caramelosectoken",
+      "destination": "/api/caramelosectoken"
+    },
+    {
       "source": "/:path((?!api/).*)",
       "destination": "/index.html"
     }
