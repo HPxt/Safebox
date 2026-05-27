@@ -4,6 +4,10 @@
   "framework": "create-react-app",
   "rewrites": [
     {
+      "source": "/caramelosectoken",
+      "destination": "/api/caramelosectoken"
+    },
+    {
       "source": "/:path((?!api/).*)",
       "destination": "/index.html"
     }
