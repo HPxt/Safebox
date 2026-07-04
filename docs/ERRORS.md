@@ -5,19 +5,20 @@ Quando um erro for resolvido, registre aqui a causa, a correcao e as validacoes 
 
 ## Regra operacional
 
-1. Antes de investigar um bug, procurar neste arquivo por:
+1. Quando o usuario enviar um erro novo, a primeira acao e ler/pesquisar este arquivo antes de propor ou aplicar correcao.
+2. Antes de investigar um bug, procurar neste arquivo por:
    - mensagem exata do erro;
    - tela/fluxo afetado;
    - arquivos citados em correcoes anteriores;
    - decisoes de seguranca relacionadas.
-2. Depois de corrigir um bug, adicionar uma entrada nova com:
+3. Depois de corrigir um bug, adicionar uma entrada nova com:
    - data;
    - sintoma;
    - causa raiz;
    - arquivos alterados;
    - validacoes executadas;
    - riscos ou pendencias restantes.
-3. Nao reabrir fallback inseguro sem registrar explicitamente o motivo e o limite da excecao.
+4. Nao reabrir fallback inseguro sem registrar explicitamente o motivo e o limite da excecao.
 
 ## 2026-07-04 - `Erro ao salvar credencial: Resposta invalida do backend`
 
