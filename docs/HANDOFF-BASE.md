@@ -121,6 +121,8 @@ Resultados mais recentes conhecidos:
 
 ## Regras de seguranca e continuidade
 
+- Antes de corrigir qualquer bug, consultar [ERRORS.md](C:/Users/KABUM/Documents/SafeBox/Safebox-3/docs/ERRORS.md) para ver se o sintoma ja foi diagnosticado.
+- Depois de corrigir qualquer erro, registrar a causa raiz, arquivos alterados e validacoes em [ERRORS.md](C:/Users/KABUM/Documents/SafeBox/Safebox-3/docs/ERRORS.md).
 - Nao fazer `db reset`, `migration` destrutiva, limpeza de dados ou qualquer operacao com risco de perda do banco.
 - Tratar o cofre como sensivel: preservar sempre o snapshot atual, o controle de versao do vault e os formatos de backup/import/export.
 - Antes de qualquer alteracao relevante:
