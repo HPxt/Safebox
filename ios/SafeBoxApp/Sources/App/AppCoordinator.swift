@@ -34,7 +34,7 @@ final class AppCoordinator: ObservableObject {
     private let credentialDonation: CredentialIdentityDonating
     private let biometricVaultKeyStore: BiometricVaultKeyStoring
     private var sessionMachine = SessionStateMachine()
-    private let lockPolicy = LockPolicy(inactivityTimeout: Self.vaultInactivityTimeout)
+    private let lockPolicy = LockPolicy(inactivityTimeout: AppCoordinator.vaultInactivityTimeout)
     private var lastInteractionAt: Date?
     private var unlockedSession: UnlockedVaultSession?
     private var currentVault: VaultReadResult?

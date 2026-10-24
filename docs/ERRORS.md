@@ -20,6 +20,15 @@ Quando um erro for resolvido, registre aqui a causa, a correcao e as validacoes 
    - riscos ou pendencias restantes.
 4. Nao reabrir fallback inseguro sem registrar explicitamente o motivo e o limite da excecao.
 
+## 2026-10-24 - Build iOS: covariant Self no inicializador
+
+Sintoma: CI macOS rejeitou `Self.vaultInactivityTimeout` no inicializador de
+propriedade armazenada de AppCoordinator. Causa: referencia ao Self covariante
+na inicializacao de propriedade de classe. Correcao: nome concreto
+`AppCoordinator.vaultInactivityTimeout`, preservando o timeout de bloqueio.
+Validacao: gate estatico local e nova execucao do workflow iOS; consultar o PR
+para resultado Apple. Parse de sintaxe sozinho nao detecta este erro de tipos.
+
 ## 2026-07-04 - `Erro ao salvar credencial: Resposta invalida do backend`
 
 **Sintoma:** ao editar uma credencial no dashboard, o frontend mostrava `Erro ao salvar credencial: Resposta invalida do backend`.
