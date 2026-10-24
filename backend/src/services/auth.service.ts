@@ -1,7 +1,6 @@
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import type { SignOptions } from 'jsonwebtoken'
-import { v4 as uuidv4 } from 'uuid'
 import { createSupabaseAuthClient, createSupabaseUserClient } from '@/config/database'
 import {
   getPrivilegedSupabase,
@@ -375,7 +374,7 @@ export class AuthService {
     userAgent?: string,
     supabaseAccessToken?: string,
   ): Promise<string> {
-    const sessionId = uuidv4()
+    const sessionId = crypto.randomUUID()
     const token = this.generateToken({ userId, email, sessionId })
 
     const row: Database['public']['Tables']['user_sessions']['Insert'] = {

@@ -271,6 +271,7 @@ const startServer = async () => {
 
 // Export for testing
 export { app }
+export default app
 
 // Start server if this file is run directly
 if (require.main === module) {

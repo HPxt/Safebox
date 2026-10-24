@@ -51,7 +51,7 @@ const loggerConfig: winston.LoggerOptions = {
 }
 
 // Add file transport in production
-if (process.env['NODE_ENV'] === 'production') {
+if (process.env['NODE_ENV'] === 'production' && !process.env['VERCEL']) {
   const logDir = path.dirname(process.env['LOG_FILE'] || 'logs/safebox.log')
   
   const fileTransports = [

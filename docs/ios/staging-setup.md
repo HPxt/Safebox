@@ -1,5 +1,8 @@
 # Staging em projeto Supabase separado
 
+Status 2026-10-24: provisionamento e testes conectados executados. Evidencias em
+`staging-connected-validation.md`; o restante deste guia descreve o processo.
+
 Nao depende de branches de banco. Um projeto independente tem URL, chaves,
 usuarios, Auth e Storage proprios. Deve reproduzir o contrato da aplicacao,
 sem copiar dados de producao.

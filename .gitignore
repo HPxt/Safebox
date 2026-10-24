@@ -18,6 +18,7 @@
 **/.build/
 
 # misc
+/.staging-work/
 ios/SafeBoxApp/Config/Local.xcconfig
 ios/SafeBoxApp/*.xcodeproj/
 **/DerivedData/

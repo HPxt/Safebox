@@ -2,6 +2,9 @@
 
 Atualizado em 2026-10-24. Status abaixo distingue codigo de validacao executada.
 
+Atualizacao de staging: banco provisionado e 17 testes conectados passaram.
+Detalhes e pendencia de acesso Vercel em `staging-connected-validation.md`.
+
 ## Arquitetura
 
 - SafeBoxCore preserva o protocolo criptografico web/iOS e as regras de dominio.

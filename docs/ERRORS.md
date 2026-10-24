@@ -20,6 +20,16 @@ Quando um erro for resolvido, registre aqui a causa, a correcao e as validacoes 
    - riscos ou pendencias restantes.
 4. Nao reabrir fallback inseguro sem registrar explicitamente o motivo e o limite da excecao.
 
+## 2026-10-24 - Validacao conectada do staging
+
+API integrada encontrava `Unexpected token export` ao importar uuid (ESM) pelo
+Jest CommonJS. AuthService ja importava crypto; a geracao UUID v4 de sessao
+passou a usar `crypto.randomUUID()` nativo, sem alterar formato/entropia e sem
+mockar autenticacao ou banco. O staging recebeu as migrations 001-015; a 015
+fixa search_path dos helpers de URL e revoga acesso a rls_auto_enable().
+Credenciais de staging ficam somente em arquivos locais ignorados. Validacoes
+e riscos restantes constam no relatorio conectado de staging.
+
 ## 2026-10-24 - Build iOS: covariant Self no inicializador
 
 Instalacao no simulador: a extensao tambem precisava de `CFBundleDisplayName`
