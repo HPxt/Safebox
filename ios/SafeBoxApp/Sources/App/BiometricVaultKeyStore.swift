@@ -22,7 +22,11 @@ protocol BiometricVaultKeyStoring: Sendable {
 }
 
 struct KeychainBiometricVaultKeyStore: BiometricVaultKeyStoring {
+    #if SAFEBOX_PERSONAL_STAGING
+    private let service = "app.safebox.ios.personalstaging.vault-key"
+    #else
     private let service = "app.safebox.ios.vault-key"
+    #endif
     private let account = "current-vault-key"
 
     func canAttemptBiometricUnlock() -> Bool {
