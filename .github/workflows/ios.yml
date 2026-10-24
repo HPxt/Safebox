@@ -1,0 +1,47 @@
+name: iOS Security and Build
+
+on:
+  pull_request:
+    paths: ['ios/**', 'scripts/ios-static-gate.mjs', '.github/workflows/ios.yml']
+  push:
+    branches: [main]
+    paths: ['ios/**', 'scripts/ios-static-gate.mjs', '.github/workflows/ios.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static security gate
+        run: node scripts/ios-static-gate.mjs
+      - name: Core crypto and domain tests
+        run: swift test --package-path ios/SafeBoxCore
+      - name: Install project generator
+        run: brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: ios/SafeBoxApp
+        run: xcodegen generate
+      - name: Build app and embedded extension (Debug)
+        run: xcodebuild -project ios/SafeBoxApp/SafeBox.xcodeproj -scheme SafeBoxApp -configuration Debug -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+      - name: Build app and embedded extension (Release)
+        run: xcodebuild -project ios/SafeBoxApp/SafeBox.xcodeproj -scheme SafeBoxApp -configuration Release -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
+      - name: Session and configuration security tests
+        shell: bash
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(v["udid"] for k,vs in d["devices"].items() if "iOS" in k for v in vs if v["name"].startswith("iPhone")))')
+          xcodebuild -project ios/SafeBoxApp/SafeBox.xcodeproj -scheme SafeBoxApp -destination "platform=iOS Simulator,id=$DEVICE_ID" -parallel-testing-enabled NO -resultBundlePath ios-results.xcresult CODE_SIGNING_ALLOWED=NO test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-test-results
+          path: ios-results.xcresult
+          if-no-files-found: ignore

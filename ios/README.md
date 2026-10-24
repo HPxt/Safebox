@@ -1,4 +1,8 @@
-# iOS Workspace (bootstrap)
+# iOS Workspace
+
+Status atual: veja `SafeBoxApp/README.md` e
+`../docs/ios/security-first-delivery.md`. O host SwiftUI e o target AutoFill ja
+existem; AutoFill funcional e distribuicao continuam sujeitos aos gates.
 
 Esta pasta concentra artefatos da trilha iOS.
 
@@ -21,7 +25,7 @@ cd ios/SafeBoxCore
 SAFEBOX_RUN_SLOW_ARGON2_TESTS=1 swift test --filter KDFPipelineTests/testLibArgon2MatchesSlowKDFVectorsWhenEnabled
 ```
 
-- Criar projeto Xcode com targets:
+- Gerar o projeto XcodeGen existente com targets:
   - `SafeBoxApp`
   - `SafeBoxAutoFillExtension`
 - Conectar `SafeBoxCore` aos targets acima.

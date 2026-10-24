@@ -172,6 +172,7 @@ final class AppCoordinator: ObservableObject {
     }
 
     func signIn() async {
+        defer { password = "" }
         errorMessage = nil
         statusMessage = "Entrando com seguranca..."
         phase = .loading
@@ -209,6 +210,7 @@ final class AppCoordinator: ObservableObject {
                 guardService: UnlockSessionGuard(kdfPipeline: environment.kdfPipeline)
             )
             let session = try await unlockService.unlock(masterPassword: masterPassword)
+            masterPassword = ""
             unlockedSession = session
             ultraWarning = session.warning == .highResourceKdfWarning
                 ? "Seu cofre usa ULTRA. Pode ser lento em alguns iPhones; recomendamos HIGH no mobile."

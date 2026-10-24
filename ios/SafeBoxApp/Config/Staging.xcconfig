@@ -1,0 +1,5 @@
+SAFEBOX_ENVIRONMENT = staging
+SAFEBOX_SUPABASE_URL = https:/$()/staging-project.invalid
+SAFEBOX_PUBLISHABLE_KEY = sb_publishable_EXAMPLE_REPLACE_LOCALLY
+SAFEBOX_BACKEND_URL = https:/$()/staging-backend.invalid
+#include? "Local.xcconfig"

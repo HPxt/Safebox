@@ -6,13 +6,39 @@ final class SafeBoxSessionStore: @unchecked Sendable {
     private var accessToken: String?
     private var currentUserID: String?
     private var userMetadata: [String: Any] = [:]
+    private var refreshToken: String?
+    private var expiresAt = Date.distantPast
+    private var generation = UUID()
+    private let refreshCoordinator = SessionRefreshCoordinator()
+    private let supabaseURL: URL
+    private let anonKey: String
+    private let urlSession: URLSession
 
-    func update(accessToken: String, userID: String, userMetadata: [String: Any]) {
+    init(supabaseURL: URL, anonKey: String, urlSession: URLSession = SafeBoxHTTP.session) {
+        self.supabaseURL = supabaseURL
+        self.anonKey = anonKey
+        self.urlSession = urlSession
+    }
+
+    fileprivate func beginSignIn() -> UUID {
+        clear()
+        return snapshot().3
+    }
+
+    fileprivate func update(_ payload: AuthTokenResponse, expectedGeneration: UUID) throws {
         lock.lock()
-        self.accessToken = accessToken
-        self.currentUserID = userID
-        self.userMetadata = userMetadata
-        lock.unlock()
+        defer { lock.unlock() }
+        guard generation == expectedGeneration else { throw SafeBoxAppError.authSessionExpired }
+        generation = UUID()
+        apply(payload)
+    }
+
+    private func apply(_ payload: AuthTokenResponse) {
+        accessToken = payload.accessToken
+        refreshToken = payload.refreshToken
+        expiresAt = Date().addingTimeInterval(payload.expiresIn)
+        currentUserID = payload.user.id
+        userMetadata = payload.user.userMetadata ?? [:]
     }
 
     func clear() {
@@ -20,16 +46,48 @@ final class SafeBoxSessionStore: @unchecked Sendable {
         accessToken = nil
         currentUserID = nil
         userMetadata = [:]
+        refreshToken = nil
+        expiresAt = .distantPast
+        generation = UUID()
         lock.unlock()
     }
 
     func token() throws -> String {
         lock.lock()
         defer { lock.unlock() }
-        guard let accessToken else {
-            throw SafeBoxAppError.missingProductionAdapter("authenticated access token")
+        guard let accessToken, expiresAt > Date() else {
+            throw SafeBoxAppError.authSessionExpired
         }
         return accessToken
+    }
+
+    private func snapshot() -> (String?, String?, Date, UUID) {
+        lock.lock()
+        defer { lock.unlock() }
+        return (accessToken, refreshToken, expiresAt, generation)
+    }
+
+    private func acceptRefresh(_ payload: AuthTokenResponse, generation expected: UUID) throws -> String {
+        lock.lock()
+        defer { lock.unlock() }
+        guard generation == expected, currentUserID == payload.user.id else {
+            throw SafeBoxAppError.authSessionExpired
+        }
+        apply(payload)
+        return payload.accessToken
+    }
+
+    func validToken() async throws -> String {
+        let state = snapshot()
+        guard let token = state.0, let refresh = state.1 else {
+            throw SafeBoxAppError.authSessionExpired
+        }
+        if state.2.timeIntervalSinceNow > 60 { return token }
+        let payload = try await refreshCoordinator.refresh(
+            refreshToken: refresh, supabaseURL: supabaseURL,
+            anonKey: anonKey, urlSession: urlSession
+        )
+        return try acceptRefresh(payload, generation: state.3)
     }
 
     func userID() throws -> String {
@@ -48,13 +106,62 @@ final class SafeBoxSessionStore: @unchecked Sendable {
     }
 }
 
+// A refresh token is rotated by Supabase. Concurrent requests share one exchange.
+private actor SessionRefreshCoordinator {
+    private var pending: (String, UUID, Task<AuthTokenResponse, Error>)?
+
+    func refresh(refreshToken: String, supabaseURL: URL, anonKey: String, urlSession: URLSession) async throws -> AuthTokenResponse {
+        if let pending, pending.0 == refreshToken { return try await pending.2.value }
+        let id = UUID()
+        let task = Task<AuthTokenResponse, Error> {
+            var components = URLComponents(url: supabaseURL.appendingPathComponent("auth/v1/token"), resolvingAgainstBaseURL: false)!
+            components.queryItems = [URLQueryItem(name: "grant_type", value: "refresh_token")]
+            var request = URLRequest(url: components.url!)
+            request.httpMethod = "POST"
+            request.setValue(anonKey, forHTTPHeaderField: "apikey")
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONSerialization.data(withJSONObject: ["refresh_token": refreshToken])
+            let (data, response) = try await urlSession.data(for: request)
+            try HTTPResponseValidator.validate(response: response, data: data)
+            return try JSONDecoder().decode(AuthTokenResponse.self, from: data)
+        }
+        pending = (refreshToken, id, task)
+        do {
+            return try await task.value
+        } catch {
+            if pending?.1 == id { pending = nil }
+            throw error
+        }
+    }
+}
+
+enum SafeBoxHTTP {
+    static let session: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpCookieStorage = nil
+        configuration.httpShouldSetCookies = false
+        configuration.urlCache = nil
+        configuration.timeoutIntervalForRequest = 30
+        configuration.timeoutIntervalForResource = 60
+        return URLSession(configuration: configuration, delegate: SameOriginRedirectDelegate(), delegateQueue: nil)
+    }()
+}
+
+private final class SameOriginRedirectDelegate: NSObject, URLSessionTaskDelegate {
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        // API endpoints must return responses directly, never forward credentials.
+        completionHandler(nil)
+    }
+}
+
 struct SupabasePasswordAuthProvider: AuthSessionProviding {
     let supabaseURL: URL
     let anonKey: String
     let sessionStore: SafeBoxSessionStore
     let urlSession: URLSession
 
-    init(supabaseURL: URL, anonKey: String, sessionStore: SafeBoxSessionStore, urlSession: URLSession = .shared) {
+    init(supabaseURL: URL, anonKey: String, sessionStore: SafeBoxSessionStore, urlSession: URLSession = SafeBoxHTTP.session) {
         self.supabaseURL = supabaseURL
         self.anonKey = anonKey
         self.sessionStore = sessionStore
@@ -62,6 +169,7 @@ struct SupabasePasswordAuthProvider: AuthSessionProviding {
     }
 
     func signIn(email: String, password: String) async throws {
+        let generation = sessionStore.beginSignIn()
         let url = supabaseURL.appendingPathComponent("auth/v1/token")
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         components?.queryItems = [URLQueryItem(name: "grant_type", value: "password")]
@@ -79,15 +187,21 @@ struct SupabasePasswordAuthProvider: AuthSessionProviding {
         let (data, response) = try await urlSession.data(for: request)
         try HTTPResponseValidator.validate(response: response, data: data)
         let payload = try JSONDecoder().decode(AuthTokenResponse.self, from: data)
-        sessionStore.update(
-            accessToken: payload.accessToken,
-            userID: payload.user.id,
-            userMetadata: payload.user.userMetadata ?? [:]
-        )
+        try sessionStore.update(payload, expectedGeneration: generation)
     }
 
     func signOut() async throws {
+        let token = try? sessionStore.token()
         sessionStore.clear()
+        guard let token else { return }
+        var components = URLComponents(url: supabaseURL.appendingPathComponent("auth/v1/logout"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "scope", value: "local")]
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "POST"
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await urlSession.data(for: request)
+        try HTTPResponseValidator.validate(response: response, data: data)
     }
 
     func currentUserID() throws -> String? {
@@ -101,7 +215,7 @@ struct SupabaseUsersKDFProfileProvider: UserKDFProfileProviding {
     let sessionStore: SafeBoxSessionStore
     let urlSession: URLSession
 
-    init(supabaseURL: URL, anonKey: String, sessionStore: SafeBoxSessionStore, urlSession: URLSession = .shared) {
+    init(supabaseURL: URL, anonKey: String, sessionStore: SafeBoxSessionStore, urlSession: URLSession = SafeBoxHTTP.session) {
         self.supabaseURL = supabaseURL
         self.anonKey = anonKey
         self.sessionStore = sessionStore
@@ -121,7 +235,7 @@ struct SupabaseUsersKDFProfileProvider: UserKDFProfileProviding {
 
         var request = URLRequest(url: url)
         request.setValue(anonKey, forHTTPHeaderField: "apikey")
-        request.setValue("Bearer \(try sessionStore.token())", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(try await sessionStore.validToken())", forHTTPHeaderField: "Authorization")
 
         let (data, response) = try await urlSession.data(for: request)
         try HTTPResponseValidator.validate(response: response, data: data)
@@ -154,7 +268,7 @@ struct BackendVaultRemoteStore: VaultRemoteStoring {
     let sessionStore: SafeBoxSessionStore
     let urlSession: URLSession
 
-    init(backendURL: URL, sessionStore: SafeBoxSessionStore, urlSession: URLSession = .shared) {
+    init(backendURL: URL, sessionStore: SafeBoxSessionStore, urlSession: URLSession = SafeBoxHTTP.session) {
         self.backendURL = backendURL
         self.sessionStore = sessionStore
         self.urlSession = urlSession
@@ -193,7 +307,7 @@ struct BackendVaultRemoteStore: VaultRemoteStoring {
     private func request(path: String, method: String, body: Data?) async throws -> Data {
         var request = URLRequest(url: backendURL.appendingPathComponent(path))
         request.httpMethod = method
-        request.setValue("Bearer \(try sessionStore.token())", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(try await sessionStore.validToken())", forHTTPHeaderField: "Authorization")
         if let body {
             request.httpBody = body
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -210,7 +324,7 @@ struct SupabaseDirectVaultReadStore: VaultRemoteStoring {
     let sessionStore: SafeBoxSessionStore
     let urlSession: URLSession
 
-    init(supabaseURL: URL, anonKey: String, sessionStore: SafeBoxSessionStore, urlSession: URLSession = .shared) {
+    init(supabaseURL: URL, anonKey: String, sessionStore: SafeBoxSessionStore, urlSession: URLSession = SafeBoxHTTP.session) {
         self.supabaseURL = supabaseURL
         self.anonKey = anonKey
         self.sessionStore = sessionStore
@@ -275,7 +389,7 @@ struct SupabaseDirectVaultReadStore: VaultRemoteStoring {
         }
         var request = URLRequest(url: url)
         request.setValue(anonKey, forHTTPHeaderField: "apikey")
-        request.setValue("Bearer \(try sessionStore.token())", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(try await sessionStore.validToken())", forHTTPHeaderField: "Authorization")
         let (data, response) = try await urlSession.data(for: request)
         try HTTPResponseValidator.validate(response: response, data: data)
         return data
@@ -288,7 +402,7 @@ struct SupabaseFoldersRemoteStore: VaultRemoteStoring {
     let sessionStore: SafeBoxSessionStore
     let urlSession: URLSession
 
-    init(supabaseURL: URL, anonKey: String, sessionStore: SafeBoxSessionStore, urlSession: URLSession = .shared) {
+    init(supabaseURL: URL, anonKey: String, sessionStore: SafeBoxSessionStore, urlSession: URLSession = SafeBoxHTTP.session) {
         self.supabaseURL = supabaseURL
         self.anonKey = anonKey
         self.sessionStore = sessionStore
@@ -322,7 +436,7 @@ struct SupabaseFoldersRemoteStore: VaultRemoteStoring {
 
         var request = URLRequest(url: url)
         request.setValue(anonKey, forHTTPHeaderField: "apikey")
-        request.setValue("Bearer \(try sessionStore.token())", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(try await sessionStore.validToken())", forHTTPHeaderField: "Authorization")
         let (data, response) = try await urlSession.data(for: request)
         try HTTPResponseValidator.validate(response: response, data: data)
         return try JSONDecoder().decode([FolderRow].self, from: data).map { $0.summary() }
@@ -332,7 +446,7 @@ struct SupabaseFoldersRemoteStore: VaultRemoteStoring {
 enum HTTPResponseValidator {
     static func validate(response: URLResponse, data: Data) throws {
         guard let http = response as? HTTPURLResponse else {
-            return
+            throw SafeBoxAppError.httpRequestFailed(statusCode: 0, code: "INVALID_HTTP_RESPONSE")
         }
         if http.statusCode == 409 {
             throw VaultSyncError.versionConflict
@@ -364,12 +478,16 @@ private struct APIErrorBody: Decodable {
     let code: String?
 }
 
-private struct AuthTokenResponse: Decodable {
+fileprivate struct AuthTokenResponse: Decodable {
     let accessToken: String
+    let refreshToken: String
+    let expiresIn: TimeInterval
     let user: AuthUser
 
     enum CodingKeys: String, CodingKey {
         case accessToken = "access_token"
+        case refreshToken = "refresh_token"
+        case expiresIn = "expires_in"
         case user
     }
 }
