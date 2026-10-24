@@ -35,7 +35,8 @@ O gate estatico nao substitui compilacao, teste conectado ou pentest.
 O usuario informou que existe apenas producao. Pode ser criado outro projeto
 Supabase independente para staging; branches de banco nao sao requisito.
 Nao existe `supabase/migrations` consolidado no repositorio: os SQL legados e
-hardening devem ser inventariados e revisados antes de aplicar no projeto vazio.
+as 14 migrations em `docs/sql/migrations` devem ser inventariados e revisados
+antes de aplicar no projeto vazio. Ver `staging-setup.md`.
 Nao assumir que um projeto novo ja tenha schema, RLS, grants, RPCs, buckets,
 Auth providers, redirects ou configuracao de email iguais aos de producao.
 Comparar estrutura/configuracao, sem clonar usuarios, dados ou secrets.
@@ -96,6 +97,17 @@ Nao registrar como concluidos sem evidencia. Publicar TestFlight somente
 apos gates B/C/D; build unsigned no CI nao e archive distribuivel.
 
 ## Fontes
+
+## Evidencia local desta entrega
+
+- `node scripts/ios-static-gate.mjs`: passou.
+- Parse de sintaxe Swift dos 17 arquivos iniciais do host/testes: passou.
+- `swift test --package-path ios/SafeBoxCore -v` fora do sandbox: 74 testes,
+  1 ignorado (vetor lento opt-in), 0 falhas, Windows Swift 6.3.1.
+- Testes novos do host e builds Apple: verificar workflow iOS no PR; nao
+  confundir os 74 testes do core com execucao dos testes novos de sessao.
+
+## Fontes oficiais
 
 - https://supabase.com/docs/guides/auth/sessions
 - https://supabase.com/docs/reference/javascript/auth-signout
