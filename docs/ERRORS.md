@@ -22,6 +22,12 @@ Quando um erro for resolvido, registre aqui a causa, a correcao e as validacoes 
 
 ## 2026-10-24 - Build iOS: covariant Self no inicializador
 
+Outros erros encontrados no gate Apple: `generic parameter T could not be
+inferred` em CredentialIdentityDonationService e overload invalido de
+`Section("Senha") { ... } footer:` em VaultItemFormView. Correcoes: continuation
+explicitamente `CheckedContinuation<Void, Error>` e header/footer explicitos
+no Section. Sem alteracao de verificacao biometrica nem de criptografia.
+
 Sintoma: CI macOS rejeitou `Self.vaultInactivityTimeout` no inicializador de
 propriedade armazenada de AppCoordinator. Causa: referencia ao Self covariante
 na inicializacao de propriedade de classe. Correcao: nome concreto

@@ -44,11 +44,13 @@ struct VaultItemFormView: View {
                         .autocorrectionDisabled(true)
                 }
 
-                Section("Senha") {
+                Section {
                     SecureField("Senha", text: $draft.password)
                         .textContentType(.password)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
+                } header: {
+                    Text("Senha")
                 } footer: {
                     Text("A senha fica criptografada dentro do cofre antes de sair do aparelho.")
                 }
