@@ -3,6 +3,19 @@
 Este arquivo e o primeiro lugar a consultar antes de corrigir qualquer bug no SafeBox.
 Quando um erro for resolvido, registre aqui a causa, a correcao e as validacoes usadas.
 
+## 2026-10-24 - Backend Vercel READY com FUNCTION_INVOCATION_FAILED
+
+Primeiro deploy no projeto exclusivo de staging compilou, mas `/health`
+retornou 500. Logs mostraram `Cannot find module '@/config/environment'`:
+TypeScript preserva aliases em CommonJS; compilacao nao garante resolucao no
+Node de producao. Imports estaticos dos modulos de runtime foram convertidos
+mecanicamente para caminhos relativos, sem mudar regras de seguranca.
+
+Validacao: type-check, build:api, lint, 93 testes locais, republicacao Node 22 e
+seis testes via HTTPS real passaram. `/health` retornou 200 com banco saudavel.
+Evidencias e ID do deploy em `docs/ios/staging-connected-validation.md`.
+Nenhuma alteracao no banco/app de producao; so o projeto backend de staging.
+
 ## Regra operacional
 
 1. Quando o usuario enviar um erro novo, a primeira acao e ler/pesquisar este arquivo antes de propor ou aplicar correcao.

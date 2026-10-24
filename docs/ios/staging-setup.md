@@ -18,7 +18,7 @@ sem copiar dados de producao.
 
 ## Estrutura
 
-O repositorio tem SQL legados na raiz e 14 migrations de hardening em
+O repositorio tem SQL legados na raiz e 15 migrations de hardening em
 `docs/sql/migrations`. As migrations de hardening nao criam necessariamente
 todas as tabelas de um projeto vazio.
 
@@ -27,7 +27,7 @@ todas as tabelas de um projeto vazio.
 - Os legados incluem `GRANT ALL` e operacoes de recriacao: nao sao um bootstrap
   endurecido pronto para copiar cegamente no SQL Editor.
 - Revisar adicoes de crypto, tipos de credencial e 2FA contra a baseline.
-- Aplicar todas as migrations de hardening 001-014 na ordem, revisando requisitos.
+- Aplicar todas as migrations de hardening 001-015 na ordem, revisando requisitos.
 - Executar `docs/sql/db-security-inventory.sql` e `docs/sql/post-checks.sql`.
 - Comparar tipos, defaults, constraints, policies, grants, views, RPCs e triggers
   com o contrato do backend e do iOS. Ausencia de erro SQL nao comprova paridade.
@@ -40,5 +40,8 @@ Criar apenas contas sinteticas A/B e cofre demo. Validar isolamento REST e API,
 mass assignment, payloads, leitura/escrita web/iOS, 409 e recuperacao de sessao.
 URLs e chaves de producao nao entram em `Local.xcconfig`.
 
-O CI macOS com mocks nao precisa deste projeto. Testes conectados e TestFlight
-continuam bloqueados ate haver staging validado e MFA/AutoFill concluidos.
+O backend dedicado https://safebox-backend-staging.vercel.app passou em seis
+testes HTTP reais conectados ao banco. A configuracao local do iOS aponta para
+essa URL. Testar o app nativo no Mac/iPhone ainda e uma etapa distinta.
+O CI macOS com mocks nao precisa deste projeto. TestFlight continua bloqueado
+ate validar o fluxo nativo e concluir MFA/AutoFill, assinatura e testes fisicos.

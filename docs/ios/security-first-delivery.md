@@ -3,7 +3,9 @@
 Atualizado em 2026-10-24. Status abaixo distingue codigo de validacao executada.
 
 Atualizacao de staging: banco provisionado e 17 testes conectados passaram.
-Detalhes e pendencia de acesso Vercel em `staging-connected-validation.md`.
+Backend HTTPS dedicado publicado e seis testes adicionais via URL publica
+passaram. Configuracao local iOS atualizada; detalhes e limites da verificacao
+em `staging-connected-validation.md`. Fluxo nativo em aparelho ainda pendente.
 
 ## Arquitetura
 
@@ -35,10 +37,10 @@ O gate estatico nao substitui compilacao, teste conectado ou pentest.
 
 ## Gate B: configuracao e teste conectado
 
-O usuario informou que existe apenas producao. Pode ser criado outro projeto
-Supabase independente para staging; branches de banco nao sao requisito.
+Criado Supabase independente `xxynxmktvonnldokhyem` para staging; branches de
+banco nao sao requisito. Backend: https://safebox-backend-staging.vercel.app .
 Nao existe `supabase/migrations` consolidado no repositorio: os SQL legados e
-as 14 migrations em `docs/sql/migrations` devem ser inventariados e revisados
+as 15 migrations em `docs/sql/migrations` devem ser inventariados e revisados
 antes de aplicar no projeto vazio. Ver `staging-setup.md`.
 Nao assumir que um projeto novo ja tenha schema, RLS, grants, RPCs, buckets,
 Auth providers, redirects ou configuracao de email iguais aos de producao.

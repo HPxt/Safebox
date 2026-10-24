@@ -51,20 +51,57 @@ descriptografia do app iOS, MFA, passkeys ou resistencia a AiTM.
 
 ## Pendencias externas e gates de release
 
-A conexao Vercel atual nao tem acesso ao time `pxt77s-projects` (403). Tentativas
-de gerar o link de autorizacao por ID/slug retornaram 404 Team not found.
-Nenhum projeto ou deploy de producao foi alterado. Publicacao do backend
-staging HTTPS requer conexao autorizada para o time correto.
+Backend HTTPS publicado e validado em 2026-10-24:
 
-O backend tem default export Express e config Vercel dedicada em `backend/`.
-Em Vercel o logger usa console, evitando filesystem somente leitura; em hosts
-tradicionais o transporte de arquivos permanece. O deploy ainda nao foi testado.
+- URL: https://safebox-backend-staging.vercel.app
+- Projeto: `safebox-backend-staging`, ID `prj_6CPyc13CuBaCG7S28jWTubBksCem`.
+- Time: `pxt77s-projects`; autenticacao oficial do CLI concluida pelo usuario.
+- Deploy validado: `dpl_7wokRZJRuqYcjXFgCGZJuA6WvNn8`, estado READY.
+- Commit do backend: `1610f5f7`, Node 22, Express, funcao em sfo1.
+- Snapshot apenas de `HEAD:backend`, com package-lock proprio. Nenhum env local
+  enviado; `.vercelignore` exclui envs/logs/dependencias locais.
+- Variaveis somente do staging, cadastradas como secrets via stdin, sem
+  valores em argumentos, historico, chat ou logs. Jobs/email permanecem desligados.
+- O target Vercel `production` significa o alias estavel DESTE projeto de
+  staging. Nao significa o app/banco de producao. Nenhum dos dois foi alterado.
+- A URL estavel responde diretamente, sem precisar de bypass de protecao no app.
+  Nenhum token da Vercel foi incorporado ao iOS.
 
-Criar projeto Vercel separado, rootDirectory=backend, framework=express,
-ambiente ligado somente ao novo Supabase. Configurar variaveis como sensitive,
-nao copiar env de producao. Validar health/auth/CRUD no endpoint HTTPS antes de
-substituir `staging-backend.invalid` no xcconfig. Nao desabilitar ATS.
+O primeiro deploy ficou READY mas falhou em runtime (`Cannot find module
+'@/config/environment'`). Imports do backend foram convertidos mecanicamente
+para relativos; nenhuma regra de autenticacao/RLS/criptografia foi relaxada.
+O segundo deploy passou no health e na suite real HTTPS, sem mocks:
 
+| Verificacao HTTPS | Resultado observado |
+|---|---|
+| GET /health | 200, healthy, database=true |
+| Headers | HSTS max-age=31536000, nosniff, X-Frame-Options DENY |
+| Token ausente / invalido | 401 / 403 |
+| Criar e ler snapshot opaco sintetico | 201 / 200, versao 1 |
+| Outro usuario lendo cofre | 200 com data=null, sem dados alheios |
+| Campo userId extra / hash adulterado | 400 / 400 |
+| Update esperado / retry com versao antiga | 200 versao 2 / 409 |
+| Backup / restore por outro usuario | 201 / 404 |
+
+Comando: `node scripts/staging/run.mjs test-api-https`.
+Seis testes passaram em 12.1s, com criacao e remocao de duas contas sinteticas.
+Regressao apos a correcao: 93 testes locais passaram (17 conectados ignorados
+por padrao), type-check, build:api e lint passaram.
+
+`ios/SafeBoxApp/Config/Local.xcconfig` foi atualizado localmente (ignorado no
+Git) com `SAFEBOX_BACKEND_URL = https:/$()/safebox-backend-staging.vercel.app`.
+ATS continua habilitado. Em outro Mac, preencher essa mesma configuracao local;
+nao levar service_role ao app. Esta entrega valida API HTTPS, nao uma execucao
+do fluxo nativo em iPhone: login/refresh/logout/crypto UI ainda exigem teste Apple.
+
+Publicacao reproduzivel: `scripts/staging/deploy.mjs prepare|refresh|env|deploy`.
+Os modos env/deploy recebem como terceiro argumento o entrypoint `dist/vc.js`
+do CLI oficial instalado (versao usada: 65.2.0). O script confere projeto,
+time e Supabase exatos, e exige backend commitado antes de preparar snapshot.
+Nao conectar automaticamente o projeto de staging ao main de producao.
+
+Redis segue `not_configured`: rate limit em memoria nao e distribuido e nao
+deve ser apresentado como protecao contra carga entre instancias serverless.
 Redis distribuido/rate limit real, MFA no issuer/backend/RLS, AutoFill funcional,
 testes em iPhone fisico e assinatura TestFlight continuam pendentes. Um Advisor
 sem avisos e suites aprovadas nao garantem ausencia de vulnerabilidades.
