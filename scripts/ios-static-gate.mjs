@@ -105,6 +105,16 @@ expectIncludes(
 expectIncludes('.gitguardian.yaml', '.cursor/skills/swift-crypto-parity/test-vectors.json')
 expectIncludes('.gitguardian.yaml', 'ios/SafeBoxCore/Tests/SafeBoxCryptoTests/Fixtures/test-vectors.json')
 
+const personalConfig = 'ios/SafeBoxApp/Config/PersonalStaging.xcconfig'
+expectIncludes(personalConfig, 'SAFEBOX_PERSONAL_STAGING')
+expectIncludes(personalConfig, 'xxynxmktvonnldokhyem.supabase.co')
+expectIncludes(personalConfig, 'safebox-backend-staging.vercel.app')
+expectNotIncludes(personalConfig, '#include')
+expectRegex(personalConfig, /^CODE_SIGN_ENTITLEMENTS =\s*$/m, 'no shared signing entitlements')
+expectNotIncludes('ios/SafeBoxApp/project.personal-staging.yml', 'SafeBoxAutoFillExtension')
+expectIncludes('ios/SafeBoxApp/project.personal-staging.yml', 'app.safebox.ios.personalstaging')
+expectIncludes('ios/SafeBoxApp/Sources/App/RuntimeConfiguration.swift', '#if SAFEBOX_PERSONAL_STAGING')
+
 if (failures.length) {
   console.error('iOS static gate failed:')
   for (const failure of failures) {

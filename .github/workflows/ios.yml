@@ -25,6 +25,8 @@ jobs:
         run: node scripts/ios-static-gate.mjs
       - name: Core crypto and domain tests
         run: swift test --package-path ios/SafeBoxCore
+      - name: Native transport contract and session regression (no staging credentials)
+        run: swift test --package-path ios
       - name: Install project generator
         run: brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
       - name: Generate Xcode project

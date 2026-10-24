@@ -1,17 +1,17 @@
 import express, { type Express } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
-import { config } from '@/config/environment'
-import { testDatabaseConnection } from '@/config/database'
-import { logger } from '@/utils/logger'
-import { fromUnknownError, toClientErrorResponse } from '@/security/errors'
-import { isAllowedCorsOrigin } from '@/security/outboundHttp'
-import { redactObject } from '@/security/redaction'
-import { generalRateLimit } from '@/middleware/rateLimiting.middleware'
-import { advancedSecurityHeaders, sanitizeInput } from '@/middleware/security.middleware'
-import authRoutes from '@/routes/auth.routes'
-import vaultRoutes from '@/routes/vault.routes'
-import settingsRoutes from '@/routes/settings.routes'
+import { config } from './config/environment'
+import { testDatabaseConnection } from './config/database'
+import { logger } from './utils/logger'
+import { fromUnknownError, toClientErrorResponse } from './security/errors'
+import { isAllowedCorsOrigin } from './security/outboundHttp'
+import { redactObject } from './security/redaction'
+import { generalRateLimit } from './middleware/rateLimiting.middleware'
+import { advancedSecurityHeaders, sanitizeInput } from './middleware/security.middleware'
+import authRoutes from './routes/auth.routes'
+import vaultRoutes from './routes/vault.routes'
+import settingsRoutes from './routes/settings.routes'
 
 // Create Express app
 const app: Express = express()
@@ -271,6 +271,7 @@ const startServer = async () => {
 
 // Export for testing
 export { app }
+export default app
 
 // Start server if this file is run directly
 if (require.main === module) {

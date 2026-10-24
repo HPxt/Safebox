@@ -37,6 +37,13 @@ struct RuntimeConfiguration {
         supabaseURL = authURL
         publicKey = key
         backendURL = try endpoint("SafeBoxBackendURL")
+        #if SAFEBOX_PERSONAL_STAGING
+        guard supabaseURL.absoluteString == "https://xxynxmktvonnldokhyem.supabase.co",
+              backendURL.absoluteString == "https://safebox-backend-staging.vercel.app",
+              publicKey == "sb_publishable_4_j0-3MA5vPNhLbAIsuwzw_UA1SjRg3" else {
+            throw ConfigurationError.invalidEnvironment
+        }
+        #endif
     }
 
     enum ConfigurationError: Error { case invalidEnvironment, invalidEndpoint, invalidPublicKey }

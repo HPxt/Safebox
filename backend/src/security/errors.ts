@@ -1,5 +1,5 @@
 import { ZodError } from 'zod'
-import { redactErrorForClient, redactObject } from '@/security/redaction'
+import { redactErrorForClient, redactObject } from './redaction'
 
 export class AppError extends Error {
   statusCode: number

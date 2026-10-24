@@ -117,22 +117,27 @@ final class AppCoordinator: ObservableObject {
 
     /// E7.E: remove grant, índice compartilhado e identidades do QuickType (fail-closed na extensão).
     private func revokeAutoFillExtensionAccess() {
+        #if !SAFEBOX_PERSONAL_STAGING
         try? autoFillSessionStore.deleteState()
         try? autoFillCandidatesStore.clearAll()
         Task { @MainActor in
             try? await credentialDonation.removeAll()
         }
+        #endif
     }
 
     private func refreshAutoFillGrantOnly() throws {
+        #if !SAFEBOX_PERSONAL_STAGING
         guard sessionMachine.state == .unlocked else { return }
         let until = Date().addingTimeInterval(Self.autoFillExtensionGrantTTL)
         try autoFillSessionStore.saveState(
             AutoFillSharedHostSessionState(vaultUnlocked: true, grantExpiresAt: until)
         )
+        #endif
     }
 
     private func republishAutoFillBridge() async throws {
+        #if !SAFEBOX_PERSONAL_STAGING
         let candidates = vaultItems.compactMap { $0.autoFillCredentialCandidate() }
         let until = Date().addingTimeInterval(Self.autoFillExtensionGrantTTL)
         try autoFillSessionStore.saveState(
@@ -143,6 +148,7 @@ final class AppCoordinator: ObservableObject {
             candidates: candidates,
             domain: AutoFillBridgeConstants.associatedDomainLabel
         )
+        #endif
     }
 
     private func republishAutoFillBridgeIgnoringErrors() async {

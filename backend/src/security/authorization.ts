@@ -1,7 +1,7 @@
 import { Request } from 'express'
-import { getPrivilegedSupabase } from '@/config/privilegedDb'
-import { AppError, NotFoundError, UnauthorizedError } from '@/security/errors'
-import type { Database } from '@/types/database'
+import { getPrivilegedSupabase } from '../config/privilegedDb'
+import { AppError, NotFoundError, UnauthorizedError } from './errors'
+import type { Database } from '../types/database'
 
 export interface AuthenticatedRequestUser {
   userId: string

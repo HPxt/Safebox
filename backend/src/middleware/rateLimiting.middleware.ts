@@ -2,9 +2,9 @@ import { Request, Response, NextFunction } from 'express'
 import rateLimit from 'express-rate-limit'
 import slowDown from 'express-slow-down'
 import Redis from 'ioredis'
-import { config } from '@/config/environment'
-import { redactObject } from '@/security/redaction'
-import { logger } from '@/utils/logger'
+import { config } from '../config/environment'
+import { redactObject } from '../security/redaction'
+import { logger } from '../utils/logger'
 
 export const rateLimitErrorBody = (error: string, retryAfter: number) => ({
   success: false,

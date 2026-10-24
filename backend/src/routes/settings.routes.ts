@@ -1,12 +1,12 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import { createSupabaseUserClient } from '@/config/database'
-import { authenticateSupabaseAccessToken } from '@/middleware/auth.middleware'
-import { logPrivilegedAuditEvent } from '@/security/audit'
-import { requireSupabaseAuthenticatedUser } from '@/security/authorization'
-import { ConflictError, NotFoundError } from '@/security/errors'
-import { asyncHandler, sendSuccess } from '@/security/http'
-import { parseIntegerQuery, validateWithSchema } from '@/security/validation'
+import { createSupabaseUserClient } from '../config/database'
+import { authenticateSupabaseAccessToken } from '../middleware/auth.middleware'
+import { logPrivilegedAuditEvent } from '../security/audit'
+import { requireSupabaseAuthenticatedUser } from '../security/authorization'
+import { ConflictError, NotFoundError } from '../security/errors'
+import { asyncHandler, sendSuccess } from '../security/http'
+import { parseIntegerQuery, validateWithSchema } from '../security/validation'
 
 const router: Router = Router()
 

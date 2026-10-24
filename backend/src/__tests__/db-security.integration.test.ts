@@ -30,6 +30,10 @@ const requireIntegrationEnv = (): IntegrationEnv => {
   const refreshA = process.env['SUPABASE_REFRESH_TOKEN_USER_A'] ?? ''
   const refreshB = process.env['SUPABASE_REFRESH_TOKEN_USER_B'] ?? ''
   const serviceRoleKey = process.env['SUPABASE_SERVICE_ROLE_KEY'] ?? ''
+  const stagingRef = process.env['APPSEC_STAGING_PROJECT_REF']
+  if (stagingRef !== 'xxynxmktvonnldokhyem' || url !== `https://${stagingRef}.supabase.co`) {
+    throw new Error('Database security tests require the explicitly authorized staging project')
+  }
 
   if (!url || !anonKey || (!(refreshA && refreshB) && !serviceRoleKey)) {
     throw new Error(

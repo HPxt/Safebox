@@ -1,0 +1,7 @@
+// Public staging values only. Deliberately does not include Local.xcconfig.
+SAFEBOX_ENVIRONMENT = staging
+SAFEBOX_SUPABASE_URL = https:/$()/xxynxmktvonnldokhyem.supabase.co
+SAFEBOX_PUBLISHABLE_KEY = sb_publishable_4_j0-3MA5vPNhLbAIsuwzw_UA1SjRg3
+SAFEBOX_BACKEND_URL = https:/$()/safebox-backend-staging.vercel.app
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) SAFEBOX_PERSONAL_STAGING
+CODE_SIGN_ENTITLEMENTS =

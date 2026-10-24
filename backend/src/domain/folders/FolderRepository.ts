@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { Database } from '@/types/database'
+import { Database } from '../../types/database'
 
 type ScopedClient = SupabaseClient<Database>
 

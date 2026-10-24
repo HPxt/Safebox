@@ -1,6 +1,6 @@
 import crypto from 'crypto'
-import { config } from '@/config/environment'
-import { ValidationError } from '@/security/errors'
+import { config } from '../config/environment'
+import { ValidationError } from './errors'
 
 const TWO_FACTOR_PREFIX = 'ENCv1'
 const TOTP_PERIOD_SECONDS = 30

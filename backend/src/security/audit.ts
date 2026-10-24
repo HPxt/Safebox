@@ -1,7 +1,7 @@
-import { privilegedRpcLogAuditEvent } from '@/config/privilegedDb'
-import { redactObject } from '@/security/redaction'
-import type { Json } from '@/types/database'
-import { logger } from '@/utils/logger'
+import { privilegedRpcLogAuditEvent } from '../config/privilegedDb'
+import { redactObject } from './redaction'
+import type { Json } from '../types/database'
+import { logger } from '../utils/logger'
 
 type AuditPayload = {
   userId: string

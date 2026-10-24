@@ -1,8 +1,8 @@
 import winston from 'winston'
 import path from 'path'
-import { privilegedRpcLogAuditEvent } from '@/config/privilegedDb'
-import { redactObject } from '@/security/redaction'
-import type { Json } from '@/types/database'
+import { privilegedRpcLogAuditEvent } from '../config/privilegedDb'
+import { redactObject } from '../security/redaction'
+import type { Json } from '../types/database'
 
 // Custom log levels
 const levels = {
@@ -51,7 +51,7 @@ const loggerConfig: winston.LoggerOptions = {
 }
 
 // Add file transport in production
-if (process.env['NODE_ENV'] === 'production') {
+if (process.env['NODE_ENV'] === 'production' && !process.env['VERCEL']) {
   const logDir = path.dirname(process.env['LOG_FILE'] || 'logs/safebox.log')
   
   const fileTransports = [

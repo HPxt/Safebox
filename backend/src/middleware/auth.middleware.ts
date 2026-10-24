@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
-import { authService } from '@/services/auth.service'
-import { createSupabaseAuthClient } from '@/config/database'
-import { ForbiddenError, UnauthorizedError } from '@/security/errors'
-import { logger } from '@/utils/logger'
+import { authService } from '../services/auth.service'
+import { createSupabaseAuthClient } from '../config/database'
+import { ForbiddenError, UnauthorizedError } from '../security/errors'
+import { logger } from '../utils/logger'
 
 // Extend Request interface to include user
 declare global {

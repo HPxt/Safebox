@@ -18,6 +18,8 @@
 **/.build/
 
 # misc
+/.staging-work/
+/scripts/ios/__pycache__/
 ios/SafeBoxApp/Config/Local.xcconfig
 ios/SafeBoxApp/*.xcodeproj/
 **/DerivedData/

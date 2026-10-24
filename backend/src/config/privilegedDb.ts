@@ -4,8 +4,8 @@
  * Prefer createSupabaseUserClient(accessToken) for all tenant data.
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Database, Json } from '@/types/database'
-import { config } from '@/config/environment'
+import type { Database, Json } from '../types/database'
+import { config } from './environment'
 
 let privilegedClient: SupabaseClient<Database> | null = null
 

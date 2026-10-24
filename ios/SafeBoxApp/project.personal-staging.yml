@@ -1,0 +1,50 @@
+name: SafeBoxPersonalStaging
+options:
+  bundleIdPrefix: app.safebox
+  deploymentTarget:
+    iOS: "16.0"
+packages:
+  SafeBoxCore:
+    path: ../SafeBoxCore
+schemes:
+  SafeBoxPersonalStaging:
+    build:
+      targets:
+        SafeBoxPersonalStaging: all
+    test:
+      targets:
+        - SafeBoxPersonalStagingTests
+targets:
+  SafeBoxPersonalStaging:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources
+        excludes: [Support]
+      - path: Sources/Support/PrivacyInfo.xcprivacy
+    dependencies:
+      - package: SafeBoxCore
+        product: SafeBoxCrypto
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.safebox.ios.personalstaging
+        INFOPLIST_FILE: PersonalStaging/Info.plist
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 1
+        TARGETED_DEVICE_FAMILY: 1
+        SWIFT_VERSION: "5.0"
+    configFiles:
+      Debug: Config/PersonalStaging.xcconfig
+      Release: Config/PersonalStaging.xcconfig
+  SafeBoxPersonalStagingTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - PersonalStagingTests
+    dependencies:
+      - target: SafeBoxPersonalStaging
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"

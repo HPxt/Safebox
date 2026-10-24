@@ -1,5 +1,9 @@
 import XCTest
+#if canImport(SafeBoxApp)
 @testable import SafeBoxApp
+#else
+@testable import SafeBoxNativeAdapters
+#endif
 
 final class ConfigurationSecurityTests: XCTestCase {
     private var valid: [String: Any] { [

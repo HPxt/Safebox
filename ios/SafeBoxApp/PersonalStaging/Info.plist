@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleName</key><string>$(PRODUCT_NAME)</string>
+    <key>CFBundleDisplayName</key><string>SafeBox Staging</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>SafeBoxEnvironment</key><string>$(SAFEBOX_ENVIRONMENT)</string>
+    <key>SafeBoxSupabaseURL</key><string>$(SAFEBOX_SUPABASE_URL)</string>
+    <key>SafeBoxPublishableKey</key><string>$(SAFEBOX_PUBLISHABLE_KEY)</string>
+    <key>SafeBoxBackendURL</key><string>$(SAFEBOX_BACKEND_URL)</string>
+    <key>SafeBoxPersonalStaging</key><true/>
+    <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
+    <key>UIRequiredDeviceCapabilities</key><array><string>arm64</string></array>
+    <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string></array>
+    <key>NSFaceIDUsageDescription</key><string>O SafeBox usa Face ID ou Touch ID para desbloquear seu cofre com seguranca.</string>
+    <key>NSAppTransportSecurity</key><dict><key>NSAllowsArbitraryLoads</key><false/></dict>
+    <key>ITSAppUsesNonExemptEncryption</key><true/>
+</dict>
+</plist>

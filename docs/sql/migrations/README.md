@@ -24,6 +24,21 @@ Aplicar **na ordem numérica** no SQL Editor do Supabase (ou via pipeline de mig
 
 ## Testes multi-tenant (staging)
 
+Staging dedicado ja provisionado: `xxynxmktvonnldokhyem`.
+As migrations 009-014 complementam ownership, limites e URLs limpas; a 015
+fixa search_path dos helpers de URL e revoga RPC da funcao interna de auto-RLS.
+Aplicar a 015 em producao exige uma entrega separada; nesta fase so staging.
+
+Com a configuracao local ignorada gerada pelo CLI autenticado:
+
+```bash
+node scripts/staging/run.mjs test-db
+node scripts/staging/run.mjs test-api
+```
+
+O wrapper impede qualquer alvo diferente do staging autorizado. A execucao
+direta da suite tambem exige `APPSEC_STAGING_PROJECT_REF=xxynxmktvonnldokhyem`.
+
 Com credenciais de **dois** utilizadores no mesmo projeto Supabase, correr a suite opcional no backend:
 
 ```bash
@@ -35,6 +50,6 @@ set SUPABASE_REFRESH_TOKEN_USER_B=...
 cd backend && npm run test:db-security-integration
 ```
 
-(Ver `src/__tests__/db-security.integration.test.ts` — placeholder até tokens estarem configurados.)
+(Ver `src/__tests__/db-security.integration.test.ts` e o wrapper staging acima.)
 
 Validar em **staging** antes de produção.

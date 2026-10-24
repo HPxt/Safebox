@@ -3,6 +3,30 @@
 Este arquivo e o primeiro lugar a consultar antes de corrigir qualquer bug no SafeBox.
 Quando um erro for resolvido, registre aqui a causa, a correcao e as validacoes usadas.
 
+## 2026-10-24 - Swift nao desbloqueia perfil KDF legado sem level
+
+Teste real conectado autenticou no Supabase staging, mas falhou ao ler
+`users.kdf_params`: `Key 'level' not found`. O contrato da web/backend nao
+exige esse rotulo. O decoder Swift agora reconhece apenas o tuple exato
+Argon2id/65536 KiB/3 iteracoes/4 lanes/32 bytes sem label como LOW.
+Nenhum parametro criptografico e alterado; perfis desconhecidos continuam
+rejeitados. Cobertura: quatro testes de compatibilidade, 78 testes do core
+(1 ignorado), 12 de sessao/config e fluxo conectado Swift/WebCrypto aprovado.
+Ver `docs/ios/native-flow-validation.md`. Nenhuma alteracao em producao.
+
+## 2026-10-24 - Backend Vercel READY com FUNCTION_INVOCATION_FAILED
+
+Primeiro deploy no projeto exclusivo de staging compilou, mas `/health`
+retornou 500. Logs mostraram `Cannot find module '@/config/environment'`:
+TypeScript preserva aliases em CommonJS; compilacao nao garante resolucao no
+Node de producao. Imports estaticos dos modulos de runtime foram convertidos
+mecanicamente para caminhos relativos, sem mudar regras de seguranca.
+
+Validacao: type-check, build:api, lint, 93 testes locais, republicacao Node 22 e
+seis testes via HTTPS real passaram. `/health` retornou 200 com banco saudavel.
+Evidencias e ID do deploy em `docs/ios/staging-connected-validation.md`.
+Nenhuma alteracao no banco/app de producao; so o projeto backend de staging.
+
 ## Regra operacional
 
 1. Quando o usuario enviar um erro novo, a primeira acao e ler/pesquisar este arquivo antes de propor ou aplicar correcao.
@@ -19,6 +43,16 @@ Quando um erro for resolvido, registre aqui a causa, a correcao e as validacoes 
    - validacoes executadas;
    - riscos ou pendencias restantes.
 4. Nao reabrir fallback inseguro sem registrar explicitamente o motivo e o limite da excecao.
+
+## 2026-10-24 - Validacao conectada do staging
+
+API integrada encontrava `Unexpected token export` ao importar uuid (ESM) pelo
+Jest CommonJS. AuthService ja importava crypto; a geracao UUID v4 de sessao
+passou a usar `crypto.randomUUID()` nativo, sem alterar formato/entropia e sem
+mockar autenticacao ou banco. O staging recebeu as migrations 001-015; a 015
+fixa search_path dos helpers de URL e revoga acesso a rls_auto_enable().
+Credenciais de staging ficam somente em arquivos locais ignorados. Validacoes
+e riscos restantes constam no relatorio conectado de staging.
 
 ## 2026-10-24 - Build iOS: covariant Self no inicializador
 

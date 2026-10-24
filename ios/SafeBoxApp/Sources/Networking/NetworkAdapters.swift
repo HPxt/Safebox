@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import SafeBoxCrypto
 
 final class SafeBoxSessionStore: @unchecked Sendable {
@@ -13,11 +16,14 @@ final class SafeBoxSessionStore: @unchecked Sendable {
     private let supabaseURL: URL
     private let anonKey: String
     private let urlSession: URLSession
+    private let now: @Sendable () -> Date
 
-    init(supabaseURL: URL, anonKey: String, urlSession: URLSession = SafeBoxHTTP.session) {
+    init(supabaseURL: URL, anonKey: String, urlSession: URLSession = SafeBoxHTTP.session,
+         now: @escaping @Sendable () -> Date = { Date() }) {
         self.supabaseURL = supabaseURL
         self.anonKey = anonKey
         self.urlSession = urlSession
+        self.now = now
     }
 
     fileprivate func beginSignIn() -> UUID {
@@ -38,7 +44,7 @@ final class SafeBoxSessionStore: @unchecked Sendable {
     private func apply(_ payload: AuthTokenResponse) {
         accessToken = payload.accessToken
         refreshToken = payload.refreshToken
-        expiresAt = Date().addingTimeInterval(payload.expiresIn)
+        expiresAt = now().addingTimeInterval(payload.expiresIn)
         currentUserID = payload.user.id
         userMetadata = payload.user.userMetadata ?? [:]
     }
@@ -61,7 +67,7 @@ final class SafeBoxSessionStore: @unchecked Sendable {
     func token() throws -> String {
         lock.lock()
         defer { lock.unlock() }
-        guard let accessToken, expiresAt > Date() else {
+        guard let accessToken, expiresAt > now() else {
             throw SafeBoxAppError.authSessionExpired
         }
         return accessToken
@@ -88,7 +94,7 @@ final class SafeBoxSessionStore: @unchecked Sendable {
         guard let token = state.0, let refresh = state.1 else {
             throw SafeBoxAppError.authSessionExpired
         }
-        if state.2.timeIntervalSinceNow > 60 { return token }
+        if state.2.timeIntervalSince(now()) > 60 { return token }
         let payload = try await refreshCoordinator.refresh(
             refreshToken: refresh, supabaseURL: supabaseURL,
             anonKey: anonKey, urlSession: urlSession
