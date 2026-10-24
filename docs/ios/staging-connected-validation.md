@@ -3,6 +3,10 @@
 Data: 2026-10-24. Projeto exclusivo `xxynxmktvonnldokhyem` (SafeBox Staging).
 Nenhuma consulta SQL ou teste ofensivo foi direcionado a producao.
 
+Fluxo Swift real de login/unlock/sync/refresh/logout e roundtrip WebCrypto
+executado depois desta etapa: ver `native-flow-validation.md`, incluindo
+incompatibilidade KDF encontrada/corrigida e limites da execucao Windows.
+
 ## Provisionamento executado
 
 - Confirmado projeto vazio pelo CLI autenticado, antes de qualquer DDL.

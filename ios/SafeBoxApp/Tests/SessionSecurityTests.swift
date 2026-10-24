@@ -1,5 +1,12 @@
 import XCTest
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+#if canImport(SafeBoxApp)
 @testable import SafeBoxApp
+#else
+@testable import SafeBoxNativeAdapters
+#endif
 
 final class SessionSecurityTests: XCTestCase {
     private let endpoint = URL(string: "https://test.supabase.co")!

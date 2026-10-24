@@ -8,6 +8,32 @@ public struct KDFParams: Codable, Sendable, Equatable {
     public let parallelism: Int
     public let hashLength: Int
 
+    private enum CodingKeys: String, CodingKey {
+        case algorithm, level, memorySize, iterations, parallelism, hashLength
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let algorithm = try container.decode(String.self, forKey: .algorithm)
+        let memorySize = try container.decode(Int.self, forKey: .memorySize)
+        let iterations = try container.decode(Int.self, forKey: .iterations)
+        let parallelism = try container.decode(Int.self, forKey: .parallelism)
+        let hashLength = try container.decode(Int.self, forKey: .hashLength)
+        let level: String
+        if container.contains(.level) {
+            level = try container.decode(String.self, forKey: .level)
+        } else if algorithm == "argon2id", memorySize == 65536, iterations == 3,
+                  parallelism == 4, hashLength == 32 {
+            // Legacy web profiles omit this label; preserve their exact KDF cost.
+            level = "LOW"
+        } else {
+            throw DecodingError.dataCorruptedError(forKey: .level, in: container,
+                debugDescription: "Unlabelled KDF parameters do not match the legacy web profile")
+        }
+        self.init(algorithm: algorithm, level: level, memorySize: memorySize,
+                  iterations: iterations, parallelism: parallelism, hashLength: hashLength)
+    }
+
     public init(
         algorithm: String,
         level: String,

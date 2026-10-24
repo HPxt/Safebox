@@ -3,6 +3,17 @@
 Este arquivo e o primeiro lugar a consultar antes de corrigir qualquer bug no SafeBox.
 Quando um erro for resolvido, registre aqui a causa, a correcao e as validacoes usadas.
 
+## 2026-10-24 - Swift nao desbloqueia perfil KDF legado sem level
+
+Teste real conectado autenticou no Supabase staging, mas falhou ao ler
+`users.kdf_params`: `Key 'level' not found`. O contrato da web/backend nao
+exige esse rotulo. O decoder Swift agora reconhece apenas o tuple exato
+Argon2id/65536 KiB/3 iteracoes/4 lanes/32 bytes sem label como LOW.
+Nenhum parametro criptografico e alterado; perfis desconhecidos continuam
+rejeitados. Cobertura: quatro testes de compatibilidade, 78 testes do core
+(1 ignorado), 12 de sessao/config e fluxo conectado Swift/WebCrypto aprovado.
+Ver `docs/ios/native-flow-validation.md`. Nenhuma alteracao em producao.
+
 ## 2026-10-24 - Backend Vercel READY com FUNCTION_INVOCATION_FAILED
 
 Primeiro deploy no projeto exclusivo de staging compilou, mas `/health`
