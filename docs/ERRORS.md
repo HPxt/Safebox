@@ -22,6 +22,11 @@ Quando um erro for resolvido, registre aqui a causa, a correcao e as validacoes 
 
 ## 2026-10-24 - Build iOS: covariant Self no inicializador
 
+Instalacao no simulador: a extensao tambem precisava de `CFBundleDisplayName`
+nao vazio. Debug/Release compilavam, mas o instalador recusava o bundle.
+Adicionado `SafeBox AutoFill` ao Info.plist da extensao. O gate inclui teste
+no simulador precisamente para detectar erros de empacotamento deste tipo.
+
 Outros erros encontrados no gate Apple: `generic parameter T could not be
 inferred` em CredentialIdentityDonationService e overload invalido de
 `Section("Senha") { ... } footer:` em VaultItemFormView. Correcoes: continuation
