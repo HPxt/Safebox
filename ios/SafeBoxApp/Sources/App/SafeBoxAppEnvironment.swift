@@ -13,6 +13,15 @@ struct SafeBoxAppEnvironment: Sendable {
     let vaultStore: any VaultRemoteStoring
     let kdfPipeline: KDFPipeline
 
+    static func configured(bundle: Bundle = .main) -> SafeBoxAppEnvironment {
+        guard let configuration = try? RuntimeConfiguration(values: bundle.infoDictionary ?? [:]) else {
+            return .unconfigured
+        }
+        return production(supabaseURL: configuration.supabaseURL,
+                          supabaseAnonKey: configuration.publicKey,
+                          backendURL: configuration.backendURL)
+    }
+
     static var unconfigured: SafeBoxAppEnvironment {
         let auth = UnconfiguredAuthSessionProvider()
         let profile = FallbackUserKDFProfileProvider(providers: [UnconfiguredKDFProfileProvider()])
@@ -26,7 +35,7 @@ struct SafeBoxAppEnvironment: Sendable {
     }
 
     static func production(supabaseURL: URL, supabaseAnonKey: String, backendURL: URL) -> SafeBoxAppEnvironment {
-        let sessionStore = SafeBoxSessionStore()
+        let sessionStore = SafeBoxSessionStore(supabaseURL: supabaseURL, anonKey: supabaseAnonKey)
         let auth = SupabasePasswordAuthProvider(
             supabaseURL: supabaseURL,
             anonKey: supabaseAnonKey,

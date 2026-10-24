@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct SafeBoxApp: App {
-    @StateObject private var coordinator = AppCoordinator(environment: .unconfigured)
+    @StateObject private var coordinator = AppCoordinator(environment: .configured())
 
     var body: some Scene {
         WindowGroup {

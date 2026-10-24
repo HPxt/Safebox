@@ -10,16 +10,22 @@ xcodegen generate
 open SafeBox.xcodeproj
 ```
 
-Current scope:
+Current scope (2026-10-24):
 
 - native SwiftUI login, unlock, vault list and settings screens;
 - coordinator wired to `SafeBoxCore` E5 services;
-- production adapter protocols/placeholders for auth, KDF profile and vault sync;
+- HTTP adapters for Supabase auth/session rotation, KDF profile and vault sync;
+- staging-only runtime configuration with HTTPS/public-key validation;
+- XCTest session/configuration security tests and macOS CI;
 - App Store baseline files: Info.plist, entitlements and Privacy Manifest.
 
 Still required before TestFlight:
 
-- implement real Supabase auth/session adapter;
-- inject production backend/Supabase URLs and tokens from secure configuration;
+- provision a separate staging Supabase project and backend, using synthetic data;
+- populate ignored `Config/Local.xcconfig` (see `docs/ios/security-first-delivery.md`);
+- pass the macOS CI builds and XCTest suite;
+- complete issuer/backend/RLS MFA enforcement;
 - run on a real iPhone with Face ID/Touch ID;
-- add AutoFill extension target.
+- complete the AutoFill selection UI and protected secret resolver (target already exists).
+
+No signed archive, real-device validation or TestFlight upload is claimed by source checks.

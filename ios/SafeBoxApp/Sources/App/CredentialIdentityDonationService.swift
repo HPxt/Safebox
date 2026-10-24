@@ -23,7 +23,7 @@ struct CredentialIdentityDonationService: CredentialIdentityDonating {
                 recordIdentifier: candidate.id
             )
         }
-        try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             ASCredentialIdentityStore.shared.saveCredentialIdentities(identities) { success, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -47,7 +47,7 @@ struct CredentialIdentityDonationService: CredentialIdentityDonating {
 
     func removeAll() async throws {
         #if canImport(AuthenticationServices)
-        try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             ASCredentialIdentityStore.shared.removeAllCredentialIdentities { success, error in
                 if let error {
                     continuation.resume(throwing: error)

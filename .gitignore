@@ -18,6 +18,11 @@
 **/.build/
 
 # misc
+ios/SafeBoxApp/Config/Local.xcconfig
+ios/SafeBoxApp/*.xcodeproj/
+**/DerivedData/
+**/*.xcarchive/
+**/*.ipa
 .DS_Store
 .env
 .env.local
