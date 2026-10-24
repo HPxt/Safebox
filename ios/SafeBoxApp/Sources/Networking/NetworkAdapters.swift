@@ -21,8 +21,10 @@ final class SafeBoxSessionStore: @unchecked Sendable {
     }
 
     fileprivate func beginSignIn() -> UUID {
-        clear()
-        return snapshot().3
+        lock.lock()
+        defer { lock.unlock() }
+        clearLocked()
+        return generation
     }
 
     fileprivate func update(_ payload: AuthTokenResponse, expectedGeneration: UUID) throws {
@@ -43,13 +45,17 @@ final class SafeBoxSessionStore: @unchecked Sendable {
 
     func clear() {
         lock.lock()
+        defer { lock.unlock() }
+        clearLocked()
+    }
+
+    private func clearLocked() {
         accessToken = nil
         currentUserID = nil
         userMetadata = [:]
         refreshToken = nil
         expiresAt = .distantPast
         generation = UUID()
-        lock.unlock()
     }
 
     func token() throws -> String {
