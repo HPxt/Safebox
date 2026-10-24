@@ -61,8 +61,14 @@ foi executado e aprovado explicitamente na segunda invocacao.
 Regressao Windows: core executou 78 testes, 1 ignorado opt-in, 0 falhas;
 12 testes de sessao/configuracao do host passaram. Estes 12 usam stubs de
 HTTP para cenarios de corrida/erros e NAO sao os casos reais conectados acima.
-Gate estatico iOS passou. Compilacao Apple destas alteracoes deve ser
-confirmada no workflow iOS do PR antes do merge.
+Gate estatico iOS passou. Confirmacao Apple do commit `7a793d09`:
+[iOS Security and Build, run 40108858230](https://github.com/HPxt/Safebox/actions/runs/40108858230)
+terminou com success. Core: 78 testes, 1 ignorado, 0 falhas. Pacote de adapters:
+12 testes unitarios passaram, 2 conectados ignorados deliberadamente (CI sem
+credenciais). Builds unsigned Debug e Release do app/extensao passaram.
+Simulador iOS: 12 testes do host passaram, `TEST SUCCEEDED`; xcresult publicado
+como artifact. Quality Gate e workflow de preview Vercel tambem passaram.
+Estes testes de simulador nao acessam staging e nao sao testes de UI/Face ID.
 
 ## Reproduzir
 
