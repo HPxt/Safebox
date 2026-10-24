@@ -1,6 +1,6 @@
-import { getPrivilegedSupabase } from '@/config/privilegedDb'
-import { Vault, VaultInsert, VaultBackup } from '@/types/database'
-import { logger, logAuditEvent } from '@/utils/logger'
+import { getPrivilegedSupabase } from '../config/privilegedDb'
+import { Vault, VaultInsert, VaultBackup } from '../types/database'
+import { logger, logAuditEvent } from '../utils/logger'
 import crypto from 'crypto'
 
 /**

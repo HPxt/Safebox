@@ -1,8 +1,8 @@
 import winston from 'winston'
 import path from 'path'
-import { privilegedRpcLogAuditEvent } from '@/config/privilegedDb'
-import { redactObject } from '@/security/redaction'
-import type { Json } from '@/types/database'
+import { privilegedRpcLogAuditEvent } from '../config/privilegedDb'
+import { redactObject } from '../security/redaction'
+import type { Json } from '../types/database'
 
 // Custom log levels
 const levels = {

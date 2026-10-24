@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { Database, Json } from '@/types/database'
-import { ConflictError, ValidationError } from '@/security/errors'
+import { Database, Json } from '../../types/database'
+import { ConflictError, ValidationError } from '../../security/errors'
 import { NormalizedVault } from './types'
 
 type ScopedClient = SupabaseClient<Database>

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import crypto from 'crypto'
-import { logSecurityEvent } from '@/utils/logger'
-import { config } from '@/config/environment'
+import { logSecurityEvent } from '../utils/logger'
+import { config } from '../config/environment'
 
 interface SecurityConfig {
   maxFailedLogins: number

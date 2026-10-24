@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
-import { Database } from '@/types/database'
+import { Database } from '../types/database'
 import { config } from './environment'
-import { getPrivilegedSupabase } from '@/config/privilegedDb'
-import { logger } from '@/utils/logger'
-import { AppError } from '@/security/errors'
+import { getPrivilegedSupabase } from './privilegedDb'
+import { logger } from '../utils/logger'
+import { AppError } from '../security/errors'
 
 /** @deprecated Prefer getPrivilegedSupabase() or createSupabaseUserClient — service_role bypasses RLS */
 export const supabase = getPrivilegedSupabase()

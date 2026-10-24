@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
-import { ExternalServiceError, ForbiddenError } from '@/security/errors'
+import { ExternalServiceError, ForbiddenError } from './errors'
 
 const DEFAULT_HTTP_TIMEOUT_MS = 10_000
 const DEFAULT_MAX_RETRIES = 2

@@ -1,5 +1,5 @@
 import { ZodType } from 'zod'
-import { ValidationError } from '@/security/errors'
+import { ValidationError } from './errors'
 
 export const validateWithSchema = <T>(schema: ZodType<T>, input: unknown): T => {
   const result = schema.safeParse(input)

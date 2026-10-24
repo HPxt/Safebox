@@ -22,6 +22,7 @@ suite('Real backend and Supabase staging contract (no database mocks)', () => {
     if (token) headers['Authorization'] = `Bearer ${token}`
     const response = await fetch(`${baseURL}${route}`, {
       method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      redirect: 'error', signal: AbortSignal.timeout(30000),
     })
     const payload = await response.json() as any
     expect(response.status).toBe(status)
@@ -34,10 +35,16 @@ suite('Real backend and Supabase staging contract (no database mocks)', () => {
     admin = createClient(url, process.env['SUPABASE_SERVICE_ROLE_KEY']!, {
       auth: { persistSession: false, autoRefreshToken: false },
     })
-    app = (await import('../index')).app
-    server = http.createServer(app)
-    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-    baseURL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
+    const remote = process.env['STAGING_API_BASE_URL']
+    if (remote) {
+      if (remote !== 'https://safebox-backend-staging.vercel.app') throw new Error('Unexpected staging API origin')
+      baseURL = remote
+    } else {
+      app = (await import('../index')).app
+      server = http.createServer(app)
+      await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+      baseURL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
+    }
     for (const name of ['a', 'b']) {
       const email = `api-${name}-${randomUUID()}@example.test`
       const password = `Synthetic-${randomUUID()}!Aa1`

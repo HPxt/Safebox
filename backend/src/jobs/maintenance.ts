@@ -1,6 +1,6 @@
-import { privilegedMaintenanceRpc } from '@/config/privilegedDb'
-import { config } from '@/config/environment'
-import { logger } from '@/utils/logger'
+import { privilegedMaintenanceRpc } from '../config/privilegedDb'
+import { config } from '../config/environment'
+import { logger } from '../utils/logger'
 
 type MaintenanceTask = {
   name: string

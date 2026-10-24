@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import type { SignOptions } from 'jsonwebtoken'
-import { createSupabaseAuthClient, createSupabaseUserClient } from '@/config/database'
+import { createSupabaseAuthClient, createSupabaseUserClient } from '../config/database'
 import {
   getPrivilegedSupabase,
   privilegedRpcUpdateUserLastLogin,
@@ -9,19 +9,19 @@ import {
   privilegedUserSessionsListActiveIds,
   privilegedUserSessionsSelectActive,
   privilegedUserSessionsUpdate,
-} from '@/config/privilegedDb'
-import { config } from '@/config/environment'
+} from '../config/privilegedDb'
+import { config } from '../config/environment'
 import {
   AppError,
   ConflictError,
   NotFoundError,
   UnauthorizedError,
   ValidationError,
-} from '@/security/errors'
-import { validatePasswordStrength, recordFailedLogin, clearFailedLogins } from '@/middleware/security.middleware'
-import type { Database } from '@/types/database'
-import { AuthUser, UserUpdate } from '@/types/database'
-import { logger, logAuditEvent } from '@/utils/logger'
+} from '../security/errors'
+import { validatePasswordStrength, recordFailedLogin, clearFailedLogins } from '../middleware/security.middleware'
+import type { Database } from '../types/database'
+import { AuthUser, UserUpdate } from '../types/database'
+import { logger, logAuditEvent } from '../utils/logger'
 
 type TokenPayload = {
   userId: string

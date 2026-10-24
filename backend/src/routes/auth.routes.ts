@@ -1,30 +1,30 @@
 import { Router } from 'express'
 import crypto from 'crypto'
 import { z } from 'zod'
-import { config } from '@/config/environment'
-import { createSupabaseUserClient } from '@/config/database'
-import { getPrivilegedSupabase } from '@/config/privilegedDb'
-import { authService } from '@/services/auth.service'
-import type { Database } from '@/types/database'
-import { authenticateSupabaseAccessToken } from '@/middleware/auth.middleware'
+import { config } from '../config/environment'
+import { createSupabaseUserClient } from '../config/database'
+import { getPrivilegedSupabase } from '../config/privilegedDb'
+import { authService } from '../services/auth.service'
+import type { Database } from '../types/database'
+import { authenticateSupabaseAccessToken } from '../middleware/auth.middleware'
 import {
   loginRateLimit,
   passwordChangeRateLimit,
   registerRateLimit,
   suspiciousActivityDetector,
   twoFactorVerifyRateLimit,
-} from '@/middleware/rateLimiting.middleware'
-import { bruteForcePrevention } from '@/middleware/security.middleware'
-import { requireSupabaseAuthenticatedUser } from '@/security/authorization'
-import { AppError, NotFoundError, UnauthorizedError, ValidationError } from '@/security/errors'
-import { asyncHandler, sendSuccess } from '@/security/http'
-import { validateWithSchema } from '@/security/validation'
-import { toCleanPublicUrl } from '@/security/urlSafety'
+} from '../middleware/rateLimiting.middleware'
+import { bruteForcePrevention } from '../middleware/security.middleware'
+import { requireSupabaseAuthenticatedUser } from '../security/authorization'
+import { AppError, NotFoundError, UnauthorizedError, ValidationError } from '../security/errors'
+import { asyncHandler, sendSuccess } from '../security/http'
+import { validateWithSchema } from '../security/validation'
+import { toCleanPublicUrl } from '../security/urlSafety'
 import {
   decryptTwoFactorSecret,
   encryptTwoFactorSecret,
   verifyTwoFactorToken,
-} from '@/security/twoFactor'
+} from '../security/twoFactor'
 
 const router: Router = Router()
 

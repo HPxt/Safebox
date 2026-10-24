@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { Database } from '@/types/database'
-import { NotFoundError } from '@/security/errors'
+import { Database } from '../../types/database'
+import { NotFoundError } from '../../security/errors'
 import { NormalizedVault, VaultBackupSummary } from './types'
 
 type ScopedClient = SupabaseClient<Database>

@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { ConflictError, NotFoundError, ValidationError } from '@/security/errors'
+import { ConflictError, NotFoundError, ValidationError } from '../../security/errors'
 import { VaultBackupRepository } from './VaultBackupRepository'
 import { VaultSnapshotRepository } from './VaultSnapshotRepository'
 import {
